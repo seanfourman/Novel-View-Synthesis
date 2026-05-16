@@ -1,374 +1,436 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Novel View Synthesis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css" />
   <script type="importmap">
   {
     "imports": {
       "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "@huggingface/transformers": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2"
     }
   }
   </script>
 </head>
 <body>
 
-  <!-- Top progress bar -->
   <div id="progress-bar"><div id="progress-fill"></div></div>
-
-  <!-- Slide dots -->
-  <nav id="dots" aria-label="Slide navigation"></nav>
-
-  <!-- Slide counter -->
+  <nav id="dots" aria-label="ניווט בין שקפים"></nav>
   <div id="counter"><span id="cur">1</span> <span class="muted">/</span> <span id="tot">16</span></div>
-
-  <!-- Keyboard hint -->
-  <div id="hint">scroll · ↓ · space</div>
+  <div id="hint">גלגל · ↓ · רווח</div>
 
   <main id="deck">
 
     <!-- ============ SLIDE 1: TITLE ============ -->
     <section class="slide" data-id="1">
       <div class="title-wrap">
-        <div class="kicker">3D Vision · Seminar</div>
+        <div class="kicker">סמינר · 3D Vision</div>
         <h1 class="big-title">Novel View<br/><span class="accent">Synthesis</span></h1>
-        <p class="lead">From flat photos to a world you can walk through.</p>
+        <p class="lead">מתמונה אחת ושטוחה — לעולם תלת־ממדי שאפשר להסתובב בו.</p>
         <canvas id="title-bg"></canvas>
       </div>
-      <div class="scroll-cue">scroll ↓</div>
+      <div class="scroll-cue">גלגל למטה ↓</div>
     </section>
 
-    <!-- ============ SLIDE 2: THE QUESTION ============ -->
+    <!-- ============ SLIDE 2: UPLOAD (running example) ============ -->
     <section class="slide" data-id="2">
-      <div class="centered">
-        <div class="kicker">the question</div>
-        <h2>You took <em>one</em> photo.</h2>
-        <h2>What does the <span class="accent">other side</span> look like?</h2>
-        <div id="q-viz">
-          <div class="q-photo">
-            <canvas id="q-canvas"></canvas>
-            <div class="q-label">input · 1 view</div>
+      <div class="upload-slide">
+        <div class="kicker">המסע מתחיל פה</div>
+        <h2>העלו תמונה — היא תלווה אותנו <em>לאורך כל ההרצאה</em></h2>
+        <p class="lead small">כל ההסברים, ההדגמות והדוגמאות בהמשך יבוססו על התמונה הזו.</p>
+
+        <div class="upload-container">
+
+          <!-- empty state -->
+          <div id="upload-zone" class="upload-zone">
+            <div class="upload-icon">📷</div>
+            <div class="upload-zone-text">גררו תמונה לכאן</div>
+            <div class="upload-zone-or">או</div>
+            <div class="upload-buttons">
+              <label class="upload-btn primary">
+                <input type="file" accept="image/*" id="file-input" hidden>
+                בחרו קובץ מהמחשב
+              </label>
+              <label class="upload-btn secondary">
+                <input type="file" accept="image/*" capture="environment" id="camera-input" hidden>
+                📸 צלמו עכשיו
+              </label>
+            </div>
+            <div class="upload-examples">
+              <span class="ex-label">או נסו דוגמה:</span>
+              <button class="ex-btn" data-example="fern">פרח</button>
+              <button class="ex-btn" data-example="trex">דינוזאור</button>
+              <button class="ex-btn" data-example="toy">צעצוע</button>
+            </div>
           </div>
-          <div class="q-marks">
-            <div class="q-mark" style="--d:0s">?</div>
-            <div class="q-mark" style="--d:.3s">?</div>
-            <div class="q-mark" style="--d:.6s">?</div>
-            <div class="q-mark" style="--d:.9s">?</div>
+
+          <!-- loaded state: photo + depth side-by-side -->
+          <div id="upload-loaded" class="upload-loaded" hidden>
+            <div class="loaded-card">
+              <canvas id="photo-canvas"></canvas>
+              <div class="card-label">התמונה שלכם</div>
+            </div>
+            <div class="loaded-arrow">←</div>
+            <div class="loaded-card">
+              <canvas id="depth-canvas"></canvas>
+              <div class="card-label">מפת עומק (מה שהמודל ראה)</div>
+            </div>
           </div>
+
+          <!-- status overlay -->
+          <div id="upload-status" class="upload-status" hidden>
+            <div class="status-spinner"></div>
+            <div class="status-text" id="status-text">מעבד...</div>
+            <div class="status-progress-bar"><div class="status-progress-fill" id="status-fill"></div></div>
+          </div>
+
+          <!-- error state -->
+          <div id="upload-error" class="upload-error" hidden>
+            <div class="err-icon">⚠️</div>
+            <div class="err-text" id="error-text">משהו השתבש</div>
+            <button id="error-retry" class="upload-btn primary">נסו שוב</button>
+          </div>
+
+          <button id="upload-reset" class="upload-reset" hidden>↺ תמונה חדשה</button>
+          <div id="upload-ready" class="upload-ready" hidden>
+            ✓ מוכן — גללו למטה כדי להמשיך
+          </div>
+
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 3: LIVE DEMO ============ -->
+    <!-- ============ SLIDE 3: THE REVEAL ============ -->
     <section class="slide" data-id="3">
-      <div class="demo-wrap">
-        <div class="kicker">what we want</div>
-        <h2>One input <span class="muted">→</span> <span class="accent">many novel views</span></h2>
-        <p class="lead small">A model learns the scene, then renders it from any camera you want.</p>
-        <div class="multi-grid">
-          <div class="input-card">
-            <canvas id="demo-input"></canvas>
-            <div class="card-label">📷 input photo</div>
+      <div class="reveal-slide" id="reveal-slide">
+        <div class="kicker">הקסם</div>
+        <h2>ארבעה מבטים חדשים <span class="muted">·</span> <span class="accent">תמונה אחת</span></h2>
+        <p class="lead small">המודל מבין את העומק של התמונה שלכם, ואז מציג אותה <em>מארבע זוויות שלא צילמתם</em>.</p>
+
+        <div class="reveal-grid">
+          <div class="reveal-input">
+            <canvas data-reveal="input"></canvas>
+            <div class="card-label">תמונה מקורית</div>
           </div>
-          <div class="arrow">→</div>
-          <div class="output-grid">
-            <div class="out-card"><canvas data-angle="0"></canvas><div class="card-label out">view 1</div></div>
-            <div class="out-card"><canvas data-angle="1"></canvas><div class="card-label out">view 2</div></div>
-            <div class="out-card"><canvas data-angle="2"></canvas><div class="card-label out">view 3</div></div>
-            <div class="out-card"><canvas data-angle="3"></canvas><div class="card-label out">view 4</div></div>
-            <div class="out-card"><canvas data-angle="4"></canvas><div class="card-label out">view 5</div></div>
-            <div class="out-card"><canvas data-angle="5"></canvas><div class="card-label out">view 6</div></div>
+          <div class="reveal-arrow">←</div>
+          <div class="reveal-outputs">
+            <div class="rev-card" data-dir="left"><canvas></canvas><div class="card-label">מבט משמאל</div></div>
+            <div class="rev-card" data-dir="right"><canvas></canvas><div class="card-label">מבט מימין</div></div>
+            <div class="rev-card" data-dir="up"><canvas></canvas><div class="card-label">מבט מלמעלה</div></div>
+            <div class="rev-card" data-dir="down"><canvas></canvas><div class="card-label">מבט מלמטה</div></div>
           </div>
+        </div>
+
+        <div class="no-image-prompt" hidden>
+          <span>↑ העלו תמונה בשקף הקודם כדי להמשיך</span>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 4: APPLICATIONS ============ -->
+    <!-- ============ SLIDE 4: APPLICATIONS (visual) ============ -->
     <section class="slide" data-id="4">
-      <div class="centered">
-        <div class="kicker">why we care</div>
-        <h2>Applications</h2>
-        <div class="apps">
-          <div class="app">
-            <div class="app-icon">🏛️</div>
-            <div class="app-title">Virtual tours</div>
-            <div class="app-sub">museums · real estate · Matterport</div>
+      <div class="centered wide">
+        <div class="kicker">איפה משתמשים בזה?</div>
+        <h2>ארבעה שימושים אמיתיים — עם <em>התמונה שלכם</em></h2>
+        <div class="apps-grid">
+          <div class="app-card" data-app="walk">
+            <canvas></canvas>
+            <div class="app-info">
+              <div class="app-title">🏛️ סיור וירטואלי</div>
+              <div class="app-sub">מצלמה זזה לתוך התמונה — כאילו אתם נכנסים לחדר.</div>
+            </div>
           </div>
-          <div class="app">
-            <div class="app-icon">🎮</div>
-            <div class="app-title">VR & entertainment</div>
-            <div class="app-sub">immersive 3D from photos</div>
+          <div class="app-card" data-app="stereo">
+            <canvas></canvas>
+            <div class="app-info">
+              <div class="app-title">🎮 VR · סטריאו</div>
+              <div class="app-sub">פיצול לעין שמאל ועין ימין — תלת־ממד אמיתי במציאות מדומה.</div>
+            </div>
           </div>
-          <div class="app">
-            <div class="app-icon">📦</div>
-            <div class="app-title">Product inspection</div>
-            <div class="app-sub">spin merchandise online</div>
+          <div class="app-card" data-app="spin">
+            <canvas></canvas>
+            <div class="app-info">
+              <div class="app-title">📦 תצוגת מוצר 360°</div>
+              <div class="app-sub">מסתובבים סביב האובייקט מבלי לצלם מחדש מכל זווית.</div>
+            </div>
           </div>
-          <div class="app">
-            <div class="app-icon">🤖</div>
-            <div class="app-title">Robotics & sim</div>
-            <div class="app-sub">train agents in real scenes</div>
+          <div class="app-card" data-app="depth">
+            <canvas></canvas>
+            <div class="app-info">
+              <div class="app-title">🤖 הבנה תלת־ממדית</div>
+              <div class="app-sub">רובוטים ומכוניות אוטונומיות מקבלות מבנה גיאומטרי מתמונה רגילה.</div>
+            </div>
           </div>
         </div>
+        <div class="no-image-prompt" hidden>↑ העלו תמונה בשקף 2</div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 5: WHY HARD ============ -->
+    <!-- ============ SLIDE 5: WHY HARD (visual) ============ -->
     <section class="slide" data-id="5">
       <div class="centered wide">
-        <div class="kicker">the challenge</div>
-        <h2>Why is this <span class="accent">hard?</span></h2>
-        <div class="hard-grid">
-          <div class="hard-card">
-            <div class="hard-num">01</div>
-            <div class="hard-title">Depth</div>
-            <div class="hard-text">A 2D photo loses the third dimension. We have to guess what's near and what's far.</div>
+        <div class="kicker">למה זה קשה?</div>
+        <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
+        <div class="hard-vis-grid">
+          <div class="hard-card-v" data-hard="depth">
+            <canvas></canvas>
+            <div class="hard-num">01 · עומק</div>
+            <div class="hard-text">תמונה אחת היא רק 2D. בלי להעריך עומק — סיבוב נראה כמו דף שטוח שמסתובב.</div>
           </div>
-          <div class="hard-card">
-            <div class="hard-num">02</div>
-            <div class="hard-title">Occlusion</div>
-            <div class="hard-text">Parts of the scene are hidden behind other parts. From a new angle they should appear.</div>
+          <div class="hard-card-v" data-hard="occlusion">
+            <canvas></canvas>
+            <div class="hard-num">02 · הסתרה</div>
+            <div class="hard-text">כשמסתכלים מזווית אחרת מתגלים אזורים שלא נראו מעולם. למודל אין מידע עליהם.</div>
           </div>
-          <div class="hard-card">
-            <div class="hard-num">03</div>
-            <div class="hard-title">Lighting</div>
-            <div class="hard-text">Shiny and reflective surfaces look completely different from each angle.</div>
+          <div class="hard-card-v" data-hard="lighting">
+            <canvas></canvas>
+            <div class="hard-num">03 · תאורה תלוית מבט</div>
+            <div class="hard-text">משטחים מבריקים זזים עם הצופה — אותה נקודה נראית שונה מכל זווית.</div>
           </div>
-          <div class="hard-card">
-            <div class="hard-num">04</div>
-            <div class="hard-title">Consistency</div>
-            <div class="hard-text">All the new views need to agree with each other and with the originals.</div>
+          <div class="hard-card-v" data-hard="consistency">
+            <canvas></canvas>
+            <div class="hard-num">04 · עקביות</div>
+            <div class="hard-text">כל מבט חדש חייב להתאים לכל המבטים האחרים — אסור שהאובייקט "ירעד".</div>
           </div>
         </div>
+        <div class="no-image-prompt" hidden>↑ העלו תמונה בשקף 2</div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 6: OLD APPROACHES ============ -->
+    <!-- ============ SLIDE 6: CLASSIC METHODS (visual) ============ -->
     <section class="slide" data-id="6">
       <div class="centered wide">
-        <div class="kicker">before NeRF</div>
-        <h2>Classical approaches</h2>
-        <div class="old-grid">
-          <div class="old-card">
-            <canvas id="mesh-canvas"></canvas>
-            <div class="old-title">Mesh + texture</div>
-            <div class="old-pros">+ free movement, measurable</div>
-            <div class="old-cons">− geometry/texture artifacts<br/>− no view-dependent effects</div>
+        <div class="kicker">לפני NeRF</div>
+        <h2>איך זה נעשה <em>בעבר</em></h2>
+        <div class="old-vis-grid">
+          <div class="old-card-v" data-old="mesh">
+            <canvas></canvas>
+            <div class="old-info">
+              <div class="old-title">רשת מצולעים + טקסטורה</div>
+              <div class="old-pros">+ חופש תנועה מלא · ניתן למדידה</div>
+              <div class="old-cons">− קצוות "קרועים" · לא תופס ברק והשתקפויות</div>
+              <div class="old-explain">בונים מודל גיאומטרי (mesh) מהתמונה ומותחים עליו את הצבעים כטקסטורה.</div>
+            </div>
           </div>
-          <div class="old-card">
-            <canvas id="phototour-canvas"></canvas>
-            <div class="old-title">Photo tour</div>
-            <div class="old-pros">+ photo-real at capture points</div>
-            <div class="old-cons">− very limited movement<br/>− visible crossfades</div>
+          <div class="old-card-v" data-old="phototour">
+            <canvas></canvas>
+            <div class="old-info">
+              <div class="old-title">סיור תמונות (Photo Tour)</div>
+              <div class="old-pros">+ פוטו־ריאליסטי בנקודות שצולמו</div>
+              <div class="old-cons">− מגבילים אותך לנתיב מוגדר · קפיצות בין מבטים</div>
+              <div class="old-explain">אוסף תמונות עם מעבר חלק ביניהן. עובד טוב — בכל עוד אתם בנקודות שכבר צולמו.</div>
+            </div>
           </div>
         </div>
+        <div class="no-image-prompt" hidden>↑ העלו תמונה בשקף 2</div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 7: ENTER NERF ============ -->
+    <!-- ============ SLIDE 7: NERF INTRO ============ -->
     <section class="slide" data-id="7">
       <div class="centered">
-        <div class="kicker">2020 · breakthrough</div>
+        <div class="kicker">2020 · פריצת דרך</div>
         <h1 class="big-title small"><span class="accent">NeRF</span></h1>
         <p class="lead">Neural Radiance Fields</p>
-        <p class="lead small">Represent the whole scene as a tiny neural network. Ask it about any 3D point — get color and density. Render any view.</p>
+        <p class="lead small">במקום לבנות mesh או לאסוף תמונות — מאמנים <em>רשת נוירונים אחת</em> שמכירה את כל הסצנה. שואלים אותה על כל נקודה במרחב, מקבלים צבע וצפיפות, ומעבדים כל מבט שרוצים.</p>
         <div class="paper-cite">Mildenhall et al., ECCV 2020</div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 8: ROTATABLE 3D ============ -->
+    <!-- ============ SLIDES 8–16 (unchanged from before) ============ -->
+
     <section class="slide" data-id="8">
       <div class="split">
-        <div class="split-left">
-          <div class="kicker">the scene, learned</div>
-          <h2>A 3D object the network <em>knows</em></h2>
-          <p class="lead small">Once trained, NeRF holds the whole scene inside its weights. Drag to look at it from any angle — every pixel is freshly rendered.</p>
-          <div class="hint-tag">🖱️ drag to rotate · scroll to zoom</div>
-        </div>
         <div class="split-right">
-          <div id="bunny-stage" class="stage"></div>
+          <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
+          <h2>אובייקט תלת־ממדי שהרשת <em>מכירה</em></h2>
+          <p class="lead small">אחרי האימון, NeRF מחזיק את הסצנה כולה בתוך המשקלים שלו. גררו ימינה ושמאלה כדי להסתכל עליו מכל זווית — כל פריים הוא מבט שעובד מחדש מהמודל.</p>
+          <div class="hint-tag">🖱️ גררו לסיבוב</div>
+        </div>
+        <div class="split-left">
+          <div id="rotatable-stage" class="stage">
+            <video id="rotatable-video" src="assets/videos/redtoyota.mp4" muted playsinline preload="auto"></video>
+            <div class="drag-cue">↔</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 9: INPUT/OUTPUT ============ -->
     <section class="slide" data-id="9">
       <div class="centered wide">
-        <div class="kicker">how NeRF thinks</div>
-        <h2>Inputs and outputs</h2>
-        <div class="io-diagram">
+        <div class="kicker">איך NeRF חושב</div>
+        <h2>קלטים ופלטים</h2>
+        <div class="io-diagram" dir="ltr">
           <div class="io-side inputs">
-            <div class="io-row"><div class="io-sym">x, y, z</div><div class="io-desc">a point in 3D space</div></div>
-            <div class="io-row"><div class="io-sym">θ, φ</div><div class="io-desc">viewing direction</div></div>
+            <div class="io-row"><div class="io-sym">x, y, z</div><div class="io-desc">נקודה במרחב התלת־ממדי</div></div>
+            <div class="io-row"><div class="io-sym">θ, φ</div><div class="io-desc">כיוון הצפייה</div></div>
           </div>
           <div class="io-arrow">→</div>
           <div class="io-mlp">
-            <div class="mlp-label">tiny neural net</div>
+            <div class="mlp-label">tiny MLP</div>
             <div class="mlp-bars">
               <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
             </div>
           </div>
           <div class="io-arrow">→</div>
           <div class="io-side outputs">
-            <div class="io-row"><div class="io-sym color">R G B</div><div class="io-desc">color at that point</div></div>
-            <div class="io-row"><div class="io-sym">σ</div><div class="io-desc">density (is there stuff here?)</div></div>
+            <div class="io-row"><div class="io-sym color">R G B</div><div class="io-desc">צבע באותה נקודה</div></div>
+            <div class="io-row"><div class="io-sym">σ</div><div class="io-desc">צפיפות — יש פה משהו?</div></div>
           </div>
         </div>
-        <p class="lead small caption">That's the entire model. Just a function from <code>position + direction → color + density</code>.</p>
+        <p class="lead small caption">זה כל המודל. פונקציה ממיקום + כיוון לצבע + צפיפות.</p>
       </div>
     </section>
 
-    <!-- ============ SLIDE 10: RAY DEMO ============ -->
     <section class="slide" data-id="10">
       <div class="split">
-        <div class="split-left">
-          <div class="kicker">how a pixel is born</div>
-          <h2>Cast a ray. <br/>Sample along it. <br/>Add it up.</h2>
-          <p class="lead small">For every pixel of the output image, shoot a ray from the camera into the scene. Sample points along it, ask the network for color and density at each, blend them together.</p>
-          <div class="hint-tag">🖱️ move your mouse over the picture</div>
-          <div class="ray-readout">
-            <div class="readout-row"><span>samples</span> <code id="rd-samples">0</code></div>
-            <div class="readout-row"><span>final color</span> <span id="rd-color" class="swatch"></span></div>
+        <div class="split-right">
+          <div class="kicker">איך נוצר פיקסל</div>
+          <h2>שולחים קרן.<br/>דוגמים נקודות.<br/>מחברים.</h2>
+          <p class="lead small">לכל פיקסל בתמונת הפלט שולחים קרן מהמצלמה אל תוך הסצנה. דוגמים נקודות לאורכה, שואלים את הרשת על צבע וצפיפות בכל נקודה, ומחברים את הכל יחד.</p>
+          <div class="hint-tag">🖱️ הזיזו את העכבר על התמונה</div>
+          <div class="ray-readout" dir="ltr">
+            <div class="readout-row"><span>דגימות פעילות</span> <code id="rd-samples">0</code></div>
+            <div class="readout-row"><span>צבע סופי</span> <span id="rd-color" class="swatch"></span></div>
           </div>
         </div>
-        <div class="split-right">
+        <div class="split-left">
           <div id="ray-stage" class="stage"></div>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 11: TRAINING ============ -->
     <section class="slide" data-id="11">
       <div class="centered wide">
-        <div class="kicker">how it learns</div>
-        <h2>Training, in one picture</h2>
+        <div class="kicker">איך זה לומד</div>
+        <h2>אימון, בתמונה אחת</h2>
         <div class="train-flow">
           <div class="train-card">
-            <canvas id="train-pred"></canvas>
-            <div class="train-label">NeRF's guess</div>
+            <video class="train-video pred" src="assets/videos/trex.mp4" muted playsinline preload="auto" loop autoplay></video>
+            <div class="train-label">הניחוש של NeRF</div>
           </div>
           <div class="train-op">−</div>
           <div class="train-card">
-            <canvas id="train-gt"></canvas>
-            <div class="train-label">real photo</div>
+            <video class="train-video gt" src="assets/videos/trex.mp4" muted playsinline preload="auto" loop autoplay></video>
+            <div class="train-label">תמונה אמיתית</div>
           </div>
           <div class="train-op">=</div>
           <div class="train-card error">
             <canvas id="train-err"></canvas>
-            <div class="train-label">error</div>
+            <div class="train-label">שגיאה</div>
           </div>
         </div>
-        <p class="lead small caption">Reduce the error → tweak network weights → repeat across millions of rays. Eventually the network reproduces every input photo — and gets the in-between views for free.</p>
+        <p class="lead small caption">מצמצמים את השגיאה → מעדכנים את משקלי הרשת → חוזרים על זה למיליוני קרניים. בסוף הרשת משחזרת כל תמונת קלט — והזוויות שביניהן יוצאות כמתנה.</p>
       </div>
     </section>
 
-    <!-- ============ SLIDE 12: CLICKABLE VIEWPOINTS ============ -->
     <section class="slide" data-id="12">
       <div class="split">
-        <div class="split-left">
-          <div class="kicker">novel views, on demand</div>
-          <h2>Pick a camera.</h2>
-          <p class="lead small">These cameras were never <em>actually</em> placed in the scene. The model invents what each one would see — instantly.</p>
-          <div class="thumb-strip" id="thumb-strip"></div>
-          <div class="hint-tag">🖱️ click any camera in the scene</div>
-        </div>
         <div class="split-right">
-          <div id="view-stage" class="stage"></div>
+          <div class="kicker">מבטים חדשים, לפי דרישה</div>
+          <h2>בחרו מצלמה.</h2>
+          <p class="lead small">כל אחת מהמצלמות האלה אף פעם לא הייתה בסצנה בפועל. המודל ממציא מה היא הייתה רואה — מיידית.</p>
+          <div class="thumb-strip" id="thumb-strip"></div>
+          <div class="hint-tag">🖱️ לחצו על מצלמה כדי לעבור אליה</div>
+        </div>
+        <div class="split-left">
+          <div id="view-stage" class="stage">
+            <video id="view-video" src="assets/videos/trex.mp4" muted playsinline preload="auto"></video>
+            <div class="cam-ring" id="cam-ring"></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 13: ORBIT SCRUBBER ============ -->
     <section class="slide" data-id="13">
       <div class="centered wide">
-        <div class="kicker">smooth interpolation</div>
-        <h2>Or scrub through every angle in between.</h2>
+        <div class="kicker">אינטרפולציה חלקה</div>
+        <h2>או החליקו דרך כל זווית באמצע.</h2>
         <div class="orbit-wrap">
-          <div id="orbit-stage" class="stage tall"></div>
+          <div id="orbit-stage" class="stage tall">
+            <video id="orbit-video" src="assets/videos/trike_200k_rgb.mp4" muted playsinline preload="auto"></video>
+          </div>
           <div class="orbit-controls">
-            <input type="range" id="orbit-slider" min="0" max="360" value="0" />
+            <input type="range" id="orbit-slider" min="0" max="1000" value="0" />
             <div class="orbit-labels">
               <span>0°</span><span>90°</span><span>180°</span><span>270°</span><span>360°</span>
             </div>
           </div>
         </div>
-        <p class="lead small caption">Continuous viewpoint control — that's the headline feature of novel view synthesis.</p>
+        <p class="lead small caption">שליטה רציפה על נקודת הצפייה — זו התכונה המרכזית של Novel View Synthesis.</p>
       </div>
     </section>
 
-    <!-- ============ SLIDE 14: LIMITATIONS ============ -->
     <section class="slide" data-id="14">
       <div class="centered wide">
-        <div class="kicker">honest assessment</div>
-        <h2>Limitations</h2>
+        <div class="kicker">הערכה כנה</div>
+        <h2>מגבלות</h2>
         <div class="lim-grid">
           <div class="lim-card">
             <div class="lim-ico">🐢</div>
-            <div class="lim-title">Slow training</div>
-            <div class="lim-text">Hours to days per scene on a GPU.</div>
+            <div class="lim-title">אימון איטי</div>
+            <div class="lim-text">שעות עד ימים על GPU לכל סצנה.</div>
           </div>
           <div class="lim-card">
             <div class="lim-ico">📸</div>
-            <div class="lim-title">Many photos needed</div>
-            <div class="lim-text">Dozens to hundreds, with known camera poses.</div>
+            <div class="lim-title">צריך הרבה תמונות</div>
+            <div class="lim-text">עשרות עד מאות, עם פוזות מצלמה ידועות.</div>
           </div>
           <div class="lim-card">
             <div class="lim-ico">🌫️</div>
-            <div class="lim-title">Static scenes only</div>
-            <div class="lim-text">Movement, wind, people — break the model.</div>
+            <div class="lim-title">רק סצנות סטטיות</div>
+            <div class="lim-text">תנועה, רוח, אנשים — מקלקלים את המודל.</div>
           </div>
           <div class="lim-card">
             <div class="lim-ico">🌆</div>
-            <div class="lim-title">Hard at scale</div>
-            <div class="lim-text">A whole city is much harder than a single object.</div>
+            <div class="lim-title">קשה בגדול</div>
+            <div class="lim-text">עיר שלמה קשה הרבה יותר מאובייקט אחד.</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 15: WHAT'S NEXT ============ -->
     <section class="slide" data-id="15">
       <div class="centered wide">
-        <div class="kicker">the field today</div>
-        <h2>What came after</h2>
+        <div class="kicker">התחום היום</div>
+        <h2>מה בא אחרי</h2>
         <div class="next-grid">
           <div class="next-card">
             <div class="next-title">Instant-NGP</div>
             <div class="next-sub">2022 · NVIDIA</div>
-            <div class="next-text">Hash-grid encoding. NeRF training in seconds, not hours.</div>
+            <div class="next-text">קידוד hash-grid. אימון של שניות במקום שעות.</div>
           </div>
           <div class="next-card">
             <div class="next-title">Mip-NeRF</div>
             <div class="next-sub">2021 · Google</div>
-            <div class="next-text">Anti-aliasing across scales — sharp from any zoom level.</div>
+            <div class="next-text">החלקת אליאסינג בכל קנה מידה — חד בכל רמת זום.</div>
           </div>
           <div class="next-card">
             <div class="next-title">Gaussian Splatting</div>
             <div class="next-sub">2023 · INRIA</div>
-            <div class="next-text">Replace the network with millions of fuzzy 3D points. Real-time. State of the art.</div>
+            <div class="next-text">מחליפים את הרשת במיליוני נקודות תלת־ממדיות מטושטשות. רנדור בזמן אמת. State of the art.</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ SLIDE 16: SUMMARY ============ -->
     <section class="slide" data-id="16">
       <div class="centered">
-        <div class="kicker">takeaway</div>
+        <div class="kicker">השורה התחתונה</div>
         <h1 class="big-title small">Novel View Synthesis</h1>
         <ul class="recap">
-          <li>Learn a scene from photos.</li>
-          <li>Represent it as a function: <code>(x,y,z,dir) → (color, density)</code>.</li>
-          <li>Render any new camera by casting rays and adding samples.</li>
-          <li>Result: a 3D world you can fly through.</li>
+          <li>לומדים סצנה מתוך תמונות.</li>
+          <li>מייצגים אותה כפונקציה: <code dir="ltr">(x,y,z,dir) → (color, density)</code>.</li>
+          <li>מעבדים כל מצלמה חדשה ע&quot;י שליחת קרניים וחיבור דגימות.</li>
+          <li>התוצאה: עולם תלת־ממדי שאפשר לטוס בתוכו.</li>
         </ul>
-        <p class="lead small thanks">Thank you.</p>
+        <p class="lead small thanks">תודה רבה.</p>
         <canvas id="end-bg"></canvas>
       </div>
     </section>
