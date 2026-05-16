@@ -1,8 +1,37 @@
 // slides.js — per-slide initializers.
 
 import * as THREE from 'three';
-import { subscribe } from './userImage.js';
-import { buildDepthScene, buildWireframeScene, renderTo, makeCamera, disposeScene } from './views.js';
+
+function primeVideo(video, play = false) {
+  if (!video) return;
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  if (video.readyState === 0) video.load();
+  if (play && (video.paused || video.readyState < 2)) {
+    video.play().catch(() => {});
+  }
+}
+
+function controlVideos(videoList) {
+  const videos = Array.from(videoList);
+  function playVisible() {
+    for (const v of videos) {
+      v.loop = true;
+      primeVideo(v, true);
+    }
+  }
+  function pauseAll() {
+    videos.forEach(v => v.pause());
+  }
+  return {
+    enter() { playVisible(); },
+    tick(visible) {
+      if (visible) playVisible();
+      else pauseAll();
+    },
+  };
+}
 
 /* =========================================================
    Slide 1: Title — wireframe background
@@ -62,355 +91,18 @@ export function initTitleBg() {
 }
 
 /* =========================================================
-   Slide 3: REVEAL — 4 novel views of the user's photo (live).
-   Re-renders whenever user image/depth changes.
-   ========================================================= */
-export function initReveal() {
-  const root = document.getElementById('reveal-slide');
-  const inputCanvas = root.querySelector('canvas[data-reveal=input]');
-  const cards = Array.from(root.querySelectorAll('.rev-card'));
-  const outCanvases = cards.map(c => c.querySelector('canvas'));
-  const prompt = root.querySelector('.no-image-prompt');
-
-  let depthScene = null;
-  let cam = null;
-  let state = null;
-  let visible = false;
-  let revealed = false;
-
-  function rebuild(imgC, depC) {
-    if (depthScene) { disposeScene(depthScene); depthScene = null; }
-    if (!imgC || !depC) return;
-    depthScene = buildDepthScene(imgC, depC, { shader: 'basic', strength: 0.45, tess: 180 });
-    cam = makeCamera(38);
-    revealed = false;
-    cards.forEach(c => c.classList.remove('in'));
-  }
-
-  function drawInput(srcCanvas) {
-    if (!srcCanvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.max(1, inputCanvas.clientWidth * dpr);
-    const h = Math.max(1, inputCanvas.clientHeight * dpr);
-    if (inputCanvas.width !== w) inputCanvas.width = w;
-    if (inputCanvas.height !== h) inputCanvas.height = h;
-    const ctx = inputCanvas.getContext('2d');
-    ctx.fillStyle = '#fafafa';
-    ctx.fillRect(0, 0, w, h);
-    const sr = srcCanvas.width / srcCanvas.height;
-    const tr = w / h;
-    let dw, dh, dx, dy;
-    if (sr > tr) { dw = w; dh = w / sr; dx = 0; dy = (h - dh) / 2; }
-    else         { dh = h; dw = h * sr; dy = 0; dx = (w - dw) / 2; }
-    ctx.drawImage(srcCanvas, dx, dy, dw, dh);
-  }
-
-  const VIEWS = [
-    { dir: 'left',  x: -0.30, y:  0.0  },
-    { dir: 'right', x:  0.30, y:  0.0  },
-    { dir: 'up',    x:  0.0,  y:  0.22 },
-    { dir: 'down',  x:  0.0,  y: -0.22 },
-  ];
-
-  function renderAll() {
-    if (!depthScene || !cam) return;
-    for (let i = 0; i < cards.length; i++) {
-      const view = VIEWS[i];
-      cam.position.set(view.x, view.y, 2.6);
-      cam.lookAt(0, 0, 0);
-      renderTo(outCanvases[i], depthScene.scene, cam);
-    }
-  }
-
-  function maybeReveal() {
-    if (!visible || !depthScene || revealed) return;
-    revealed = true;
-    cards.forEach((c, i) => setTimeout(() => c.classList.add('in'), 120 + i * 180));
-  }
-
-  subscribe((s) => {
-    state = s;
-    if (s.status === 'ready' && s.image && s.depth) {
-      prompt.hidden = true;
-      drawInput(s.image);
-      rebuild(s.image, s.depth);
-      renderAll();
-      maybeReveal();
-    } else {
-      prompt.hidden = false;
-      // clear cards
-      cards.forEach(c => c.classList.remove('in'));
-      outCanvases.forEach(c => {
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = '#fafafa';
-        ctx.fillRect(0, 0, c.width || 100, c.height || 100);
-      });
-      const ctx = inputCanvas.getContext('2d');
-      inputCanvas.width = inputCanvas.clientWidth * (window.devicePixelRatio || 1);
-      inputCanvas.height = inputCanvas.clientHeight * (window.devicePixelRatio || 1);
-      ctx.fillStyle = '#fafafa';
-      ctx.fillRect(0, 0, inputCanvas.width, inputCanvas.height);
-      ctx.fillStyle = '#999';
-      ctx.font = '16px Heebo, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('—', inputCanvas.width / 2, inputCanvas.height / 2);
-    }
-  });
-
-  return {
-    enter() { visible = true; maybeReveal(); },
-    tick(isVisible) {
-      visible = isVisible;
-      // we only need to render once per upload, but if the canvas resizes
-      // we'd want to redo. cheap: re-render every ~30 frames.
-      if (isVisible && depthScene && cam) renderAll();
-    },
-  };
-}
-
-/* =========================================================
-   Slide 4: APPLICATIONS — 4 mini-animations of the user's photo
+   Slides 3–5: NeRF project-page videos
    ========================================================= */
 export function initApplications() {
-  const cards = Array.from(document.querySelectorAll('.app-card'));
-  const prompt = document.querySelector('.slide[data-id="4"] .no-image-prompt');
-
-  // build a single shared DepthScene + plus a specular & heatmap variant
-  let basicScene = null, specularScene = null, heatmapScene = null;
-  let cam = null;
-  let t = 0;
-
-  function rebuild(img, dep) {
-    [basicScene, specularScene, heatmapScene].forEach(disposeScene);
-    if (!img || !dep) { basicScene = specularScene = heatmapScene = null; return; }
-    basicScene    = buildDepthScene(img, dep, { shader: 'basic',    strength: 0.45 });
-    specularScene = buildDepthScene(img, dep, { shader: 'specular', strength: 0.45 });
-    heatmapScene  = buildDepthScene(img, dep, { shader: 'heatmap',  strength: 0.45 });
-    cam = makeCamera(36);
-  }
-
-  subscribe((s) => {
-    if (s.status === 'ready' && s.image && s.depth) {
-      prompt.hidden = true;
-      rebuild(s.image, s.depth);
-    } else {
-      prompt.hidden = false;
-      rebuild(null, null);
-    }
-  });
-
-  function clearCanvases() {
-    for (const card of cards) {
-      const c = card.querySelector('canvas');
-      const w = c.clientWidth * (window.devicePixelRatio || 1);
-      const h = c.clientHeight * (window.devicePixelRatio || 1);
-      if (c.width !== w) c.width = w;
-      if (c.height !== h) c.height = h;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#fafafa';
-      ctx.fillRect(0, 0, w, h);
-    }
-  }
-
-  return {
-    tick(visible) {
-      if (!visible) return;
-      if (!basicScene) { clearCanvases(); return; }
-      t += 0.012;
-
-      // App 1: VR walkthrough — dolly forward (z 2.6 → 1.6) with slight pan
-      {
-        const c = cards.find(c => c.dataset.app === 'walk').querySelector('canvas');
-        const u = (Math.sin(t * 0.6) + 1) / 2;        // 0..1
-        cam.position.set(0.04 * Math.sin(t), 0.02 * Math.cos(t), 2.6 - u * 0.9);
-        cam.lookAt(0, 0, 0.2);
-        renderTo(c, basicScene.scene, cam);
-      }
-
-      // App 2: stereo — render left and right viewports side-by-side
-      {
-        const card = cards.find(c => c.dataset.app === 'stereo');
-        const c = card.querySelector('canvas');
-        const dpr = window.devicePixelRatio || 1;
-        const cw = c.clientWidth | 0, chh = c.clientHeight | 0;
-        const bw = cw * dpr, bh = chh * dpr;
-        if (c.width !== bw) c.width = bw;
-        if (c.height !== bh) c.height = bh;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, bw, bh);
-
-        // create a tmp canvas for each eye
-        const half = document.createElement('canvas');
-        half.width = bw / 2; half.height = bh;
-        // left eye
-        cam.position.set(-0.10, 0, 2.5); cam.lookAt(0, 0, 0);
-        renderTo(half, basicScene.scene, cam);
-        ctx.drawImage(half, 0, 0);
-        // right eye
-        cam.position.set( 0.10, 0, 2.5); cam.lookAt(0, 0, 0);
-        renderTo(half, basicScene.scene, cam);
-        ctx.drawImage(half, bw / 2, 0);
-        // divider
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(bw / 2, 0); ctx.lineTo(bw / 2, bh); ctx.stroke();
-      }
-
-      // App 3: spin — camera orbits at small radius
-      {
-        const c = cards.find(c => c.dataset.app === 'spin').querySelector('canvas');
-        const a = t * 0.7;
-        cam.position.set(Math.sin(a) * 0.4, 0.05 * Math.sin(a * 1.7), 2.4 + Math.cos(a) * 0.3);
-        cam.lookAt(0, 0, 0);
-        renderTo(c, basicScene.scene, cam);
-      }
-
-      // App 4: depth heatmap (mix oscillates)
-      {
-        const c = cards.find(c => c.dataset.app === 'depth').querySelector('canvas');
-        const mix = 0.35 + 0.35 * (Math.sin(t * 1.2) + 1) / 2;
-        heatmapScene.uniforms.mixAmt.value = mix;
-        cam.position.set(0.1 * Math.sin(t * 0.4), 0, 2.6);
-        cam.lookAt(0, 0, 0);
-        renderTo(c, heatmapScene.scene, cam);
-      }
-    },
-  };
+  return controlVideos(document.querySelectorAll('.slide[data-id="3"] video'));
 }
 
-/* =========================================================
-   Slide 5: WHY HARD — 4 demos of difficulties on the user's photo
-   ========================================================= */
 export function initWhyHard() {
-  const cards = Array.from(document.querySelectorAll('.hard-card-v'));
-  const prompt = document.querySelector('.slide[data-id="5"] .no-image-prompt');
-
-  let scene3D = null, sceneFlat = null, sceneSpec = null;
-  let cam = null;
-  let t = 0;
-
-  function rebuild(img, dep) {
-    [scene3D, sceneFlat, sceneSpec].forEach(disposeScene);
-    if (!img || !dep) { scene3D = sceneFlat = sceneSpec = null; return; }
-    scene3D   = buildDepthScene(img, dep, { shader: 'basic',    strength: 0.6 });
-    sceneFlat = buildDepthScene(img, dep, { shader: 'basic',    flat: true });
-    sceneSpec = buildDepthScene(img, dep, { shader: 'specular', strength: 0.5 });
-    // larger background for occlusion demo so voids are obvious as gray, not white
-    scene3D.scene.background = new THREE.Color(0x202020);
-    cam = makeCamera(36);
-  }
-
-  subscribe((s) => {
-    if (s.status === 'ready' && s.image && s.depth) {
-      prompt.hidden = true;
-      rebuild(s.image, s.depth);
-    } else { prompt.hidden = false; rebuild(null, null); }
-  });
-
-  return {
-    tick(visible) {
-      if (!visible || !scene3D) return;
-      t += 0.012;
-
-      // 01 depth: flip between flat and 3D every 2.5s
-      {
-        const c = cards.find(c => c.dataset.hard === 'depth').querySelector('canvas');
-        const phase = Math.floor(t / 2) % 2;
-        const sc = phase === 0 ? sceneFlat : scene3D;
-        const yaw = Math.sin(t * 0.8) * 0.5;
-        cam.position.set(Math.sin(yaw) * 2.6, 0, Math.cos(yaw) * 2.6);
-        cam.lookAt(0, 0, 0);
-        sc.scene.background = new THREE.Color(0xffffff);
-        renderTo(c, sc.scene, cam);
-      }
-
-      // 02 occlusion: extreme rotation, dark background to make voids obvious
-      {
-        const c = cards.find(c => c.dataset.hard === 'occlusion').querySelector('canvas');
-        const a = Math.sin(t * 0.6) * 1.0;
-        cam.position.set(Math.sin(a) * 2.4, 0, Math.cos(a) * 2.4);
-        cam.lookAt(0, 0, 0);
-        scene3D.scene.background = new THREE.Color(0x202020);
-        renderTo(c, scene3D.scene, cam);
-      }
-
-      // 03 lighting: specular highlight moves in a circle
-      {
-        const c = cards.find(c => c.dataset.hard === 'lighting').querySelector('canvas');
-        const lx = 0.5 + Math.cos(t * 1.4) * 0.35;
-        const ly = 0.5 + Math.sin(t * 1.4) * 0.35;
-        sceneSpec.uniforms.lightPos.value.set(lx, ly, 0.5);
-        cam.position.set(0, 0, 2.4); cam.lookAt(0, 0, 0);
-        sceneSpec.scene.background = new THREE.Color(0xffffff);
-        renderTo(c, sceneSpec.scene, cam);
-      }
-
-      // 04 consistency: jittered orbit — camera shakes randomly
-      {
-        const c = cards.find(c => c.dataset.hard === 'consistency').querySelector('canvas');
-        const phase = Math.floor(t / 1.5) % 2;
-        const jitter = phase === 0
-          ? new THREE.Vector3((Math.random() - .5) * 0.18, (Math.random() - .5) * 0.18, 0)
-          : new THREE.Vector3(0.04 * Math.sin(t), 0, 0);
-        cam.position.set(0.2 + jitter.x, jitter.y, 2.4);
-        cam.lookAt(0, 0, 0);
-        scene3D.scene.background = new THREE.Color(0xffffff);
-        renderTo(c, scene3D.scene, cam);
-      }
-    },
-  };
+  return controlVideos(document.querySelectorAll('.slide[data-id="4"] video'));
 }
 
-/* =========================================================
-   Slide 6: CLASSIC METHODS — wireframe mesh + photo tour crossfade
-   ========================================================= */
 export function initClassic() {
-  const meshCard = document.querySelector('.old-card-v[data-old=mesh]');
-  const tourCard = document.querySelector('.old-card-v[data-old=phototour]');
-  const meshCanvas = meshCard?.querySelector('canvas');
-  const tourCanvas = tourCard?.querySelector('canvas');
-  const prompt = document.querySelector('.slide[data-id="6"] .no-image-prompt');
-
-  let wireScene = null, basicScene = null;
-  let cam = null;
-  let t = 0;
-
-  function rebuild(img, dep) {
-    if (wireScene) disposeScene(wireScene);
-    if (basicScene) disposeScene(basicScene);
-    if (!img || !dep) { wireScene = basicScene = null; return; }
-    wireScene  = buildWireframeScene(img, dep, { strength: 0.5, tess: 70 });
-    basicScene = buildDepthScene(img, dep, { shader: 'basic', strength: 0.45 });
-    cam = makeCamera(36);
-  }
-
-  subscribe((s) => {
-    if (s.status === 'ready' && s.image && s.depth) {
-      prompt.hidden = true;
-      rebuild(s.image, s.depth);
-    } else { prompt.hidden = false; rebuild(null, null); }
-  });
-
-  return {
-    tick(visible) {
-      if (!visible || !wireScene) return;
-      t += 0.01;
-
-      // Mesh: rotate wireframe slowly
-      const yaw = Math.sin(t * 0.6) * 0.45;
-      cam.position.set(Math.sin(yaw) * 2.6, 0.05, Math.cos(yaw) * 2.6);
-      cam.lookAt(0, 0, 0);
-      renderTo(meshCanvas, wireScene.scene, cam);
-
-      // Photo tour: ping-pong between 2 nearby camera positions, with quick cut
-      const phase = (t * 0.5) % 2;
-      const dx = phase < 1 ? -0.22 : 0.22;
-      // sharp transitions like a slideshow
-      cam.position.set(dx, 0, 2.4);
-      cam.lookAt(0, 0, 0);
-      renderTo(tourCanvas, basicScene.scene, cam);
-    },
-  };
+  return controlVideos(document.querySelectorAll('.slide[data-id="5"] video'));
 }
 
 /* =========================================================
@@ -430,7 +122,7 @@ export function initOldApproaches() {
 }
 
 /* =========================================================
-   Slide 8: Rotatable — drag horizontally to scrub through orbit video
+   Slide 7: Rotatable — drag horizontally to scrub through orbit video
    ========================================================= */
 export function initRotatable() {
   const stage = document.getElementById('rotatable-stage');
@@ -439,18 +131,12 @@ export function initRotatable() {
   let dragging = false;
   let lastX = 0;
   let userTouched = false;
-  let autoT = 0;
 
-  // make sure the video is ready and not auto-playing forever
   v.loop = true;
-  v.muted = true;
-
-  function onReady() {
-    if (!v.duration) return;
-    // start at a nice frame
-    try { v.currentTime = 0.0; } catch {}
-  }
-  v.addEventListener('loadedmetadata', onReady, { once: true });
+  primeVideo(v);
+  v.addEventListener('loadedmetadata', () => {
+    try { v.currentTime = 0; } catch {}
+  }, { once: true });
 
   stage.addEventListener('pointerdown', (e) => {
     dragging = true;
@@ -460,15 +146,12 @@ export function initRotatable() {
     stage.setPointerCapture?.(e.pointerId);
   });
   stage.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
+    if (!dragging || !v.duration) return;
     const dx = e.clientX - lastX;
     lastX = e.clientX;
-    if (!v.duration) return;
-    // RTL: positive dx = drag right → go "forward". Adjust feel.
     let t = v.currentTime + (dx / stage.clientWidth) * v.duration * 1.6;
-    // wrap
-    if (t < 0) t = v.duration + t;
-    if (t >= v.duration) t = t - v.duration;
+    if (t < 0) t += v.duration;
+    if (t >= v.duration) t -= v.duration;
     try { v.currentTime = t; } catch {}
   });
   const endDrag = () => { dragging = false; stage.classList.remove('grabbed'); };
@@ -479,17 +162,12 @@ export function initRotatable() {
   return {
     enter() {
       userTouched = false;
-      autoT = 0;
-      v.play().then(() => v.pause()).catch(() => {});
+      try { v.currentTime = 0; } catch {}
+      primeVideo(v, true);
     },
     tick(visible) {
-      if (!visible || !v.duration) return;
-      if (!userTouched && !dragging) {
-        // gentle auto-rotation before first interaction
-        autoT += 0.012;
-        let t = (autoT) % v.duration;
-        try { v.currentTime = t; } catch {}
-      }
+      if (!visible) { v.pause(); return; }
+      primeVideo(v, true);
     },
   };
 }
@@ -720,39 +398,36 @@ export function initRayDemo() {
 }
 
 /* =========================================================
-   Slide 11: Training — same video shown twice (pred blurry → sharpens),
-   plus a live pixel-diff error canvas.
+   Slide 10: Training — prediction sharpens, error fades
    ========================================================= */
 export function initTraining() {
   const pred = document.querySelector('.train-video.pred');
   const gt   = document.querySelector('.train-video.gt');
   const err  = document.getElementById('train-err');
 
+  pred.loop = gt.loop = true;
+  primeVideo(pred);
+  primeVideo(gt);
+
   function syncVideos() {
     if (Math.abs(pred.currentTime - gt.currentTime) > 0.05) {
       try { pred.currentTime = gt.currentTime; } catch {}
     }
   }
-  pred.loop = gt.loop = true;
-  pred.muted = gt.muted = true;
 
-  let entered = false;
   return {
     enter() {
       pred.classList.remove('sharp');
-      gt.play().catch(() => {});
-      pred.play().catch(() => {});
-      // sharpen the prediction over ~5s
+      primeVideo(gt, true);
+      primeVideo(pred, true);
       setTimeout(() => pred.classList.add('sharp'), 100);
-      entered = true;
     },
     tick(visible) {
       if (!visible) { gt.pause(); pred.pause(); return; }
-      if (gt.paused) gt.play().catch(() => {});
-      if (pred.paused) pred.play().catch(() => {});
+      primeVideo(gt, true);
+      primeVideo(pred, true);
       syncVideos();
 
-      // pixel diff to error canvas
       const w = err.clientWidth * (window.devicePixelRatio || 1);
       const h = err.clientHeight * (window.devicePixelRatio || 1);
       if (err.width !== w) err.width = w;
@@ -765,7 +440,7 @@ export function initTraining() {
       try {
         ctx.drawImage(gt, 0, 0, w, h);
         ctx.drawImage(pred, 0, 0, w, h);
-      } catch (_) { /* video not ready */ }
+      } catch (_) {}
       ctx.globalCompositeOperation = 'source-over';
       try {
         const img = ctx.getImageData(0, 0, w, h);
@@ -784,38 +459,32 @@ export function initTraining() {
 }
 
 /* =========================================================
-   Slide 12: Clickable viewpoints — N camera buttons arranged in a ring
-   around the video. Each maps to a preset video.currentTime (a different
-   orbit angle). Thumbs render that same frame.
+   Slide 11: Clickable viewpoints — camera buttons mapped to video time
    ========================================================= */
 export function initClickableViews() {
-  const stage = document.getElementById('view-stage');
   const v = document.getElementById('view-video');
   const ring = document.getElementById('cam-ring');
   const strip = document.getElementById('thumb-strip');
 
   const NUM = 8;
-  // arrange cam buttons around an ellipse inset from stage edges
+  primeVideo(v);
+  ring.innerHTML = '';
+  strip.innerHTML = '';
   const cams = [];
+  const thumbs = [];
+  const thumbCanvases = [];
+
   for (let i = 0; i < NUM; i++) {
     const theta = (i / NUM) * Math.PI * 2 - Math.PI / 2;
-    const cx = 50 + Math.cos(theta) * 42;  // % position
-    const cy = 50 + Math.sin(theta) * 42;
     const btn = document.createElement('button');
     btn.className = 'cam';
-    btn.style.left = cx + '%';
-    btn.style.top  = cy + '%';
+    btn.style.left = (50 + Math.cos(theta) * 42) + '%';
+    btn.style.top  = (50 + Math.sin(theta) * 42) + '%';
     btn.style.transform = 'translate(-50%, -50%)';
     btn.dataset.idx = i;
     ring.appendChild(btn);
     cams.push(btn);
-  }
 
-  // thumbs
-  strip.innerHTML = '';
-  const thumbs = [];
-  const thumbCanvases = [];
-  for (let i = 0; i < NUM; i++) {
     const d = document.createElement('div');
     d.className = 'thumb';
     d.dataset.idx = i;
@@ -831,6 +500,13 @@ export function initClickableViews() {
   }
 
   let activeIdx = 0;
+  let thumbsBuilt = false;
+  const ov = document.createElement('video');
+  ov.src = v.currentSrc || v.src;
+  ov.muted = true;
+  ov.playsInline = true;
+  ov.preload = 'auto';
+
   function timeForIdx(i) {
     if (!v.duration) return 0;
     return (i / NUM) * v.duration;
@@ -844,21 +520,12 @@ export function initClickableViews() {
       try { v.currentTime = timeForIdx(i); } catch {}
     }
   }
+
   cams.forEach((b, i) => b.addEventListener('click', () => setActive(i)));
   thumbs.forEach((d, i) => d.addEventListener('click', () => setActive(i)));
 
-  // render thumbs by grabbing frames at each preset time. Approach: cycle
-  // a single offscreen <video> through each time and drawImage to each thumb.
-  const ov = document.createElement('video');
-  ov.src = v.src;
-  ov.muted = true;
-  ov.playsInline = true;
-  ov.preload = 'auto';
-  let thumbsBuilt = false;
-
   async function buildThumbs() {
-    if (thumbsBuilt) return;
-    if (!ov.duration) return;
+    if (thumbsBuilt || !ov.duration) return;
     for (let i = 0; i < NUM; i++) {
       await new Promise(res => {
         const onSeek = () => { ov.removeEventListener('seeked', onSeek); res(); };
@@ -870,13 +537,13 @@ export function initClickableViews() {
       const h = c.clientHeight * (window.devicePixelRatio || 1);
       if (c.width !== w) c.width = w;
       if (c.height !== h) c.height = h;
-      const ctx = c.getContext('2d');
-      try { ctx.drawImage(ov, 0, 0, w, h); } catch {}
+      try { c.getContext('2d').drawImage(ov, 0, 0, w, h); } catch {}
     }
     thumbsBuilt = true;
   }
+
   ov.addEventListener('loadedmetadata', buildThumbs, { once: true });
-  v.addEventListener('loadedmetadata', () => { setActive(0); }, { once: true });
+  v.addEventListener('loadedmetadata', () => setActive(0), { once: true });
 
   return {
     enter() {
@@ -891,45 +558,46 @@ export function initClickableViews() {
 }
 
 /* =========================================================
-   Slide 13: Orbit scrubber — slider maps to video.currentTime
+   Slide 12: Orbit scrubber — slider maps to video time
    ========================================================= */
 export function initOrbitScrubber() {
   const v = document.getElementById('orbit-video');
   const slider = document.getElementById('orbit-slider');
-  let userInteracting = false;
-  let autoT = 0;
+  let scrubbing = false;
 
-  v.muted = true; v.loop = true;
+  v.loop = true;
+  primeVideo(v);
+
+  function setSliderFraction(f, seekVideo = false) {
+    const pct = THREE.MathUtils.clamp(f, 0, 1) * 100;
+    slider.value = Math.round((pct / 100) * parseFloat(slider.max));
+    slider.style.setProperty('--p', pct.toFixed(1) + '%');
+    if (seekVideo && v.duration) {
+      try { v.currentTime = (pct / 100) * v.duration; } catch {}
+    }
+  }
 
   slider.addEventListener('input', (e) => {
-    userInteracting = true;
-    const f = parseFloat(e.target.value) / parseFloat(slider.max);
-    if (v.duration) {
-      try { v.currentTime = f * v.duration; } catch {}
-    }
-    slider.style.setProperty('--p', (f * 100).toFixed(1) + '%');
+    scrubbing = true;
+    setSliderFraction(parseFloat(e.target.value) / parseFloat(slider.max), true);
   });
+  slider.addEventListener('pointerup', () => { scrubbing = false; });
+  slider.addEventListener('change', () => { scrubbing = false; });
 
-  v.addEventListener('loadedmetadata', () => {
-    try { v.currentTime = 0; } catch {}
-  }, { once: true });
+  v.addEventListener('loadedmetadata', () => setSliderFraction(0), { once: true });
 
   return {
     enter() {
-      userInteracting = false;
-      autoT = 0;
-      try { v.pause(); v.currentTime = 0; } catch {}
-      slider.value = 0;
-      slider.style.setProperty('--p', '0%');
+      scrubbing = false;
+      try { v.currentTime = 0; } catch {}
+      primeVideo(v, true);
+      setSliderFraction(0);
     },
     tick(visible) {
-      if (!visible) return;
-      if (!userInteracting && v.duration) {
-        autoT += 1 / 60 * 0.15; // slow auto-orbit
-        const f = (autoT % 1);
-        try { v.currentTime = f * v.duration; } catch {}
-        slider.value = Math.round(f * parseFloat(slider.max));
-        slider.style.setProperty('--p', (f * 100).toFixed(1) + '%');
+      if (!visible) { v.pause(); return; }
+      primeVideo(v, true);
+      if (!scrubbing && v.duration) {
+        setSliderFraction((v.currentTime % v.duration) / v.duration);
       }
     },
   };

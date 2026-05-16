@@ -1,13 +1,11 @@
-// app.js — entry point: scroll/keyboard navigation, slide visibility tracking,
-// preloads the depth model in the background as soon as the page is ready.
+// app.js — entry point: scroll/keyboard navigation and slide visibility tracking.
 
 import {
-  initTitleBg, initReveal, initApplications, initWhyHard, initClassic,
+  initTitleBg, initApplications, initWhyHard, initClassic,
   initOldApproaches, initRotatable, initRayDemo, initTraining,
   initClickableViews, initOrbitScrubber, initEndBg,
 } from './slides.js';
 import { initUpload } from './upload.js';
-import { preloadModel } from './depth.js';
 
 const deck = document.getElementById('deck');
 const slides = Array.from(document.querySelectorAll('.slide'));
@@ -104,18 +102,17 @@ function updateChrome() {
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
   0:  initTitleBg,        // slide 1
-  1:  initUpload,         // slide 2
-  2:  initReveal,         // slide 3
-  3:  initApplications,   // slide 4
-  4:  initWhyHard,        // slide 5
-  5:  initClassic,        // slide 6
-  // slide 7 (NeRF intro) — no canvas
-  7:  initRotatable,      // slide 8
-  9:  initRayDemo,        // slide 10
-  10: initTraining,       // slide 11
-  11: initClickableViews, // slide 12
-  12: initOrbitScrubber,  // slide 13
-  15: initEndBg,          // slide 16
+  1:  initUpload,         // slide 2 process
+  2:  initApplications,   // slide 3
+  3:  initWhyHard,        // slide 4
+  4:  initClassic,        // slide 5
+  // slide 6 (NeRF intro) — no canvas
+  6:  initRotatable,      // slide 7
+  8:  initRayDemo,        // slide 9
+  9:  initTraining,       // slide 10
+  10: initClickableViews, // slide 11
+  11: initOrbitScrubber,  // slide 12
+  14: initEndBg,          // slide 15
 };
 
 const sceneInstances = {};
@@ -133,11 +130,10 @@ function ensureSlideInit(idx) {
 }
 
 ensureSlideInit(0);
-ensureSlideInit(1);   // pre-init the upload slide so subscriptions are live
-ensureSlideInit(2);   // pre-init reveal so it picks up the depth as soon as ready
-ensureSlideInit(3);   // applications
-ensureSlideInit(4);   // why-hard
-ensureSlideInit(5);   // classic
+ensureSlideInit(1);   // process slide
+ensureSlideInit(2);   // applications
+ensureSlideInit(3);   // why-hard
+ensureSlideInit(4);   // classic
 
 /* ===================== Render loop ===================== */
 function loop() {
@@ -153,11 +149,5 @@ function loop() {
 }
 loop();
 updateChrome();
-
-/* ===================== Preload depth model ===================== */
-// Fire and forget. By the time the user uploads on slide 2, the model is
-// usually already cached. We don't surface progress on the title slide to
-// keep it clean.
-preloadModel();
 
 console.log('Novel View Synthesis deck ready — ' + total + ' slides.');
