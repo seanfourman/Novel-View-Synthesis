@@ -48,20 +48,45 @@ export function initTitleBg() {
 
   const matA = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.18 });
   const matB = new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.15 });
-  const geos = [
-    new THREE.IcosahedronGeometry(0.8, 0),
-    new THREE.OctahedronGeometry(0.7, 0),
-    new THREE.TetrahedronGeometry(0.8, 0),
-    new THREE.TorusKnotGeometry(0.5, 0.16, 64, 8),
-  ];
+  const matC = new THREE.LineBasicMaterial({ color: 0x00b894, transparent: true, opacity: 0.15 });
+
+  // NVS-related shapes:
+  // 1. Camera Frustums (4-sided pyramids)
+  const geomCamera = new THREE.CylinderGeometry(0.4, 0, 1, 4, 1);
+  geomCamera.rotateY(Math.PI / 4);
+  geomCamera.rotateX(Math.PI / 2);
+  // 2. Image Plane grids
+  const geomPlane = new THREE.PlaneGeometry(1.2, 1.2, 3, 3);
+  // 3. Voxel cubes
+  const geomBox = new THREE.BoxGeometry(1, 1, 1);
+  // 4. Ray lines
+  const geomRay = new THREE.CylinderGeometry(0.02, 0.02, 4, 3);
+
+  const geos = [geomCamera, geomPlane, geomBox, geomRay];
+  const mats = [matA, matB, matC];
+
   const shapes = [];
-  for (let i = 0; i < 10; i++) {
-    const g = geos[i % geos.length];
-    const line = new THREE.LineSegments(new THREE.EdgesGeometry(g), i % 2 ? matB : matA);
-    const rr = 5 + Math.random() * 3;
-    const t = Math.random() * Math.PI * 2;
-    line.position.set(Math.cos(t) * rr, (Math.random() - 0.5) * 4, Math.sin(t) * rr - 3);
-    line.userData = { sp: 0.002 + Math.random() * 0.004 };
+  // Spread 40 shapes all over the background
+  for (let i = 0; i < 40; i++) {
+    const g = geos[Math.floor(Math.random() * geos.length)];
+    const mat = mats[Math.floor(Math.random() * mats.length)];
+    const line = new THREE.LineSegments(new THREE.EdgesGeometry(g), mat);
+    
+    line.position.set(
+      (Math.random() - 0.5) * 30, // x spread
+      (Math.random() - 0.5) * 20, // y spread
+      (Math.random() - 0.5) * 15 - 5 // z spread (mostly behind)
+    );
+    line.rotation.set(
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI
+    );
+    line.userData = { 
+      spX: (Math.random() - 0.5) * 0.004, 
+      spY: (Math.random() - 0.5) * 0.004,
+      spZ: (Math.random() - 0.5) * 0.004
+    };
     scene.add(line);
     shapes.push(line);
   }
@@ -82,8 +107,9 @@ export function initTitleBg() {
     tick(visible) {
       if (!visible) return;
       for (const s of shapes) {
-        s.rotation.x += s.userData.sp;
-        s.rotation.y += s.userData.sp * 1.4;
+        s.rotation.x += s.userData.spX;
+        s.rotation.y += s.userData.spY;
+        s.rotation.z += s.userData.spZ;
       }
       r.render(scene, camera);
     },
