@@ -46,51 +46,79 @@ export function initTitleBg() {
   r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   r.setClearColor(0xffffff, 0);
 
-  const matA = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.18 });
-  const matB = new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.15 });
-  const matC = new THREE.LineBasicMaterial({ color: 0x00b894, transparent: true, opacity: 0.15 });
+  const matRoom = new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.15 });
+  const matObj = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.3 });
 
-  // NVS-related shapes:
-  // 1. Camera Frustums (4-sided pyramids)
-  const geomCamera = new THREE.CylinderGeometry(0.4, 0, 1, 4, 1);
-  geomCamera.rotateY(Math.PI / 4);
-  geomCamera.rotateX(Math.PI / 2);
-  // 2. Image Plane grids
-  const geomPlane = new THREE.PlaneGeometry(1.2, 1.2, 3, 3);
-  // 3. Voxel cubes
-  const geomBox = new THREE.BoxGeometry(1, 1, 1);
-  // 4. Ray lines
-  const geomRay = new THREE.CylinderGeometry(0.02, 0.02, 4, 3);
+  // 1. A static wireframe room bounds
+  const roomGeom = new THREE.BoxGeometry(16, 8, 16);
+  const room = new THREE.LineSegments(new THREE.EdgesGeometry(roomGeom), matRoom);
+  room.position.y = 3;
+  scene.add(room);
 
-  const geos = [geomCamera, geomPlane, geomBox, geomRay];
-  const mats = [matA, matB, matC];
+  // 2. A floor grid
+  const floor = new THREE.GridHelper(16, 16, 0x6c5ce7, 0x6c5ce7);
+  floor.material.transparent = true;
+  floor.material.opacity = 0.15;
+  floor.position.y = -1;
+  scene.add(floor);
 
-  const shapes = [];
-  // Spread 40 shapes all over the background
-  for (let i = 0; i < 40; i++) {
-    const g = geos[Math.floor(Math.random() * geos.length)];
-    const mat = mats[Math.floor(Math.random() * mats.length)];
-    const line = new THREE.LineSegments(new THREE.EdgesGeometry(g), mat);
-    
-    line.position.set(
-      (Math.random() - 0.5) * 30, // x spread
-      (Math.random() - 0.5) * 20, // y spread
-      (Math.random() - 0.5) * 15 - 5 // z spread (mostly behind)
-    );
-    line.rotation.set(
-      Math.random() * Math.PI,
-      Math.random() * Math.PI,
-      Math.random() * Math.PI
-    );
-    line.userData = { 
-      spX: (Math.random() - 0.5) * 0.004, 
-      spY: (Math.random() - 0.5) * 0.004,
-      spZ: (Math.random() - 0.5) * 0.004
-    };
-    scene.add(line);
-    shapes.push(line);
+  // 3. Static geometric furniture/objects
+  const objects = new THREE.Group();
+  scene.add(objects);
+  
+  const addBox = (w, h, d, x, y, z) => {
+    const mesh = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), matObj);
+    mesh.position.set(x, y, z);
+    objects.add(mesh);
+  };
+
+  // "Table"
+  addBox(4, 0.1, 2.5, 0, 0.5, 0);
+  addBox(0.1, 1.5, 0.1, -1.8, -0.25, -1.1);
+  addBox(0.1, 1.5, 0.1,  1.8, -0.25, -1.1);
+  addBox(0.1, 1.5, 0.1, -1.8, -0.25,  1.1);
+  addBox(0.1, 1.5, 0.1,  1.8, -0.25,  1.1);
+
+  // Abstract blocks
+  addBox(1.2, 1.5, 1.2, -3, -0.25, 3);
+  addBox(0.8, 2.5, 0.8, 3, 0.25, -3);
+
+  // Floating centerpiece
+  const centerGeom = new THREE.OctahedronGeometry(0.8, 0);
+  const centerMesh = new THREE.LineSegments(new THREE.EdgesGeometry(centerGeom), matObj);
+  centerMesh.position.set(0, 1.5, 0);
+  objects.add(centerMesh);
+
+  const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  let state = 'HOLD';
+  let timer = 0;
+  const HOLD_TIME = 4.0;
+  const MOVE_TIME = 3.0;
+
+  const center = new THREE.Vector3(0, 1, 0);
+
+  let startAngle = Math.PI / 4;
+  let targetAngle = startAngle;
+  let startRadius = 6;
+  let targetRadius = 6;
+  let startY = 3;
+  let targetY = 3;
+
+  function getNextTarget() {
+    const angleDelta = (Math.PI / 3) + Math.random() * (Math.PI / 2);
+    const sign = Math.random() > 0.5 ? 1 : -1;
+    targetAngle = startAngle + angleDelta * sign;
+    targetRadius = 4.5 + Math.random() * 3.0; // 4.5 to 7.5 (inside the 8-unit walls)
+    targetY = 1.5 + Math.random() * 3.5; // 1.5 to 5.0 (inside the room)
   }
-  camera.position.set(0, 0, 8);
+  
+  camera.position.set(
+    Math.cos(startAngle) * startRadius,
+    startY,
+    Math.sin(startAngle) * startRadius
+  );
+  camera.lookAt(center);
 
   const resize = () => {
     const w = slide.clientWidth, h = slide.clientHeight;
@@ -106,11 +134,42 @@ export function initTitleBg() {
   return {
     tick(visible) {
       if (!visible) return;
-      for (const s of shapes) {
-        s.rotation.x += s.userData.spX;
-        s.rotation.y += s.userData.spY;
-        s.rotation.z += s.userData.spZ;
+      
+      timer += 0.016; // approx dt for 60fps
+      
+      if (state === 'HOLD') {
+        if (timer > HOLD_TIME) {
+          state = 'MOVE';
+          timer = 0;
+          startAngle = targetAngle;
+          startRadius = targetRadius;
+          startY = targetY;
+          getNextTarget();
+        }
+      } else if (state === 'MOVE') {
+        let t = timer / MOVE_TIME;
+        if (t >= 1.0) {
+          t = 1.0;
+          state = 'HOLD';
+          timer = 0;
+        }
+        
+        const easeT = easeInOutCubic(t);
+        const curAngle = THREE.MathUtils.lerp(startAngle, targetAngle, easeT);
+        const curRadius = THREE.MathUtils.lerp(startRadius, targetRadius, easeT);
+        const curY = THREE.MathUtils.lerp(startY, targetY, easeT);
+        
+        camera.position.set(
+          Math.cos(curAngle) * curRadius,
+          curY,
+          Math.sin(curAngle) * curRadius
+        );
+        camera.lookAt(center);
       }
+
+      // Keep the centerpiece slightly animated to show the scene is alive
+      centerMesh.rotation.y += 0.005;
+      
       r.render(scene, camera);
     },
   };
