@@ -9,13 +9,10 @@ import {
 } from './userImage.js';
 
 const MAX_INPUT_SIDE = 512;   // cap input to keep memory bounded
-// Single source video (the NeRF supplementary). Each example seeks to a
-// different timestamp to grab a representative frame.
-const NERF_VIDEO = 'assets/videos/nerf.mp4';
 const EXAMPLE_VIDEOS = {
-  fern: { src: NERF_VIDEO, t: 95 },   // real scene segment (fern / fortress area)
-  trex: { src: NERF_VIDEO, t: 110 },  // real scene t-rex skeleton
-  toy:  { src: NERF_VIDEO, t: 8 },    // lego bulldozer turntable
+  fern: 'assets/videos/fern_200k_rgb.mp4',
+  trex: 'assets/videos/trex.mp4',
+  toy:  'assets/videos/redtoyota.mp4',
 };
 
 export function initUpload() {
@@ -80,9 +77,9 @@ export function initUpload() {
   // --- example buttons ---
   exBtns.forEach(b => b.addEventListener('click', () => {
     const key = b.dataset.example;
-    const ex = EXAMPLE_VIDEOS[key];
-    if (!ex) return;
-    captureVideoFrame(ex.src, 512, ex.t).then(process).catch(err => {
+    const src = EXAMPLE_VIDEOS[key];
+    if (!src) return;
+    captureVideoFrame(src).then(process).catch(err => {
       console.error(err);
       setError('שגיאה בטעינת הדוגמה');
     });
@@ -157,17 +154,12 @@ function fileToCanvas(file, maxSide) {
   });
 }
 
-function captureVideoFrame(src, maxSide = 512, seekTime = null) {
+function captureVideoFrame(src, maxSide = 512) {
   return new Promise((resolve, reject) => {
     const v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = src;
     v.addEventListener('loadeddata', () => {
-      try {
-        const t = seekTime != null
-          ? Math.min(seekTime, Math.max(0, v.duration - 0.5))
-          : Math.min(0.5, v.duration / 3);
-        v.currentTime = t;
-      } catch {}
+      try { v.currentTime = Math.min(0.5, v.duration / 3); } catch {}
     });
     v.addEventListener('seeked', () => {
       const W = v.videoWidth, H = v.videoHeight;
