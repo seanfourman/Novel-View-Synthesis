@@ -1,0 +1,432 @@
+Novel View Synthesis
+
+           3D Vision
+     University of Illinois
+
+         Derek Hoiem
+
+                                                    Many slides adapted from Lana Lazebnik, Steve Seitz, Yasu Furukawa, Noah Snavely
+This class: Novel View Synthesis
+
+· Applications and problem space
+· NeRF
+· Mesh-based
+Applications of Novel View Synthesis
+
+· Walk-throughs and photo tours
+· Merchandise inspection
+· Virtual tourism / Entertainment / VR
+Novel view synthesis
+
+· View interpolation
+
+   ­ Render views that are similar or between photo views
+
+· View extrapolation
+
+   ­ Render views from arbitrary positions and orientations
+
+· View manipulation
+
+   ­ Change materials, lighting, or content
+Matterport example: https://matterport.com/gallery
+How Matterport viewing works
+
+· Mesh viewing
+
+      ­ Solve for mesh, texture map, and render from arbitrary viewpoint
+      ­ Enables extrapolation and free view synthesis
+
+· Photo viewing and transitions
+
+      ­ Transition by texture mapping start/destination photos onto simple mesh and cross-fading during
+         movement
+
+      ­ Enables restricted photo tour
+
+· What is good and bad about these approaches?
+
+Mesh:
++ simple, complete freedom of movement, can also support measurement/pins/annotations
+- Cannot render view-dependent effects, artifacts due to geometry/texture errors
+
+Photo tour w/ mesh-based cross-fade
++ simple, looks perfect at photo locations
+- Very limited freedom of movement
+NeRF:
+Representing Scenes as
+Neural Radiance Fields for
+View Synthesis
+
+Most of following slides from Jon Barron
+
+Ben Mildenhall*  Pratul Srinivasan*       Matt Tancik*  Jon Barron       Ravi Ramamoorthi  Ren Ng
+
+UC Berkeley      UC Berkeley              UC Berkeley   Google Research  UC San Diego      UC Berkeley
+Problem: View Interpolation
+
+Inputs: sparsely sampled images of scene                             Outputs: new views of same scene
+
+                                                    tancik.com/nerf                                                                                                        Slide credit: Jon Barron
+Neural Networks as a Continuous Shape Representation
+
+Slide credit: Jon Barron                                                                 (, , )  occupancy
+                                                                                         (, , )  distance
+                                                                                         (, , )  (color, occupancy)
+                                                                                         (, , )  latent vector
+
+                          + Compact and expressive parameterization
+
+                          - Limited rendering, difficult to optimize
+
+                                                                                       Mescheder et al. Occupancy Networks, CVPR 2019, Park et al., DeepSDF, CVPR 2019,
+                               Sitzmann et al., Scene Representation Networks, NeurIPS 2019, Niemeyer et al. Differentiable Volumetric Rendering, CVPR 2020
+NeRF (neural radiance fields)
+
+{
+   {
+
+                {
+
+                                          {
+
+Spatial   Viewing                     Output  Output
+location  direction                   color   density
+
+                     Fully-connected
+                     neural network
+                     9 layers,
+                     256 channels
+
+                                                       Slide credit: Jon Barron
+Generate views with traditional volume rendering
+
+                                                                                                                                                                                                                                                                                                   Slide credit: Jon Barron
+      Volume rendering is trivially differentiable
+
+Rendering model for ray r(t) = o + td:
+
+                                                                                                                                                         Ray
+
+                                                   colors                        
+                                 weights
+                                                                                               3D volume
+How much light is blocked earlier along ray:
+                                                           1
+
+                                                           Camera
+
+How much light is contributed by ray segment i:
+
+Density * Distance Between Points
+
+                                                                   Slide credit: Jon Barron
+Optimize with gradient descent on rendering loss
+
+                                                                                                                                                                                                                                                                                                   Slide credit: Jon Barron
+Training network to reproduce all input views of the scene
+
+                                                                                                                                                                                                                                                                                                          Slide credit: Jon Barron
+Can we allocate samples more efficiently?
+               Two pass rendering
+
+                                                                                               Ray
+
+                                                        
+
+                                                                                          3D volume
+
+Camera
+
+                                                                                                     Slide credit: Jon Barron
+Two pass rendering: coarse
+
+treat weights as probability                                      Ray
+distribution for new samples
+                                                             
+                                                     Camera
+                                                             3D volume
+
+                                                                        Slide credit: Jon Barron
+Two pass rendering: fine
+
+treat weights as probability                                      Ray
+distribution for new samples
+                                                             
+                                                     Camera
+                                                             3D volume
+
+                                                                        Slide credit: Jon Barron
+          Network Structure
+
+            Input position
+          (skip connection)
+
+                             Predicted density
+
+ Input
+position
+
+                                                   Predicted
+                                                      Color
+
+                             Input direction
+Viewing directions as input
+
+                                                                                                                                                                                                                                          Slide credit: Jon Barron
+Naive implementation produces blurry results
+
+NeRF (Naive)
+
+              Slide credit: Jon Barron
+Naive implementation produces blurry results
+
+NeRF (Naive)  NeRF (with positional encoding)
+
+                                                                                                                               Slide credit: Jon Barron
+Toy problem: memorizing a 2D image
+
+                                                                                                                                                                                                                                                                                  Slide credit: Jon Barron
+Toy problem: memorizing a 2D imageShallow network
+                       (2 layers)
+Ground truth image  Standard fully-connected net
+
+                    Deep network
+                       (8 layers)
+
+                                     23
+
+                                                                                                                                                                               Slide credit: Jon Barron
+Slide credit: Jon Barron
+                    Shallow network
+                       (2 layers)
+Ground truth image  Standard fully-connected net  With Positional Encoding
+
+                    Deep network
+                       (8 layers)
+
+                                     25
+
+                                                                                                                                                                               Slide credit: Jon Barron
+Positional encoding also directly improves our scene representation!
+
+NeRF (Naive)  NeRF (with positional encoding)
+
+                                                                                                                               Slide credit: Jon Barron
+            Fourier Features Let Networks Learn
+High Frequency Functions in Low Dimensional Domains
+
+Matthew Tancik*, Pratul Srinivasan*, Ben Mildenhall*,
+Sara Fridovich-Keil, Nithin Ragahavan, Utkarsh Singhal,
+Ravi Ramamoorthi, Jonathan T. Barron, Ren Ng
+
+                                                         Slide credit: Jon Barron
+     Input Coordinate       Input Mapping xx  Relu MLP xxxxx  Output Signal xxxxxxx
+(position, view direction)                                          (color, density)
+
+                  Positional Encoding [1]:                    [1] Vaswani et al.. NeurIPS, 2017
+              Random Fourier Features [2]:                    [2] Rahimi & Recht. NeurIPS, 2007
+
+Slide credit: Jon Barron
+                    Neural Tangent Kernel
+
+                                                              Under certain conditions,
+                                                              neural networks are kernel regression(!)
+
+                                                               ReLU MLPs correspond to a "dot product" kernel
+
+           Jacot et al., NeurIPS, 2018, Arora, et al., ICML, 2019, Basri et al., 2020., Du et al., ICLR, 2019., Lee et al., NeurIPS, 2019
+
+Slide credit: Jon Barron
+Dot Product of Fourier Features
+
+(cosine difference trig identity)
+
+Fourier Features  stationary kernel
+
+                                     Slide credit: Jon Barron
+          Resulting composed NTK is stationary
+Resulting network regression function is a convolution
+
+                                                                                                                                                                                                                                           Slide credit: Jon Barron
+Fit to 1D function with varying Fourier features (low p = high frequency FF)
+Mapping bandwidth controls underfitting /
+                     overfitting
+
+                                                                                                                                                                                                                                                                                          Slide credit: Jon Barron
+Mapping bandwidth controls underfitting /
+                     overfitting
+
+                                                                                                                                                                                                                                                                                          Slide credit: Jon Barron
+Mapping bandwidth controls underfitting /
+                     overfitting
+
+                                                                                                                                                                                                                                                                                          Slide credit: Jon Barron
+Slide credit: Jon Barron
+             Try It!
+
+B = SCALE * np.random.normal(shape=(input_dims, NUM_FEATURES))
+x = np.concatenate([np.sin(x @ B), np.cos(x @ B)], axis=-1)
+x = nn.Dense(x, features=256)
+
+                                                                                                                                                                                                                                     Slide credit: Jon Barron
+Results
+View-Dependent Effects
+Detailed Geometry & Occlusion
+Detailed Geometry & Occlusion
+Meshable
+Baking Neural Radiance Fields for Real-Time View Synthesis
+
+http://nerf.live/                              Concurrent works:
+                   Has a demo too!  Yu et al., PlenOctrees
+
+                                               Garbin et al., FastNeRF
+                                               Reiser et al., KiloNeRF
+· NeRF modified to output diffuse color, density, and 4-d specular
+  features
+
+· Color and features are accumulated along ray, and a small network
+  produces a specular residual that is added to color
+
+· Prior encourages sparse density/opacity in coarse samples
+Rendering
+· Precompute anti-aliased diffuse
+
+   colors/features on voxel grid (10003 to
+   13003)
+· Voxels are stored sparsely and divided into
+   local blocks
+· In coarse grid, store whether occupied and
+   if so pointer to higher resolution
+   color/feature info
+· Compute specular component from
+   features (only once per pixel) and add to
+   color
+· All values are quantized and compressed
+· Per-pixel shading is fine-tuned to recover
+   losses due to above process
+· Result: 30+ FPS on laptop, < 100 MB model
+Mip-NeRF: A Multiscale Representation
+for Anti-Aliasing Neural Radiance Fields
+
+Jonathan T. Barron  Ben Mildenhall  Matthew Tancik
+
+Peter Hedman        Ricardo Martin-Brualla Pratul P. Srinivasan
+Full Resolution
+
+                 0.964                    0.930                  0.964
+
+1/8 Resolution
+
+                                0.917                   0.955                  0.987    Ground Truth
+
+                 Improved NeRF            Improved NeRF          Mip-NeRF
+                 (Single Scale Training)  (Multiscale Training)  (Multiscale Training)
+
+                                                                                                      Slide credit: Jon Barron
+NeRF
+
+      Slide credit: Jon Barron
+NeRF
+
+      Positional Encoding
+
+                                                                                                                                         Slide credit: Jon Barron
+mip-NeRF
+
+                                                                                                                 mip = "multum in parvo", Latin for "much in little"
+
+                                                                                                                                                                                                                                                                                                                        Slide credit: Jon Barron
+mip-NeRF
+
+          Slide credit: Jon Barron
+NeRF summary
+
+· Solves for functional mapping of position to occupancy and
+  position/view to color
+
+· Produces geometry/reflectance estimates that are good for
+  interpolating views and robust to non-Lambertian surfaces
+
+· Many follow-on works for efficient learning/storing/rendering,
+  extending applicable settings, and manipulations
+
+· Photometric objective and volumetric implicit surface function may
+  not be ideal for estimating geometry in large scenes
+Be wary of starting NeRF extension research
+
+· Sooo much work on this, so fast:
+  https://github.com/yenchenlin/awesome-NeRF
+
+· Other people, like original authors, have a big
+  head start
+
+                                                                                          2021 NeRF papers co-
+                                                                                          authored by Jon Barron
+Free view synthesis (Riegler and Koltun ECCV 2020)
+
+· Start with mesh
+
+    ­ SfM + MVS + DT/GC mesh (all in COLMAP codebase)
+
+· Learn to select/blend/generate colors based on projected
+  features from source views
+  Free view synthesis
+
+1. Render mesh into target view
+     to get its depth map 
+
+2. For each source image:
+
+    a. Extract features (using 3
+          stages of ImageNet
+          pretrained VGG)
+
+    b. Warp each pixel into each
+          source view using  and
+          get interpolated features
+
+    c. Predict intensity  and
+          confidence  images using
+          blending decoder
+          (UNet+GRU) for each source
+
+    d. Store mask values for cases
+          where mesh is missing or
+          point doesn't project within
+          source
+
+3. Produce final intensity  and
+     confidence  using blending
+     decoder for each source
+Training
+
+· Minimize L1 distance to pixel intensities and VGG features of
+  the true held out image
+
+· Train on 17 Tanks and Temple scenes in leave-one-image-out
+Evaluation
+Evaluation
+Open problems / research ideas
+
+· Making NeRF faster to train (see MVSNeRF)
+· NeRF on large scale scenes
+· In MVS, model intensity as a mix of diffuse and specular color and
+
+  make photometric cost a function of diffuse color
+· Use 360 images taken from various positions within a room to
+
+  enable omnidirectional and omnipositional free view synthesis
+Summary
+
+· NeRF encodes a surface with diffuse and non-diffuse color
+  components by mapping (x,y,z,direction) to (density, r,g,b)
+
+    ­ Numerous follow-on works improve the rendering time, model size,
+      training time, ability to handle occlusions, special effects, and more
+
+· Free view synthesis achieves results that are sometimes better than
+  NeRF by using an MVS-derived mesh to map and blend features
+
+· Both offer spectacular results
+

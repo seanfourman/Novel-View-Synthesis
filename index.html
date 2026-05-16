@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Novel View Synthesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Top progress bar -->
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <!-- Slide dots -->
+  <nav id="dots" aria-label="Slide navigation"></nav>
+
+  <!-- Slide counter -->
+  <div id="counter"><span id="cur">1</span> <span class="muted">/</span> <span id="tot">16</span></div>
+
+  <!-- Keyboard hint -->
+  <div id="hint">scroll · ↓ · space</div>
+
+  <main id="deck">
+
+    <!-- ============ SLIDE 1: TITLE ============ -->
+    <section class="slide" data-id="1">
+      <div class="title-wrap">
+        <div class="kicker">3D Vision · Seminar</div>
+        <h1 class="big-title">Novel View<br/><span class="accent">Synthesis</span></h1>
+        <p class="lead">From flat photos to a world you can walk through.</p>
+        <canvas id="title-bg"></canvas>
+      </div>
+      <div class="scroll-cue">scroll ↓</div>
+    </section>
+
+    <!-- ============ SLIDE 2: THE QUESTION ============ -->
+    <section class="slide" data-id="2">
+      <div class="centered">
+        <div class="kicker">the question</div>
+        <h2>You took <em>one</em> photo.</h2>
+        <h2>What does the <span class="accent">other side</span> look like?</h2>
+        <div id="q-viz">
+          <div class="q-photo">
+            <canvas id="q-canvas"></canvas>
+            <div class="q-label">input · 1 view</div>
+          </div>
+          <div class="q-marks">
+            <div class="q-mark" style="--d:0s">?</div>
+            <div class="q-mark" style="--d:.3s">?</div>
+            <div class="q-mark" style="--d:.6s">?</div>
+            <div class="q-mark" style="--d:.9s">?</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 3: LIVE DEMO ============ -->
+    <section class="slide" data-id="3">
+      <div class="demo-wrap">
+        <div class="kicker">what we want</div>
+        <h2>One input <span class="muted">→</span> <span class="accent">many novel views</span></h2>
+        <p class="lead small">A model learns the scene, then renders it from any camera you want.</p>
+        <div class="multi-grid">
+          <div class="input-card">
+            <canvas id="demo-input"></canvas>
+            <div class="card-label">📷 input photo</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="output-grid">
+            <div class="out-card"><canvas data-angle="0"></canvas><div class="card-label out">view 1</div></div>
+            <div class="out-card"><canvas data-angle="1"></canvas><div class="card-label out">view 2</div></div>
+            <div class="out-card"><canvas data-angle="2"></canvas><div class="card-label out">view 3</div></div>
+            <div class="out-card"><canvas data-angle="3"></canvas><div class="card-label out">view 4</div></div>
+            <div class="out-card"><canvas data-angle="4"></canvas><div class="card-label out">view 5</div></div>
+            <div class="out-card"><canvas data-angle="5"></canvas><div class="card-label out">view 6</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 4: APPLICATIONS ============ -->
+    <section class="slide" data-id="4">
+      <div class="centered">
+        <div class="kicker">why we care</div>
+        <h2>Applications</h2>
+        <div class="apps">
+          <div class="app">
+            <div class="app-icon">🏛️</div>
+            <div class="app-title">Virtual tours</div>
+            <div class="app-sub">museums · real estate · Matterport</div>
+          </div>
+          <div class="app">
+            <div class="app-icon">🎮</div>
+            <div class="app-title">VR & entertainment</div>
+            <div class="app-sub">immersive 3D from photos</div>
+          </div>
+          <div class="app">
+            <div class="app-icon">📦</div>
+            <div class="app-title">Product inspection</div>
+            <div class="app-sub">spin merchandise online</div>
+          </div>
+          <div class="app">
+            <div class="app-icon">🤖</div>
+            <div class="app-title">Robotics & sim</div>
+            <div class="app-sub">train agents in real scenes</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 5: WHY HARD ============ -->
+    <section class="slide" data-id="5">
+      <div class="centered wide">
+        <div class="kicker">the challenge</div>
+        <h2>Why is this <span class="accent">hard?</span></h2>
+        <div class="hard-grid">
+          <div class="hard-card">
+            <div class="hard-num">01</div>
+            <div class="hard-title">Depth</div>
+            <div class="hard-text">A 2D photo loses the third dimension. We have to guess what's near and what's far.</div>
+          </div>
+          <div class="hard-card">
+            <div class="hard-num">02</div>
+            <div class="hard-title">Occlusion</div>
+            <div class="hard-text">Parts of the scene are hidden behind other parts. From a new angle they should appear.</div>
+          </div>
+          <div class="hard-card">
+            <div class="hard-num">03</div>
+            <div class="hard-title">Lighting</div>
+            <div class="hard-text">Shiny and reflective surfaces look completely different from each angle.</div>
+          </div>
+          <div class="hard-card">
+            <div class="hard-num">04</div>
+            <div class="hard-title">Consistency</div>
+            <div class="hard-text">All the new views need to agree with each other and with the originals.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 6: OLD APPROACHES ============ -->
+    <section class="slide" data-id="6">
+      <div class="centered wide">
+        <div class="kicker">before NeRF</div>
+        <h2>Classical approaches</h2>
+        <div class="old-grid">
+          <div class="old-card">
+            <canvas id="mesh-canvas"></canvas>
+            <div class="old-title">Mesh + texture</div>
+            <div class="old-pros">+ free movement, measurable</div>
+            <div class="old-cons">− geometry/texture artifacts<br/>− no view-dependent effects</div>
+          </div>
+          <div class="old-card">
+            <canvas id="phototour-canvas"></canvas>
+            <div class="old-title">Photo tour</div>
+            <div class="old-pros">+ photo-real at capture points</div>
+            <div class="old-cons">− very limited movement<br/>− visible crossfades</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 7: ENTER NERF ============ -->
+    <section class="slide" data-id="7">
+      <div class="centered">
+        <div class="kicker">2020 · breakthrough</div>
+        <h1 class="big-title small"><span class="accent">NeRF</span></h1>
+        <p class="lead">Neural Radiance Fields</p>
+        <p class="lead small">Represent the whole scene as a tiny neural network. Ask it about any 3D point — get color and density. Render any view.</p>
+        <div class="paper-cite">Mildenhall et al., ECCV 2020</div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 8: ROTATABLE 3D ============ -->
+    <section class="slide" data-id="8">
+      <div class="split">
+        <div class="split-left">
+          <div class="kicker">the scene, learned</div>
+          <h2>A 3D object the network <em>knows</em></h2>
+          <p class="lead small">Once trained, NeRF holds the whole scene inside its weights. Drag to look at it from any angle — every pixel is freshly rendered.</p>
+          <div class="hint-tag">🖱️ drag to rotate · scroll to zoom</div>
+        </div>
+        <div class="split-right">
+          <div id="bunny-stage" class="stage"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 9: INPUT/OUTPUT ============ -->
+    <section class="slide" data-id="9">
+      <div class="centered wide">
+        <div class="kicker">how NeRF thinks</div>
+        <h2>Inputs and outputs</h2>
+        <div class="io-diagram">
+          <div class="io-side inputs">
+            <div class="io-row"><div class="io-sym">x, y, z</div><div class="io-desc">a point in 3D space</div></div>
+            <div class="io-row"><div class="io-sym">θ, φ</div><div class="io-desc">viewing direction</div></div>
+          </div>
+          <div class="io-arrow">→</div>
+          <div class="io-mlp">
+            <div class="mlp-label">tiny neural net</div>
+            <div class="mlp-bars">
+              <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+            </div>
+          </div>
+          <div class="io-arrow">→</div>
+          <div class="io-side outputs">
+            <div class="io-row"><div class="io-sym color">R G B</div><div class="io-desc">color at that point</div></div>
+            <div class="io-row"><div class="io-sym">σ</div><div class="io-desc">density (is there stuff here?)</div></div>
+          </div>
+        </div>
+        <p class="lead small caption">That's the entire model. Just a function from <code>position + direction → color + density</code>.</p>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 10: RAY DEMO ============ -->
+    <section class="slide" data-id="10">
+      <div class="split">
+        <div class="split-left">
+          <div class="kicker">how a pixel is born</div>
+          <h2>Cast a ray. <br/>Sample along it. <br/>Add it up.</h2>
+          <p class="lead small">For every pixel of the output image, shoot a ray from the camera into the scene. Sample points along it, ask the network for color and density at each, blend them together.</p>
+          <div class="hint-tag">🖱️ move your mouse over the picture</div>
+          <div class="ray-readout">
+            <div class="readout-row"><span>samples</span> <code id="rd-samples">0</code></div>
+            <div class="readout-row"><span>final color</span> <span id="rd-color" class="swatch"></span></div>
+          </div>
+        </div>
+        <div class="split-right">
+          <div id="ray-stage" class="stage"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 11: TRAINING ============ -->
+    <section class="slide" data-id="11">
+      <div class="centered wide">
+        <div class="kicker">how it learns</div>
+        <h2>Training, in one picture</h2>
+        <div class="train-flow">
+          <div class="train-card">
+            <canvas id="train-pred"></canvas>
+            <div class="train-label">NeRF's guess</div>
+          </div>
+          <div class="train-op">−</div>
+          <div class="train-card">
+            <canvas id="train-gt"></canvas>
+            <div class="train-label">real photo</div>
+          </div>
+          <div class="train-op">=</div>
+          <div class="train-card error">
+            <canvas id="train-err"></canvas>
+            <div class="train-label">error</div>
+          </div>
+        </div>
+        <p class="lead small caption">Reduce the error → tweak network weights → repeat across millions of rays. Eventually the network reproduces every input photo — and gets the in-between views for free.</p>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 12: CLICKABLE VIEWPOINTS ============ -->
+    <section class="slide" data-id="12">
+      <div class="split">
+        <div class="split-left">
+          <div class="kicker">novel views, on demand</div>
+          <h2>Pick a camera.</h2>
+          <p class="lead small">These cameras were never <em>actually</em> placed in the scene. The model invents what each one would see — instantly.</p>
+          <div class="thumb-strip" id="thumb-strip"></div>
+          <div class="hint-tag">🖱️ click any camera in the scene</div>
+        </div>
+        <div class="split-right">
+          <div id="view-stage" class="stage"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 13: ORBIT SCRUBBER ============ -->
+    <section class="slide" data-id="13">
+      <div class="centered wide">
+        <div class="kicker">smooth interpolation</div>
+        <h2>Or scrub through every angle in between.</h2>
+        <div class="orbit-wrap">
+          <div id="orbit-stage" class="stage tall"></div>
+          <div class="orbit-controls">
+            <input type="range" id="orbit-slider" min="0" max="360" value="0" />
+            <div class="orbit-labels">
+              <span>0°</span><span>90°</span><span>180°</span><span>270°</span><span>360°</span>
+            </div>
+          </div>
+        </div>
+        <p class="lead small caption">Continuous viewpoint control — that's the headline feature of novel view synthesis.</p>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 14: LIMITATIONS ============ -->
+    <section class="slide" data-id="14">
+      <div class="centered wide">
+        <div class="kicker">honest assessment</div>
+        <h2>Limitations</h2>
+        <div class="lim-grid">
+          <div class="lim-card">
+            <div class="lim-ico">🐢</div>
+            <div class="lim-title">Slow training</div>
+            <div class="lim-text">Hours to days per scene on a GPU.</div>
+          </div>
+          <div class="lim-card">
+            <div class="lim-ico">📸</div>
+            <div class="lim-title">Many photos needed</div>
+            <div class="lim-text">Dozens to hundreds, with known camera poses.</div>
+          </div>
+          <div class="lim-card">
+            <div class="lim-ico">🌫️</div>
+            <div class="lim-title">Static scenes only</div>
+            <div class="lim-text">Movement, wind, people — break the model.</div>
+          </div>
+          <div class="lim-card">
+            <div class="lim-ico">🌆</div>
+            <div class="lim-title">Hard at scale</div>
+            <div class="lim-text">A whole city is much harder than a single object.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 15: WHAT'S NEXT ============ -->
+    <section class="slide" data-id="15">
+      <div class="centered wide">
+        <div class="kicker">the field today</div>
+        <h2>What came after</h2>
+        <div class="next-grid">
+          <div class="next-card">
+            <div class="next-title">Instant-NGP</div>
+            <div class="next-sub">2022 · NVIDIA</div>
+            <div class="next-text">Hash-grid encoding. NeRF training in seconds, not hours.</div>
+          </div>
+          <div class="next-card">
+            <div class="next-title">Mip-NeRF</div>
+            <div class="next-sub">2021 · Google</div>
+            <div class="next-text">Anti-aliasing across scales — sharp from any zoom level.</div>
+          </div>
+          <div class="next-card">
+            <div class="next-title">Gaussian Splatting</div>
+            <div class="next-sub">2023 · INRIA</div>
+            <div class="next-text">Replace the network with millions of fuzzy 3D points. Real-time. State of the art.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SLIDE 16: SUMMARY ============ -->
+    <section class="slide" data-id="16">
+      <div class="centered">
+        <div class="kicker">takeaway</div>
+        <h1 class="big-title small">Novel View Synthesis</h1>
+        <ul class="recap">
+          <li>Learn a scene from photos.</li>
+          <li>Represent it as a function: <code>(x,y,z,dir) → (color, density)</code>.</li>
+          <li>Render any new camera by casting rays and adding samples.</li>
+          <li>Result: a 3D world you can fly through.</li>
+        </ul>
+        <p class="lead small thanks">Thank you.</p>
+        <canvas id="end-bg"></canvas>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
