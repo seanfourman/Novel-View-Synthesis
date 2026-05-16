@@ -50,13 +50,13 @@ export function initTitleBg() {
   const matObj = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.3 });
 
   // 1. A static wireframe room bounds
-  const roomGeom = new THREE.BoxGeometry(16, 8, 16);
+  const roomGeom = new THREE.BoxGeometry(24, 10, 24);
   const room = new THREE.LineSegments(new THREE.EdgesGeometry(roomGeom), matRoom);
-  room.position.y = 3;
+  room.position.y = 4;
   scene.add(room);
 
   // 2. A floor grid
-  const floor = new THREE.GridHelper(16, 16, 0x6c5ce7, 0x6c5ce7);
+  const floor = new THREE.GridHelper(24, 24, 0x6c5ce7, 0x6c5ce7);
   floor.material.transparent = true;
   floor.material.opacity = 0.15;
   floor.position.y = -1;
@@ -72,45 +72,69 @@ export function initTitleBg() {
     objects.add(mesh);
   };
 
-  // "Table"
-  addBox(4, 0.1, 2.5, 0, 0.5, 0);
-  addBox(0.1, 1.5, 0.1, -1.8, -0.25, -1.1);
+  // 1. Rug (flat box on floor)
+  addBox(12, 0.05, 10, 0, -0.95, 0);
+
+  // 2. Sofa (facing the table)
+  // Seat
+  addBox(7, 0.8, 2.5, 0, -0.6, 4);
+  // Backrest
+  addBox(7, 2.0, 0.6, 0, 0.4, 5);
+  // Armrests
+  addBox(0.8, 1.2, 3.1, -3.9, -0.4, 4.3);
+  addBox(0.8, 1.2, 3.1,  3.9, -0.4, 4.3);
+
+  // 3. Table
+  addBox(4, 0.1, 2.5, 0, 0.5, 0); // tabletop
+  addBox(0.1, 1.5, 0.1, -1.8, -0.25, -1.1); // legs
   addBox(0.1, 1.5, 0.1,  1.8, -0.25, -1.1);
   addBox(0.1, 1.5, 0.1, -1.8, -0.25,  1.1);
   addBox(0.1, 1.5, 0.1,  1.8, -0.25,  1.1);
 
-  // Abstract blocks
-  addBox(1.2, 1.5, 1.2, -3, -0.25, 3);
-  addBox(0.8, 2.5, 0.8, 3, 0.25, -3);
+  // 4. TV Stand and TV
+  addBox(6, 1.0, 1.5, 0, -0.5, -5); // Stand
+  addBox(4.5, 2.5, 0.2, 0, 1.5, -5); // Screen
 
-  // Floating centerpiece
-  const centerGeom = new THREE.OctahedronGeometry(0.8, 0);
-  const centerMesh = new THREE.LineSegments(new THREE.EdgesGeometry(centerGeom), matObj);
-  centerMesh.position.set(0, 1.5, 0);
-  objects.add(centerMesh);
+  // 5. Bookshelf
+  addBox(2.5, 6, 1.5, -6, 2, -4); // Frame
+  addBox(2.3, 0.1, 1.3, -6, -0.5, -4); // Shelves
+  addBox(2.3, 0.1, 1.3, -6,  1.0, -4);
+  addBox(2.3, 0.1, 1.3, -6,  2.5, -4);
+  addBox(2.3, 0.1, 1.3, -6,  4.0, -4);
+  
+  // 6. House Plant
+  addBox(1.2, 1.2, 1.2, 5, -0.4, -4); // Pot
+  const plantGeom = new THREE.IcosahedronGeometry(1.5, 0);
+  const plantMesh = new THREE.LineSegments(new THREE.EdgesGeometry(plantGeom), matObj);
+  plantMesh.position.set(5, 1.5, -4);
+  objects.add(plantMesh);
+
+  // 7. Small objects on the table (laptop, books)
+  addBox(1.0, 0.05, 0.8, -0.8, 0.55, 0); // Laptop
+  addBox(0.6, 0.2,  0.8,  1.2, 0.6, 0.2); // Book
 
   const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   let state = 'HOLD';
   let timer = 0;
-  const HOLD_TIME = 4.0;
-  const MOVE_TIME = 3.0;
+  const HOLD_TIME = 6.0;
+  const MOVE_TIME = 4.5;
 
   const center = new THREE.Vector3(0, 1, 0);
 
   let startAngle = Math.PI / 4;
   let targetAngle = startAngle;
-  let startRadius = 6;
-  let targetRadius = 6;
-  let startY = 3;
-  let targetY = 3;
+  let startRadius = 9;
+  let targetRadius = 9;
+  let startY = 4;
+  let targetY = 4;
 
   function getNextTarget() {
     const angleDelta = (Math.PI / 3) + Math.random() * (Math.PI / 2);
     const sign = Math.random() > 0.5 ? 1 : -1;
     targetAngle = startAngle + angleDelta * sign;
-    targetRadius = 4.5 + Math.random() * 3.0; // 4.5 to 7.5 (inside the 8-unit walls)
-    targetY = 1.5 + Math.random() * 3.5; // 1.5 to 5.0 (inside the room)
+    targetRadius = 7.0 + Math.random() * 4.0; // 7.0 to 11.0 (inside the new 12-unit walls)
+    targetY = 2.0 + Math.random() * 4.5; // 2.0 to 6.5 (inside the room)
   }
   
   camera.position.set(
@@ -167,9 +191,6 @@ export function initTitleBg() {
         camera.lookAt(center);
       }
 
-      // Keep the centerpiece slightly animated to show the scene is alive
-      centerMesh.rotation.y += 0.005;
-      
       r.render(scene, camera);
     },
   };
