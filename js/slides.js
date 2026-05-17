@@ -245,27 +245,27 @@ export function initDepthBasedNVS() {
   const steps = [
     {
       title: "קלט: תמונת RGB",
-      text: "זה הדבר היחיד שנכנס בהתחלה: תמונה אחת מהמצלמה. עדיין אין כאן עומק או תלת-ממד, רק צבעים בפיקסלים.",
+      text: "תמונה אחת מהמצלמה, בלי עומק מפורש.",
       mode: "rgb",
     },
     {
-      title: "הערכת עומק לכל פיקסל",
-      text: "מודל עומק מונוקולרי מעריך עומק יחסי מהתמונה. זו באמת המפה השחורה-לבנה שממנה אפשר להבין מה קרוב ומה רחוק.",
+      title: "הערכת עומק",
+      text: "מפה שחורה-לבנה של קרוב מול רחוק.",
       mode: "depth",
     },
     {
-      title: "הרמת RGB-D למרחב",
-      text: "מחברים כל פיקסל עם העומק שלו ומקרינים אותו אחורה דרך מודל המצלמה. התוצאה היא ענן נקודות/משטח תלת-ממדי מקורב, לא קרני אור על תמונה שטוחה.",
+      title: "הרמת RGB-D",
+      text: "כל פיקסל מקבל עומק וזז לנקודה במרחב.",
       mode: "cloud",
     },
     {
-      title: "הקרנה למצלמת יעד",
-      text: "עכשיו מציבים מצלמה חדשה ומקרינים אליה את נקודות ה-RGB-D. פיקסלים שלא נראו מהזווית המקורית נשארים כחורים אמיתיים ב-warp.",
+      title: "הקרנה למבט חדש",
+      text: "הנקודות מוקרנות למצלמת יעד חדשה.",
       mode: "warp",
     },
     {
-      title: "קלט לרשת השלמה",
-      text: "במודל כזה רשת refinement או inpainting מקבלת את התמונה שהוזזה ואת מסיכת החורים. היא משלימה רק אזורים שלא היו ידועים מהקלט.",
+      title: "השלמת חורים",
+      text: "רשת refinement ממלאת אזורים שלא נראו.",
       mode: "refine",
     },
   ];
@@ -321,6 +321,10 @@ export function initDepthBasedNVS() {
     if (transitionFrom === active) return 1;
     const elapsed = (now - transitionStart) / 1000;
     return clamp01(elapsed / transitionDuration(transitionFrom, active));
+  }
+
+  function imageRect(width, height) {
+    return { x: 0, y: 0, width, height };
   }
 
   async function loadImageCanvas(src, maxSide = 640) {
@@ -520,6 +524,10 @@ export function initDepthBasedNVS() {
       sourceCanvas = await loadImageCanvas("assets/images/redtoyota.jpg");
       root.style.setProperty("--nvs-source-width", `${sourceCanvas.width}px`);
       root.style.setProperty(
+        "--nvs-display-width",
+        `${Math.round(sourceCanvas.width * 1.55)}px`,
+      );
+      root.style.setProperty(
         "--nvs-source-ratio",
         `${sourceCanvas.width} / ${sourceCanvas.height}`,
       );
@@ -608,7 +616,7 @@ export function initDepthBasedNVS() {
     if (!sourceCanvas) return;
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    drawCanvasContained(sourceCanvas, width, height, 0);
+    ctx.drawImage(sourceCanvas, 0, 0, width, height);
   }
 
   function drawDepth(width, height, t, progressOverride = null) {
@@ -618,35 +626,40 @@ export function initDepthBasedNVS() {
     }
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+    const rect = imageRect(width, height);
     ctx.drawImage(sourceCanvas, rect.x, rect.y, rect.width, rect.height);
     const wipe =
       progressOverride == null ? Math.min(1, 0.18 + t * 0.8) : progressOverride;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(rect.x, rect.y, rect.width * wipe, rect.height);
-    ctx.clip();
-    ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
-    ctx.restore();
-    ctx.fillStyle = "rgba(0,0,0,0.18)";
-    ctx.fillRect(rect.x + rect.width * wipe - 1, rect.y, 2, rect.height);
+    if (wipe >= 0.995) {
+      ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
+    } else {
+      const revealWidth = Math.min(rect.width, rect.width * wipe + 3);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rect.x, rect.y, revealWidth, rect.height);
+      ctx.clip();
+      ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
+      ctx.restore();
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fillRect(rect.x + revealWidth - 1, rect.y, 2, rect.height);
+    }
   }
 
   function cloudProjection(point, width, height, t, animated = true) {
-    const yaw = -0.42 + (animated ? Math.sin(t * 0.65) * 0.12 : 0);
-    const pitch = -0.08;
+    const yaw = -0.24 + (animated ? Math.sin(t * 0.65) * 0.035 : 0);
+    const pitch = -0.045;
     const cosY = Math.cos(yaw);
     const sinY = Math.sin(yaw);
     const cosP = Math.cos(pitch);
     const sinP = Math.sin(pitch);
-    const focal = Math.min(width, height) * 1.15;
+    const focal = Math.min(width, height) * 1.55;
     const x1 = cosY * point.x + sinY * point.z;
     const z1 = -sinY * point.x + cosY * point.z;
     const y1 = cosP * point.y - sinP * z1;
-    const z2 = sinP * point.y + cosP * z1 + 2.2;
+    const z2 = sinP * point.y + cosP * z1 + 1.65;
     return {
       px: width / 2 + (x1 / z2) * focal,
-      py: height / 2 + (y1 / z2) * focal,
+      py: height / 2 + (y1 / z2) * focal + height * 0.045,
       z: z2,
     };
   }
@@ -690,13 +703,14 @@ export function initDepthBasedNVS() {
       return;
     }
 
-    const p = easeInOutCubic(progress);
+    const pixelP = easeInOutCubic(clamp01(progress / 0.28));
+    const moveP = easeInOutCubic(clamp01((progress - 0.18) / 0.82));
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+    const rect = imageRect(width, height);
 
     ctx.save();
-    ctx.globalAlpha = 1 - p;
+    ctx.globalAlpha = 1 - pixelP;
     ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
     ctx.restore();
 
@@ -711,11 +725,11 @@ export function initDepthBasedNVS() {
       .sort((a, b) => b.end.z - a.end.z);
 
     for (const item of particles) {
-      const x = lerp(item.startX, item.end.px, p);
-      const y = lerp(item.startY, item.end.py, p);
+      const x = lerp(item.startX, item.end.px, moveP);
+      const y = lerp(item.startY, item.end.py, moveP);
       if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
-      const size = lerp(cellW, Math.max(1.4, Math.min(width, height) / 420), p);
-      drawMovingPixel(item.point, x, y, size, p);
+      const size = lerp(cellW, Math.max(1.8, Math.min(width, height) / 300), moveP);
+      drawMovingPixel(item.point, x, y, size, moveP);
     }
   }
 
@@ -730,13 +744,13 @@ export function initDepthBasedNVS() {
     const projected = [];
 
     for (const point of pointCloud) {
-      const { px, py, z } = cloudProjection(point, width, height, t);
+      const { px, py, z } = cloudProjection(point, width, height, t, false);
       if (px < -10 || px > width + 10 || py < -10 || py > height + 10) continue;
       projected.push({ px, py, z, point });
     }
 
     projected.sort((a, b) => b.z - a.z);
-    const pointSize = Math.max(1.3, Math.min(width, height) / 420);
+    const pointSize = Math.max(1.8, Math.min(width, height) / 300);
     for (const item of projected) {
       ctx.globalAlpha = 0.9;
       drawMovingPixel(item.point, item.px, item.py, pointSize, 1);
@@ -754,7 +768,7 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+    const rect = imageRect(width, height);
     ctx.save();
     ctx.globalAlpha = Math.max(0, p - 0.62) / 0.38;
     ctx.drawImage(warpCanvas, rect.x, rect.y, rect.width, rect.height);
@@ -771,7 +785,7 @@ export function initDepthBasedNVS() {
     }
 
     projected.sort((a, b) => b.z - a.z);
-    const size = Math.max(1.3, Math.min(width, height) / 420);
+    const size = Math.max(1.8, Math.min(width, height) / 300);
     for (const item of projected) {
       const x = lerp(item.start.px, item.endX, p);
       const y = lerp(item.start.py, item.endY, p);
