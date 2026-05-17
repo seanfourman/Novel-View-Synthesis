@@ -240,37 +240,31 @@ export function initDepthBasedNVS() {
   const loading = document.getElementById("nvs-loading");
   const title = document.getElementById("nvs-step-title");
   const text = document.getElementById("nvs-step-text");
-  const badge = document.getElementById("nvs-stage-badge");
   const ctx = canvas.getContext("2d", { alpha: false });
 
   const steps = [
     {
       title: "קלט: תמונת RGB",
-      badge: "RGB input",
       text: "זה הדבר היחיד שנכנס בהתחלה: תמונה אחת מהמצלמה. עדיין אין כאן עומק או תלת-ממד, רק צבעים בפיקסלים.",
       mode: "rgb",
     },
     {
       title: "הערכת עומק לכל פיקסל",
-      badge: "Depth map",
       text: "מודל עומק מונוקולרי מעריך עומק יחסי מהתמונה. זו באמת המפה השחורה-לבנה שממנה אפשר להבין מה קרוב ומה רחוק.",
       mode: "depth",
     },
     {
       title: "הרמת RGB-D למרחב",
-      badge: "RGB-D proxy",
       text: "מחברים כל פיקסל עם העומק שלו ומקרינים אותו אחורה דרך מודל המצלמה. התוצאה היא ענן נקודות/משטח תלת-ממדי מקורב, לא קרני אור על תמונה שטוחה.",
       mode: "cloud",
     },
     {
       title: "הקרנה למצלמת יעד",
-      badge: "Target warp",
       text: "עכשיו מציבים מצלמה חדשה ומקרינים אליה את נקודות ה-RGB-D. פיקסלים שלא נראו מהזווית המקורית נשארים כחורים אמיתיים ב-warp.",
       mode: "warp",
     },
     {
       title: "קלט לרשת השלמה",
-      badge: "Refinement input",
       text: "במודל כזה רשת refinement או inpainting מקבלת את התמונה שהוזזה ואת מסיכת החורים. היא משלימה רק אזורים שלא היו ידועים מהקלט.",
       mode: "refine",
     },
@@ -524,6 +518,11 @@ export function initDepthBasedNVS() {
     sourcePromise = (async () => {
       setLoading("Loading input image...", true);
       sourceCanvas = await loadImageCanvas("assets/images/redtoyota.jpg");
+      root.style.setProperty("--nvs-source-width", `${sourceCanvas.width}px`);
+      root.style.setProperty(
+        "--nvs-source-ratio",
+        `${sourceCanvas.width} / ${sourceCanvas.height}`,
+      );
       setLoading("", false);
       render();
       setTimeout(() => {
@@ -692,7 +691,7 @@ export function initDepthBasedNVS() {
     }
 
     const p = easeInOutCubic(progress);
-    ctx.fillStyle = "#111318";
+    ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
     const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
 
@@ -725,7 +724,7 @@ export function initDepthBasedNVS() {
       drawDepth(width, height, t);
       return;
     }
-    ctx.fillStyle = "#111318";
+    ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
     const projected = [];
@@ -752,8 +751,7 @@ export function initDepthBasedNVS() {
     }
 
     const p = easeInOutCubic(progress);
-    const gray = Math.round(lerp(17, 255, p));
-    ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+    ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
     const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
@@ -920,7 +918,6 @@ export function initDepthBasedNVS() {
     animStart = transitionStart;
     title.textContent = step.title;
     text.textContent = step.text;
-    badge.textContent = step.badge;
     prepareRealArtifacts(active > 0);
     render();
   }
