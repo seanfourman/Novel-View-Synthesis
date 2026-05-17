@@ -664,6 +664,57 @@ export function initDepthBasedNVS() {
     };
   }
 
+  function centeredCloudPoints(width, height, t, animated = false) {
+    if (!pointCloud.length) return [];
+
+    const projected = [];
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let weightedX = 0;
+    let weightedY = 0;
+    let totalWeight = 0;
+
+    for (const point of pointCloud) {
+      const pos = cloudProjection(point, width, height, t, animated);
+      projected.push({ ...pos, point });
+      minX = Math.min(minX, pos.px);
+      maxX = Math.max(maxX, pos.px);
+      minY = Math.min(minY, pos.py);
+      maxY = Math.max(maxY, pos.py);
+
+      const redDominance = Math.max(0, point.r - Math.max(point.g, point.b));
+      const saturation = Math.max(point.r, point.g, point.b) - Math.min(point.r, point.g, point.b);
+      const foreground = point.depth;
+      const weight = 1 + redDominance * 0.08 + saturation * 0.012 + foreground * 2.2;
+      weightedX += pos.px * weight;
+      weightedY += pos.py * weight;
+      totalWeight += weight;
+    }
+
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return projected;
+
+    const boxW = Math.max(1, maxX - minX);
+    const boxH = Math.max(1, maxY - minY);
+    const scale = Math.min((width * 0.9) / boxW, (height * 0.82) / boxH, 1.08);
+    const boundsCx = (minX + maxX) / 2;
+    const boundsCy = (minY + maxY) / 2;
+    const centroidCx = totalWeight ? weightedX / totalWeight : boundsCx;
+    const centroidCy = totalWeight ? weightedY / totalWeight : boundsCy;
+    const sourceCx = lerp(boundsCx, centroidCx, 0.62);
+    const sourceCy = lerp(boundsCy, centroidCy, 0.38);
+    const targetCx = width / 2 - width * 0.035;
+    const targetCy = height / 2;
+
+    return projected.map((item) => ({
+      ...item,
+      px: targetCx + (item.px - sourceCx) * scale,
+      py: targetCy + (item.py - sourceCy) * scale,
+      scale,
+    }));
+  }
+
   function targetProjection(point) {
     if (!sourceCanvas) return null;
     const width = sourceCanvas.width;
@@ -715,13 +766,17 @@ export function initDepthBasedNVS() {
     ctx.restore();
 
     const cellW = Math.max(2, rect.width / (sourceCanvas.width / 6));
+    const centered = new Map(
+      centeredCloudPoints(width, height, t, false).map((item) => [item.point, item]),
+    );
     const particles = pointCloud
       .map((point) => {
         const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
         const startY = rect.y + (point.sy / sourceCanvas.height) * rect.height;
-        const end = cloudProjection(point, width, height, t, false);
+        const end = centered.get(point);
         return { point, startX, startY, end };
       })
+      .filter((item) => item.end)
       .sort((a, b) => b.end.z - a.end.z);
 
     for (const item of particles) {
@@ -741,13 +796,9 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    const projected = [];
-
-    for (const point of pointCloud) {
-      const { px, py, z } = cloudProjection(point, width, height, t, false);
-      if (px < -10 || px > width + 10 || py < -10 || py > height + 10) continue;
-      projected.push({ px, py, z, point });
-    }
+    const projected = centeredCloudPoints(width, height, t, false).filter(
+      ({ px, py }) => px >= -10 && px <= width + 10 && py >= -10 && py <= height + 10,
+    );
 
     projected.sort((a, b) => b.z - a.z);
     const pointSize = Math.max(1.8, Math.min(width, height) / 300);
@@ -775,8 +826,12 @@ export function initDepthBasedNVS() {
     ctx.restore();
 
     const projected = [];
+    const centered = new Map(
+      centeredCloudPoints(width, height, t, false).map((item) => [item.point, item]),
+    );
     for (const point of pointCloud) {
-      const start = cloudProjection(point, width, height, t, false);
+      const start = centered.get(point);
+      if (!start) continue;
       const target = targetProjection(point);
       if (!target) continue;
       const endX = rect.x + (target.u / sourceCanvas.width) * rect.width;
