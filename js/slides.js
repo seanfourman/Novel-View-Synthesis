@@ -277,9 +277,11 @@ export function initDepthBasedNVS() {
   let sourceCanvas = null;
   let depthCanvas = null;
   let pointCloud = [];
+  let cloudBounds = null;
   let warpCanvas = null;
   let holeMaskCanvas = null;
   let holeMap = null;
+  let refinedCanvas = null;
   let prepareError = null;
   let sourcePromise = null;
   let depthPromise = null;
@@ -404,30 +406,100 @@ export function initDepthBasedNVS() {
     const cx = width / 2;
     const cy = height / 2;
     const focal = width * 0.95;
-    const step = Math.max(5, Math.floor(Math.max(width, height) / 110));
+    const step = Math.max(4, Math.floor(Math.max(width, height) / 140));
     const points = [];
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
 
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
         const idx = y * width + x;
         const d = depthAt(dep, idx);
         const z = 0.85 + (1 - d) * 2.55;
+        const wx = ((x - cx) / focal) * z;
+        const wy = ((y - cy) / focal) * z;
         const colorIdx = idx * 4;
         points.push({
           sx: x,
           sy: y,
           depth: d,
-          x: ((x - cx) / focal) * z,
-          y: ((y - cy) / focal) * z,
+          x: wx,
+          y: wy,
           z,
           r: rgb.data[colorIdx],
           g: rgb.data[colorIdx + 1],
           b: rgb.data[colorIdx + 2],
         });
+        if (wx < minX) minX = wx;
+        if (wx > maxX) maxX = wx;
+        if (wy < minY) minY = wy;
+        if (wy > maxY) maxY = wy;
+        if (z < minZ) minZ = z;
+        if (z > maxZ) maxZ = z;
       }
     }
 
+    cloudBounds = {
+      cx: (minX + maxX) / 2,
+      cy: (minY + maxY) / 2,
+      cz: (minZ + maxZ) / 2,
+      size: Math.max(maxX - minX, maxY - minY, maxZ - minZ),
+    };
+
     return points;
+  }
+
+  function buildRefinedResult(warpCanvasIn, holesMask) {
+    const width = warpCanvasIn.width;
+    const height = warpCanvasIn.height;
+    const srcCtx = warpCanvasIn.getContext("2d", { willReadFrequently: true });
+    const data = srcCtx.getImageData(0, 0, width, height);
+    const pixels = data.data;
+    let filled = new Uint8Array(holesMask);
+
+    for (let pass = 0; pass < 16; pass++) {
+      const next = new Uint8Array(filled);
+      let newlyFilled = 0;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = y * width + x;
+          if (filled[idx]) continue;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            const ny = y + dy;
+            if (ny < 0 || ny >= height) continue;
+            for (let dx = -1; dx <= 1; dx++) {
+              const nx = x + dx;
+              if (nx < 0 || nx >= width) continue;
+              const nIdx = ny * width + nx;
+              if (!filled[nIdx]) continue;
+              const base = nIdx * 4;
+              r += pixels[base];
+              g += pixels[base + 1];
+              b += pixels[base + 2];
+              count++;
+            }
+          }
+          if (count > 0) {
+            const base = idx * 4;
+            pixels[base] = r / count;
+            pixels[base + 1] = g / count;
+            pixels[base + 2] = b / count;
+            pixels[base + 3] = 255;
+            next[idx] = 1;
+            newlyFilled++;
+          }
+        }
+      }
+      filled = next;
+      if (newlyFilled === 0) break;
+    }
+
+    const out = makeCanvas(width, height);
+    out.getContext("2d").putImageData(data, 0, 0);
+    return out;
   }
 
   function writePixel(image, index, r, g, b, a = 255) {
@@ -562,6 +634,8 @@ export function initDepthBasedNVS() {
       warpCanvas = warp.warp;
       holeMaskCanvas = warp.mask;
       holeMap = warp.holes;
+      if (active > 0) setLoading("Inpainting holes...", true);
+      refinedCanvas = buildRefinedResult(warpCanvas, holeMap);
       setLoading("", false);
       if (active > 0) {
         transitionFrom = Math.max(0, active - 1);
@@ -646,73 +720,37 @@ export function initDepthBasedNVS() {
   }
 
   function cloudProjection(point, width, height, t, animated = true) {
-    const yaw = -0.24 + (animated ? Math.sin(t * 0.65) * 0.035 : 0);
-    const pitch = -0.045;
+    if (!cloudBounds) return { px: 0, py: 0, z: 1 };
+
+    const dx = point.x - cloudBounds.cx;
+    const dy = point.y - cloudBounds.cy;
+    const dz = point.z - cloudBounds.cz;
+
+    const yaw = animated ? Math.sin(t * 0.45) * 0.42 : 0.28;
+    const pitch = animated ? Math.cos(t * 0.31) * 0.07 - 0.04 : 0.0;
+
     const cosY = Math.cos(yaw);
     const sinY = Math.sin(yaw);
+    const xRot = cosY * dx + sinY * dz;
+    const zRot = -sinY * dx + cosY * dz;
+
     const cosP = Math.cos(pitch);
     const sinP = Math.sin(pitch);
-    const focal = Math.min(width, height) * 1.55;
-    const x1 = cosY * point.x + sinY * point.z;
-    const z1 = -sinY * point.x + cosY * point.z;
-    const y1 = cosP * point.y - sinP * z1;
-    const z2 = sinP * point.y + cosP * z1 + 1.65;
-    return {
-      px: width / 2 + (x1 / z2) * focal,
-      py: height / 2 + (y1 / z2) * focal + height * 0.045,
-      z: z2,
-    };
-  }
+    const yRot = cosP * dy - sinP * zRot;
+    const zRot2 = sinP * dy + cosP * zRot;
 
-  function centeredCloudPoints(width, height, t, animated = false) {
-    if (!pointCloud.length) return [];
+    const camDist = cloudBounds.size * 1.5;
+    const camZ = zRot2 + camDist;
 
-    const projected = [];
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    let weightedX = 0;
-    let weightedY = 0;
-    let totalWeight = 0;
-
-    for (const point of pointCloud) {
-      const pos = cloudProjection(point, width, height, t, animated);
-      projected.push({ ...pos, point });
-      minX = Math.min(minX, pos.px);
-      maxX = Math.max(maxX, pos.px);
-      minY = Math.min(minY, pos.py);
-      maxY = Math.max(maxY, pos.py);
-
-      const redDominance = Math.max(0, point.r - Math.max(point.g, point.b));
-      const saturation = Math.max(point.r, point.g, point.b) - Math.min(point.r, point.g, point.b);
-      const foreground = point.depth;
-      const weight = 1 + redDominance * 0.08 + saturation * 0.012 + foreground * 2.2;
-      weightedX += pos.px * weight;
-      weightedY += pos.py * weight;
-      totalWeight += weight;
+    if (camZ <= 0.05) {
+      return { px: -9999, py: -9999, z: camZ };
     }
 
-    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return projected;
+    const focal = Math.min(width, height) * 0.85;
+    const px = width / 2 + (focal * xRot) / camZ;
+    const py = height / 2 + (focal * yRot) / camZ;
 
-    const boxW = Math.max(1, maxX - minX);
-    const boxH = Math.max(1, maxY - minY);
-    const scale = Math.min((width * 0.9) / boxW, (height * 0.82) / boxH, 1.08);
-    const boundsCx = (minX + maxX) / 2;
-    const boundsCy = (minY + maxY) / 2;
-    const centroidCx = totalWeight ? weightedX / totalWeight : boundsCx;
-    const centroidCy = totalWeight ? weightedY / totalWeight : boundsCy;
-    const sourceCx = lerp(boundsCx, centroidCx, 0.62);
-    const sourceCy = lerp(boundsCy, centroidCy, 0.38);
-    const targetCx = width / 2 - width * 0.035;
-    const targetCy = height / 2;
-
-    return projected.map((item) => ({
-      ...item,
-      px: targetCx + (item.px - sourceCx) * scale,
-      py: targetCy + (item.py - sourceCy) * scale,
-      scale,
-    }));
+    return { px, py, z: camZ };
   }
 
   function targetProjection(point) {
@@ -766,24 +804,25 @@ export function initDepthBasedNVS() {
     ctx.restore();
 
     const cellW = Math.max(2, rect.width / (sourceCanvas.width / 6));
-    const centered = new Map(
-      centeredCloudPoints(width, height, t, false).map((item) => [item.point, item]),
-    );
-    const particles = pointCloud
-      .map((point) => {
-        const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
-        const startY = rect.y + (point.sy / sourceCanvas.height) * rect.height;
-        const end = centered.get(point);
-        return { point, startX, startY, end };
-      })
-      .filter((item) => item.end)
-      .sort((a, b) => b.end.z - a.end.z);
+    const baseSize = Math.max(2.4, Math.min(width, height) / 240);
+    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+
+    const particles = pointCloud.map((point) => {
+      const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
+      const startY = rect.y + (point.sy / sourceCanvas.height) * rect.height;
+      const end = cloudProjection(point, width, height, t, true);
+      return { point, startX, startY, end };
+    });
+
+    particles.sort((a, b) => b.end.z - a.end.z);
 
     for (const item of particles) {
       const x = lerp(item.startX, item.end.px, moveP);
       const y = lerp(item.startY, item.end.py, moveP);
       if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
-      const size = lerp(cellW, Math.max(1.8, Math.min(width, height) / 300), moveP);
+      const sizeScale = Math.min(1.7, refZ / Math.max(item.end.z, 0.1));
+      const endSize = baseSize * sizeScale;
+      const size = lerp(cellW, endSize, moveP);
       drawMovingPixel(item.point, x, y, size, moveP);
     }
   }
@@ -796,15 +835,20 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    const projected = centeredCloudPoints(width, height, t, false).filter(
-      ({ px, py }) => px >= -10 && px <= width + 10 && py >= -10 && py <= height + 10,
-    );
+    const baseSize = Math.max(2.4, Math.min(width, height) / 240);
+    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+
+    const projected = pointCloud
+      .map((point) => ({ point, ...cloudProjection(point, width, height, t, true) }))
+      .filter(({ px, py }) => px >= -10 && px <= width + 10 && py >= -10 && py <= height + 10);
 
     projected.sort((a, b) => b.z - a.z);
-    const pointSize = Math.max(1.8, Math.min(width, height) / 300);
+
     for (const item of projected) {
-      ctx.globalAlpha = 0.9;
-      drawMovingPixel(item.point, item.px, item.py, pointSize, 1);
+      const sizeScale = Math.min(1.7, refZ / Math.max(item.z, 0.1));
+      const size = baseSize * sizeScale;
+      ctx.globalAlpha = 0.92;
+      drawMovingPixel(item.point, item.px, item.py, size, 1);
     }
     ctx.globalAlpha = 1;
   }
@@ -825,13 +869,12 @@ export function initDepthBasedNVS() {
     ctx.drawImage(warpCanvas, rect.x, rect.y, rect.width, rect.height);
     ctx.restore();
 
+    const baseSize = Math.max(2.2, Math.min(width, height) / 260);
+    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+
     const projected = [];
-    const centered = new Map(
-      centeredCloudPoints(width, height, t, false).map((item) => [item.point, item]),
-    );
     for (const point of pointCloud) {
-      const start = centered.get(point);
-      if (!start) continue;
+      const start = cloudProjection(point, width, height, t, true);
       const target = targetProjection(point);
       if (!target) continue;
       const endX = rect.x + (target.u / sourceCanvas.width) * rect.width;
@@ -840,13 +883,13 @@ export function initDepthBasedNVS() {
     }
 
     projected.sort((a, b) => b.z - a.z);
-    const size = Math.max(1.8, Math.min(width, height) / 300);
     for (const item of projected) {
       const x = lerp(item.start.px, item.endX, p);
       const y = lerp(item.start.py, item.endY, p);
       if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
-      ctx.globalAlpha = 0.92 * (1 - Math.max(0, p - 0.72) / 0.28);
-      drawMovingPixel(item.point, x, y, size, 1);
+      const sizeScale = Math.min(1.6, refZ / Math.max(item.z, 0.1));
+      ctx.globalAlpha = 0.92 * (1 - Math.max(0, p - 0.78) / 0.22);
+      drawMovingPixel(item.point, x, y, baseSize * sizeScale, 1);
     }
     ctx.globalAlpha = 1;
   }
@@ -866,33 +909,38 @@ export function initDepthBasedNVS() {
     ctx.restore();
   }
 
-  function drawRefinementInput(width, height, t) {
-    if (!warpCanvas || !holeMaskCanvas) {
+  function drawRefine(width, height, t) {
+    if (!refinedCanvas) {
       drawWarp(width, height, t);
       return;
     }
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    const rect = drawCanvasContained(warpCanvas, width, height, 0);
-    const pulse = 0.25 + (Math.sin(t * 4.2) + 1) * 0.18;
-    ctx.save();
-    ctx.globalAlpha = pulse;
-    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
-    ctx.restore();
+    drawCanvasContained(refinedCanvas, width, height, 0);
   }
 
   function drawWarpToRefine(width, height, t, progress) {
-    if (!warpCanvas || !holeMaskCanvas) {
+    if (!refinedCanvas || !warpCanvas) {
       drawWarp(width, height, t);
       return;
     }
+    const p = easeInOutCubic(progress);
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    const rect = drawCanvasContained(warpCanvas, width, height, 0);
+
+    drawCanvasContained(warpCanvas, width, height, 0);
     ctx.save();
-    ctx.globalAlpha = easeInOutCubic(progress) * 0.48;
-    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.globalAlpha = p;
+    drawCanvasContained(refinedCanvas, width, height, 0);
     ctx.restore();
+
+    if (holeMaskCanvas) {
+      const rect = drawCanvasContained(warpCanvas, width, height, 0);
+      ctx.save();
+      ctx.globalAlpha = (1 - p) * 0.42;
+      ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
+      ctx.restore();
+    }
   }
 
   function drawResetToRgb(width, height, t, progress) {
@@ -900,7 +948,7 @@ export function initDepthBasedNVS() {
       drawRgb(width, height);
       return;
     }
-    drawRefinementInput(width, height, t);
+    drawRefine(width, height, t);
     const p = easeInOutCubic(progress);
     ctx.save();
     ctx.globalAlpha = p;
@@ -942,7 +990,7 @@ export function initDepthBasedNVS() {
     else if (steps[active].mode === "depth") drawDepth(width, height, t);
     else if (steps[active].mode === "cloud") drawCloud(width, height, t);
     else if (steps[active].mode === "warp") drawWarp(width, height, t);
-    else if (steps[active].mode === "refine") drawRefinementInput(width, height, t);
+    else if (steps[active].mode === "refine") drawRefine(width, height, t);
   }
 
   function render() {
