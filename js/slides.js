@@ -1,6 +1,7 @@
 // slides.js — per-slide initializers.
 
 import * as THREE from "three";
+import { estimateDepth, preloadModel } from "./depth.js";
 
 function primeVideo(video, play = false) {
   if (!video) return;
@@ -222,6 +223,729 @@ export function initTitleBg() {
       }
 
       r.render(scene, camera);
+    },
+  };
+}
+
+/* =========================================================
+   Slide 2: Concrete single-image depth-based NVS pipeline
+   ========================================================= */
+export function initDepthBasedNVS() {
+  const root = document.getElementById("nvs-slide");
+  if (!root) return { tick() {} };
+
+  const board = document.getElementById("nvs-process-board");
+  const stage = board;
+  const canvas = document.getElementById("nvs-process-canvas");
+  const loading = document.getElementById("nvs-loading");
+  const title = document.getElementById("nvs-step-title");
+  const text = document.getElementById("nvs-step-text");
+  const badge = document.getElementById("nvs-stage-badge");
+  const ctx = canvas.getContext("2d", { alpha: false });
+
+  const steps = [
+    {
+      title: "קלט: תמונת RGB",
+      badge: "RGB input",
+      text: "זה הדבר היחיד שנכנס בהתחלה: תמונה אחת מהמצלמה. עדיין אין כאן עומק או תלת-ממד, רק צבעים בפיקסלים.",
+      mode: "rgb",
+    },
+    {
+      title: "הערכת עומק לכל פיקסל",
+      badge: "Depth map",
+      text: "מודל עומק מונוקולרי מעריך עומק יחסי מהתמונה. זו באמת המפה השחורה-לבנה שממנה אפשר להבין מה קרוב ומה רחוק.",
+      mode: "depth",
+    },
+    {
+      title: "הרמת RGB-D למרחב",
+      badge: "RGB-D proxy",
+      text: "מחברים כל פיקסל עם העומק שלו ומקרינים אותו אחורה דרך מודל המצלמה. התוצאה היא ענן נקודות/משטח תלת-ממדי מקורב, לא קרני אור על תמונה שטוחה.",
+      mode: "cloud",
+    },
+    {
+      title: "הקרנה למצלמת יעד",
+      badge: "Target warp",
+      text: "עכשיו מציבים מצלמה חדשה ומקרינים אליה את נקודות ה-RGB-D. פיקסלים שלא נראו מהזווית המקורית נשארים כחורים אמיתיים ב-warp.",
+      mode: "warp",
+    },
+    {
+      title: "קלט לרשת השלמה",
+      badge: "Refinement input",
+      text: "במודל כזה רשת refinement או inpainting מקבלת את התמונה שהוזזה ואת מסיכת החורים. היא משלימה רק אזורים שלא היו ידועים מהקלט.",
+      mode: "refine",
+    },
+  ];
+
+  let active = 0;
+  let transitionFrom = 0;
+  let transitionStart = performance.now();
+  let animStart = performance.now();
+  let sourceCanvas = null;
+  let depthCanvas = null;
+  let pointCloud = [];
+  let warpCanvas = null;
+  let holeMaskCanvas = null;
+  let holeMap = null;
+  let prepareError = null;
+  let sourcePromise = null;
+  let depthPromise = null;
+
+  function makeCanvas(width, height) {
+    const c = document.createElement("canvas");
+    c.width = width;
+    c.height = height;
+    return c;
+  }
+
+  function setLoading(message, show = true) {
+    if (!loading) return;
+    loading.textContent = message;
+    loading.hidden = !show;
+  }
+
+  function updateProgress(info) {
+    const message = info?.text || "Loading depth model...";
+    if (active > 0) setLoading(message, true);
+  }
+
+  const clamp01 = (value) => Math.max(0, Math.min(1, value));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const easeInOutCubic = (t) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  function transitionDuration(from, to) {
+    const fromMode = steps[from]?.mode;
+    const toMode = steps[to]?.mode;
+    if (fromMode === "rgb" && toMode === "depth") return 1.15;
+    if (fromMode === "depth" && toMode === "cloud") return 1.85;
+    if (fromMode === "cloud" && toMode === "warp") return 1.65;
+    if (fromMode === "warp" && toMode === "refine") return 1.15;
+    return 1.0;
+  }
+
+  function transitionProgress(now = performance.now()) {
+    if (transitionFrom === active) return 1;
+    const elapsed = (now - transitionStart) / 1000;
+    return clamp01(elapsed / transitionDuration(transitionFrom, active));
+  }
+
+  async function loadImageCanvas(src, maxSide = 640) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+    if (img.decode) {
+      await img.decode();
+    } else {
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+    }
+
+    const scale = Math.min(
+      1,
+      maxSide / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height),
+    );
+    const width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+    const height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+    const out = makeCanvas(width, height);
+    const octx = out.getContext("2d");
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = "high";
+    octx.drawImage(img, 0, 0, width, height);
+    return out;
+  }
+
+  function fitRect(srcW, srcH, dstW, dstH, padding = 0) {
+    const availableW = Math.max(1, dstW - padding * 2);
+    const availableH = Math.max(1, dstH - padding * 2);
+    const scale = Math.min(availableW / srcW, availableH / srcH);
+    const width = srcW * scale;
+    const height = srcH * scale;
+    return {
+      x: padding + (availableW - width) / 2,
+      y: padding + (availableH - height) / 2,
+      width,
+      height,
+    };
+  }
+
+  function sizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.max(1, canvas.clientWidth | 0);
+    const height = Math.max(1, canvas.clientHeight | 0);
+    const pixelW = Math.round(width * dpr);
+    const pixelH = Math.round(height * dpr);
+    if (canvas.width !== pixelW) canvas.width = pixelW;
+    if (canvas.height !== pixelH) canvas.height = pixelH;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { width, height };
+  }
+
+  function drawCanvasContained(src, dstW, dstH, padding = 34) {
+    const rect = fitRect(src.width, src.height, dstW, dstH, padding);
+    ctx.drawImage(src, rect.x, rect.y, rect.width, rect.height);
+    return rect;
+  }
+
+  function getImageDataFrom(source) {
+    return source
+      .getContext("2d", { willReadFrequently: true })
+      .getImageData(0, 0, source.width, source.height);
+  }
+
+  function depthAt(depthData, idx) {
+    return depthData.data[idx * 4] / 255;
+  }
+
+  function buildPointCloud(rgbCanvas, depth) {
+    const rgb = getImageDataFrom(rgbCanvas);
+    const dep = getImageDataFrom(depth);
+    const width = rgbCanvas.width;
+    const height = rgbCanvas.height;
+    const cx = width / 2;
+    const cy = height / 2;
+    const focal = width * 0.95;
+    const step = Math.max(5, Math.floor(Math.max(width, height) / 110));
+    const points = [];
+
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        const idx = y * width + x;
+        const d = depthAt(dep, idx);
+        const z = 0.85 + (1 - d) * 2.55;
+        const colorIdx = idx * 4;
+        points.push({
+          sx: x,
+          sy: y,
+          depth: d,
+          x: ((x - cx) / focal) * z,
+          y: ((y - cy) / focal) * z,
+          z,
+          r: rgb.data[colorIdx],
+          g: rgb.data[colorIdx + 1],
+          b: rgb.data[colorIdx + 2],
+        });
+      }
+    }
+
+    return points;
+  }
+
+  function writePixel(image, index, r, g, b, a = 255) {
+    const base = index * 4;
+    image.data[base] = r;
+    image.data[base + 1] = g;
+    image.data[base + 2] = b;
+    image.data[base + 3] = a;
+  }
+
+  function buildTargetWarp(rgbCanvas, depth) {
+    const width = rgbCanvas.width;
+    const height = rgbCanvas.height;
+    const rgb = getImageDataFrom(rgbCanvas);
+    const dep = getImageDataFrom(depth);
+    const outCanvas = makeCanvas(width, height);
+    const maskCanvas = makeCanvas(width, height);
+    const outCtx = outCanvas.getContext("2d");
+    const maskCtx = maskCanvas.getContext("2d");
+    const outImage = outCtx.createImageData(width, height);
+    const maskImage = maskCtx.createImageData(width, height);
+    const zBuffer = new Float32Array(width * height);
+    const filled = new Uint8Array(width * height);
+
+    zBuffer.fill(Number.POSITIVE_INFINITY);
+
+    for (let i = 0; i < width * height; i++) {
+      writePixel(outImage, i, 246, 247, 250, 255);
+      writePixel(maskImage, i, 0, 0, 0, 0);
+    }
+
+    const focal = width * 0.95;
+    const cx = width / 2;
+    const cy = height / 2;
+    const yaw = -0.28;
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+    const targetShiftX = -0.18;
+    const targetShiftZ = 0.08;
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const idx = y * width + x;
+        const d = depthAt(dep, idx);
+        const z = 0.85 + (1 - d) * 2.55;
+        const worldX = ((x - cx) / focal) * z;
+        const worldY = ((y - cy) / focal) * z;
+        const worldZ = z;
+        const camX = cos * worldX + sin * worldZ + targetShiftX;
+        const camZ = -sin * worldX + cos * worldZ + targetShiftZ;
+        const camY = worldY;
+
+        if (camZ <= 0.2) continue;
+
+        const u = Math.round((focal * camX) / camZ + cx);
+        const v = Math.round((focal * camY) / camZ + cy);
+        if (u < 0 || u >= width || v < 0 || v >= height) continue;
+
+        const dst = v * width + u;
+        if (camZ >= zBuffer[dst]) continue;
+
+        zBuffer[dst] = camZ;
+        filled[dst] = 1;
+        const srcBase = idx * 4;
+        writePixel(
+          outImage,
+          dst,
+          rgb.data[srcBase],
+          rgb.data[srcBase + 1],
+          rgb.data[srcBase + 2],
+          255,
+        );
+      }
+    }
+
+    for (let i = 0; i < width * height; i++) {
+      if (filled[i]) {
+        writePixel(maskImage, i, 0, 0, 0, 0);
+      } else {
+        writePixel(maskImage, i, 255, 90, 54, 230);
+      }
+    }
+
+    outCtx.putImageData(outImage, 0, 0);
+    maskCtx.putImageData(maskImage, 0, 0);
+
+    return { warp: outCanvas, mask: maskCanvas, holes: filled };
+  }
+
+  function ensureSourceImage() {
+    if (sourcePromise) return sourcePromise;
+    sourcePromise = (async () => {
+      setLoading("Loading input image...", true);
+      sourceCanvas = await loadImageCanvas("assets/images/redtoyota.jpg");
+      setLoading("", false);
+      render();
+      setTimeout(() => {
+        ensureDepthArtifacts().catch((err) => {
+          console.warn("background depth preparation failed", err);
+        });
+      }, 250);
+      return sourceCanvas;
+    })().catch((err) => {
+      sourcePromise = null;
+      throw err;
+    });
+    return sourcePromise;
+  }
+
+  function ensureDepthArtifacts() {
+    if (depthPromise) return depthPromise;
+    depthPromise = (async () => {
+      await ensureSourceImage();
+
+      if (active > 0) setLoading("Estimating monocular depth...", true);
+      const warmup = preloadModel(updateProgress);
+      await warmup.catch(() => {});
+      depthCanvas = await estimateDepth(sourceCanvas, updateProgress);
+
+      if (active > 0) setLoading("Building RGB-D proxy...", true);
+      pointCloud = buildPointCloud(sourceCanvas, depthCanvas);
+      const warp = buildTargetWarp(sourceCanvas, depthCanvas);
+      warpCanvas = warp.warp;
+      holeMaskCanvas = warp.mask;
+      holeMap = warp.holes;
+      setLoading("", false);
+      if (active > 0) {
+        transitionFrom = Math.max(0, active - 1);
+        transitionStart = performance.now();
+        animStart = transitionStart;
+      }
+      render();
+    })().catch((err) => {
+      depthPromise = null;
+      throw err;
+    });
+    return depthPromise;
+  }
+
+  async function prepareRealArtifacts(needsDepth = false) {
+    try {
+      if (needsDepth) {
+        if (!depthCanvas) setLoading("Estimating monocular depth...", true);
+        await ensureDepthArtifacts();
+      }
+      else await ensureSourceImage();
+    } catch (err) {
+      prepareError = err;
+      console.error("failed to prepare depth-based NVS slide", err);
+      setLoading("Depth pipeline failed. Check network/model loading.", true);
+      render();
+    }
+  }
+
+  function drawSpinner(width, height, t) {
+    ctx.save();
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = "rgba(108,92,231,0.28)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, 28, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "#6c5ce7";
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, 28, t * 4, t * 4 + Math.PI * 1.25);
+    ctx.stroke();
+    ctx.direction = "ltr";
+    ctx.textAlign = "center";
+    ctx.font = "14px JetBrains Mono, monospace";
+    ctx.fillStyle = "#555";
+    ctx.fillText("running real depth inference", width / 2, height / 2 + 58);
+    ctx.restore();
+  }
+
+  function drawRgb(width, height) {
+    if (!sourceCanvas) return;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    drawCanvasContained(sourceCanvas, width, height, 0);
+  }
+
+  function drawDepth(width, height, t, progressOverride = null) {
+    if (!sourceCanvas || !depthCanvas) {
+      drawRgb(width, height);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+    ctx.drawImage(sourceCanvas, rect.x, rect.y, rect.width, rect.height);
+    const wipe =
+      progressOverride == null ? Math.min(1, 0.18 + t * 0.8) : progressOverride;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width * wipe, rect.height);
+    ctx.clip();
+    ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillRect(rect.x + rect.width * wipe - 1, rect.y, 2, rect.height);
+  }
+
+  function cloudProjection(point, width, height, t, animated = true) {
+    const yaw = -0.42 + (animated ? Math.sin(t * 0.65) * 0.12 : 0);
+    const pitch = -0.08;
+    const cosY = Math.cos(yaw);
+    const sinY = Math.sin(yaw);
+    const cosP = Math.cos(pitch);
+    const sinP = Math.sin(pitch);
+    const focal = Math.min(width, height) * 1.15;
+    const x1 = cosY * point.x + sinY * point.z;
+    const z1 = -sinY * point.x + cosY * point.z;
+    const y1 = cosP * point.y - sinP * z1;
+    const z2 = sinP * point.y + cosP * z1 + 2.2;
+    return {
+      px: width / 2 + (x1 / z2) * focal,
+      py: height / 2 + (y1 / z2) * focal,
+      z: z2,
+    };
+  }
+
+  function targetProjection(point) {
+    if (!sourceCanvas) return null;
+    const width = sourceCanvas.width;
+    const height = sourceCanvas.height;
+    const focal = width * 0.95;
+    const cx = width / 2;
+    const cy = height / 2;
+    const yaw = -0.28;
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+    const targetShiftX = -0.18;
+    const targetShiftZ = 0.08;
+    const camX = cos * point.x + sin * point.z + targetShiftX;
+    const camZ = -sin * point.x + cos * point.z + targetShiftZ;
+    const camY = point.y;
+
+    if (camZ <= 0.2) return null;
+
+    const u = (focal * camX) / camZ + cx;
+    const v = (focal * camY) / camZ + cy;
+    if (u < 0 || u >= width || v < 0 || v >= height) return null;
+    return { u, v, z: camZ };
+  }
+
+  function drawMovingPixel(point, x, y, size, depthMix) {
+    const g = Math.round(point.depth * 255);
+    const r = Math.round(lerp(g, point.r, depthMix));
+    const green = Math.round(lerp(g, point.g, depthMix));
+    const b = Math.round(lerp(g, point.b, depthMix));
+    ctx.fillStyle = `rgb(${r},${green},${b})`;
+    ctx.fillRect(x - size / 2, y - size / 2, size, size);
+  }
+
+  function drawDepthToCloud(width, height, t, progress) {
+    if (!pointCloud.length || !sourceCanvas) {
+      drawDepth(width, height, t, 1);
+      return;
+    }
+
+    const p = easeInOutCubic(progress);
+    ctx.fillStyle = "#111318";
+    ctx.fillRect(0, 0, width, height);
+    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+
+    ctx.save();
+    ctx.globalAlpha = 1 - p;
+    ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+
+    const cellW = Math.max(2, rect.width / (sourceCanvas.width / 6));
+    const particles = pointCloud
+      .map((point) => {
+        const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
+        const startY = rect.y + (point.sy / sourceCanvas.height) * rect.height;
+        const end = cloudProjection(point, width, height, t, false);
+        return { point, startX, startY, end };
+      })
+      .sort((a, b) => b.end.z - a.end.z);
+
+    for (const item of particles) {
+      const x = lerp(item.startX, item.end.px, p);
+      const y = lerp(item.startY, item.end.py, p);
+      if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
+      const size = lerp(cellW, Math.max(1.4, Math.min(width, height) / 420), p);
+      drawMovingPixel(item.point, x, y, size, p);
+    }
+  }
+
+  function drawCloud(width, height, t) {
+    if (!pointCloud.length) {
+      drawDepth(width, height, t);
+      return;
+    }
+    ctx.fillStyle = "#111318";
+    ctx.fillRect(0, 0, width, height);
+
+    const projected = [];
+
+    for (const point of pointCloud) {
+      const { px, py, z } = cloudProjection(point, width, height, t);
+      if (px < -10 || px > width + 10 || py < -10 || py > height + 10) continue;
+      projected.push({ px, py, z, point });
+    }
+
+    projected.sort((a, b) => b.z - a.z);
+    const pointSize = Math.max(1.3, Math.min(width, height) / 420);
+    for (const item of projected) {
+      ctx.globalAlpha = 0.9;
+      drawMovingPixel(item.point, item.px, item.py, pointSize, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawCloudToWarp(width, height, t, progress) {
+    if (!warpCanvas || !pointCloud.length || !sourceCanvas) {
+      drawCloud(width, height, t);
+      return;
+    }
+
+    const p = easeInOutCubic(progress);
+    const gray = Math.round(lerp(17, 255, p));
+    ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+    ctx.fillRect(0, 0, width, height);
+
+    const rect = fitRect(sourceCanvas.width, sourceCanvas.height, width, height, 0);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p - 0.62) / 0.38;
+    ctx.drawImage(warpCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+
+    const projected = [];
+    for (const point of pointCloud) {
+      const start = cloudProjection(point, width, height, t, false);
+      const target = targetProjection(point);
+      if (!target) continue;
+      const endX = rect.x + (target.u / sourceCanvas.width) * rect.width;
+      const endY = rect.y + (target.v / sourceCanvas.height) * rect.height;
+      projected.push({ point, start, endX, endY, z: lerp(start.z, target.z, p) });
+    }
+
+    projected.sort((a, b) => b.z - a.z);
+    const size = Math.max(1.3, Math.min(width, height) / 420);
+    for (const item of projected) {
+      const x = lerp(item.start.px, item.endX, p);
+      const y = lerp(item.start.py, item.endY, p);
+      if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
+      ctx.globalAlpha = 0.92 * (1 - Math.max(0, p - 0.72) / 0.28);
+      drawMovingPixel(item.point, x, y, size, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawWarp(width, height, t) {
+    if (!warpCanvas || !holeMaskCanvas || !holeMap) {
+      drawCloud(width, height, t);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    const rect = drawCanvasContained(warpCanvas, width, height, 0);
+    const pulse = 0.35 + Math.sin(t * 5) * 0.12;
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+  }
+
+  function drawRefinementInput(width, height, t) {
+    if (!warpCanvas || !holeMaskCanvas) {
+      drawWarp(width, height, t);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    const rect = drawCanvasContained(warpCanvas, width, height, 0);
+    const pulse = 0.25 + (Math.sin(t * 4.2) + 1) * 0.18;
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+  }
+
+  function drawWarpToRefine(width, height, t, progress) {
+    if (!warpCanvas || !holeMaskCanvas) {
+      drawWarp(width, height, t);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    const rect = drawCanvasContained(warpCanvas, width, height, 0);
+    ctx.save();
+    ctx.globalAlpha = easeInOutCubic(progress) * 0.48;
+    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+  }
+
+  function drawResetToRgb(width, height, t, progress) {
+    if (!sourceCanvas) {
+      drawRgb(width, height);
+      return;
+    }
+    drawRefinementInput(width, height, t);
+    const p = easeInOutCubic(progress);
+    ctx.save();
+    ctx.globalAlpha = p;
+    drawRgb(width, height);
+    ctx.restore();
+  }
+
+  function drawTransition(width, height, t, progress) {
+    const fromMode = steps[transitionFrom]?.mode;
+    const toMode = steps[active]?.mode;
+
+    if (fromMode === "rgb" && toMode === "depth") {
+      if (!depthCanvas) drawRgb(width, height);
+      else drawDepth(width, height, t, easeInOutCubic(progress));
+      return;
+    }
+    if (fromMode === "depth" && toMode === "cloud") {
+      drawDepthToCloud(width, height, t, progress);
+      return;
+    }
+    if (fromMode === "cloud" && toMode === "warp") {
+      drawCloudToWarp(width, height, t, progress);
+      return;
+    }
+    if (fromMode === "warp" && toMode === "refine") {
+      drawWarpToRefine(width, height, t, progress);
+      return;
+    }
+    if (fromMode === "refine" && toMode === "rgb") {
+      drawResetToRgb(width, height, t, progress);
+      return;
+    }
+
+    drawCurrentStage(width, height, t);
+  }
+
+  function drawCurrentStage(width, height, t) {
+    if (steps[active].mode === "rgb") drawRgb(width, height);
+    else if (steps[active].mode === "depth") drawDepth(width, height, t);
+    else if (steps[active].mode === "cloud") drawCloud(width, height, t);
+    else if (steps[active].mode === "warp") drawWarp(width, height, t);
+    else if (steps[active].mode === "refine") drawRefinementInput(width, height, t);
+  }
+
+  function render() {
+    const { width, height } = sizeCanvas();
+    const now = performance.now();
+    const t = (now - animStart) / 1000;
+
+    if (prepareError && !sourceCanvas) {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.direction = "ltr";
+      ctx.textAlign = "center";
+      ctx.font = "15px JetBrains Mono, monospace";
+      ctx.fillStyle = "#d63031";
+      ctx.fillText("Depth pipeline failed to load", width / 2, height / 2);
+      return;
+    }
+
+    if (!sourceCanvas) {
+      drawSpinner(width, height, t);
+      return;
+    }
+
+    const progress = transitionProgress(now);
+    if (transitionFrom !== active && progress < 1) {
+      drawTransition(width, height, t, progress);
+    } else {
+      drawCurrentStage(width, height, t);
+    }
+  }
+
+  function setStep(index) {
+    if (active > 0 && !depthCanvas) {
+      prepareRealArtifacts(true);
+      return;
+    }
+    const previous = active;
+    active = (index + steps.length) % steps.length;
+    transitionFrom = previous;
+    transitionStart = performance.now();
+    const step = steps[active];
+    animStart = transitionStart;
+    title.textContent = step.title;
+    text.textContent = step.text;
+    badge.textContent = step.badge;
+    prepareRealArtifacts(active > 0);
+    render();
+  }
+
+  function advance() {
+    setStep(active + 1);
+  }
+
+  board.addEventListener("click", advance);
+  board.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      advance();
+    }
+  });
+
+  new ResizeObserver(render).observe(stage);
+  setStep(0);
+
+  return {
+    enter() {
+      setStep(active);
+    },
+    tick(visible) {
+      if (visible) render();
     },
   };
 }
