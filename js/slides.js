@@ -406,7 +406,7 @@ export function initDepthBasedNVS() {
     const cx = width / 2;
     const cy = height / 2;
     const focal = width * 0.95;
-    const step = Math.max(4, Math.floor(Math.max(width, height) / 140));
+    const step = Math.max(3, Math.floor(Math.max(width, height) / 200));
     const points = [];
 
     let minX = Infinity, maxX = -Infinity;
@@ -809,15 +809,18 @@ export function initDepthBasedNVS() {
     }
   }
 
-  function cloudProjection(point, width, height, t, animated = true) {
+  function cloudProjection(point, width, height, _t, animated = true) {
     if (!cloudBounds) return { px: 0, py: 0, z: 1 };
 
     const dx = point.x - cloudBounds.cx;
     const dy = point.y - cloudBounds.cy;
     const dz = point.z - cloudBounds.cz;
 
-    const yaw = animated ? Math.sin(t * 0.45) * 0.42 : 0.28;
-    const pitch = animated ? Math.cos(t * 0.31) * 0.07 - 0.04 : 0.0;
+    // Use wall-clock time so the orbit phase is continuous across step transitions
+    // (per-step `animStart` reset would otherwise snap the cloud back to yaw=0).
+    const orbitT = performance.now() / 1000;
+    const yaw = animated ? Math.sin(orbitT * 0.45) * 0.42 : 0.28;
+    const pitch = animated ? Math.cos(orbitT * 0.31) * 0.07 - 0.04 : 0.0;
 
     const cosY = Math.cos(yaw);
     const sinY = Math.sin(yaw);
@@ -950,8 +953,8 @@ export function initDepthBasedNVS() {
     if (!sourceCanvas) return 4;
     const rect = imageRect(width, height);
     const fit = Math.min(rect.width / sourceCanvas.width, rect.height / sourceCanvas.height);
-    const step = Math.max(4, Math.floor(Math.max(sourceCanvas.width, sourceCanvas.height) / 140));
-    return step * fit * 1.25;
+    const step = Math.max(3, Math.floor(Math.max(sourceCanvas.width, sourceCanvas.height) / 200));
+    return step * fit * 1.4;
   }
 
   // Project the point cloud from a camera that is linearly interpolated between
@@ -1002,16 +1005,15 @@ export function initDepthBasedNVS() {
     }
   }
 
-  // Smooth oscillation between source view (0) and target view (1).
-  // Starts at source, holds briefly, eases to target, eases back. Repeats.
-  function warpCameraAlpha(t) {
-    if (t < 0.7) return 0;
-    const phase = ((t - 0.7) % 7) / 7;
-    if (phase < 0.07) return 0;
-    if (phase < 0.43) return easeInOutCubic((phase - 0.07) / 0.36);
-    if (phase < 0.5) return 1;
-    if (phase < 0.93) return 1 - easeInOutCubic((phase - 0.5) / 0.43);
-    return 0;
+  // One-shot timeline for stage 4. `localT` is seconds since the cloud→warp
+  // transition completed (i.e., since the point cloud landed at source positions).
+  //   0 - 0.80 : hold at source view — the reconstruction (= the original image)
+  //   0.80 - 2.60 : rotate camera once from source to target
+  //   2.60+ : hold at the new viewpoint
+  function warpStageState(localT) {
+    if (localT < 0.80) return { cameraAlpha: 0 };
+    if (localT < 2.60) return { cameraAlpha: easeInOutCubic((localT - 0.80) / 1.80) };
+    return { cameraAlpha: 1 };
   }
 
   function drawCloudToWarp(width, height, t, progress) {
@@ -1066,7 +1068,12 @@ export function initDepthBasedNVS() {
     }
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    drawSourceProjection(width, height, warpCameraAlpha(t), imageSplatSize(width, height));
+
+    // `t` includes the cloud→warp transition time. Subtract it so the stage 4
+    // timeline starts cleanly at 0 when the reconstruction finishes.
+    const localT = Math.max(0, t - transitionDuration(transitionFrom, active));
+    const { cameraAlpha } = warpStageState(localT);
+    drawSourceProjection(width, height, cameraAlpha, imageSplatSize(width, height));
   }
 
   function drawRefine(width, height, t) {
