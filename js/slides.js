@@ -445,6 +445,9 @@ export function initDepthBasedNVS() {
       cx: (minX + maxX) / 2,
       cy: (minY + maxY) / 2,
       cz: (minZ + maxZ) / 2,
+      sizeX: maxX - minX,
+      sizeY: maxY - minY,
+      sizeZ: maxZ - minZ,
       size: Math.max(maxX - minX, maxY - minY, maxZ - minZ),
     };
 
@@ -457,44 +460,87 @@ export function initDepthBasedNVS() {
     const srcCtx = warpCanvasIn.getContext("2d", { willReadFrequently: true });
     const data = srcCtx.getImageData(0, 0, width, height);
     const pixels = data.data;
-    let filled = new Uint8Array(holesMask);
+    const wasHole = new Uint8Array(width * height);
+    for (let i = 0; i < wasHole.length; i++) wasHole[i] = holesMask[i] ? 0 : 1;
+    const filled = new Uint8Array(holesMask);
 
-    for (let pass = 0; pass < 16; pass++) {
-      const next = new Uint8Array(filled);
-      let newlyFilled = 0;
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const idx = y * width + x;
-          if (filled[idx]) continue;
-          let r = 0, g = 0, b = 0, count = 0;
-          for (let dy = -1; dy <= 1; dy++) {
-            const ny = y + dy;
-            if (ny < 0 || ny >= height) continue;
-            for (let dx = -1; dx <= 1; dx++) {
-              const nx = x + dx;
-              if (nx < 0 || nx >= width) continue;
-              const nIdx = ny * width + nx;
-              if (!filled[nIdx]) continue;
-              const base = nIdx * 4;
-              r += pixels[base];
-              g += pixels[base + 1];
-              b += pixels[base + 2];
-              count++;
+    // Wavefront BFS: each hole pixel takes the color of the nearest filled pixel.
+    // Seed the queue with every filled pixel that borders a hole.
+    let frontier = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = y * width + x;
+        if (!filled[idx]) continue;
+        let bordersHole = false;
+        for (let dy = -1; dy <= 1 && !bordersHole; dy++) {
+          const ny = y + dy;
+          if (ny < 0 || ny >= height) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x + dx;
+            if (nx < 0 || nx >= width) continue;
+            if (!filled[ny * width + nx]) {
+              bordersHole = true;
+              break;
             }
           }
-          if (count > 0) {
-            const base = idx * 4;
-            pixels[base] = r / count;
-            pixels[base + 1] = g / count;
-            pixels[base + 2] = b / count;
-            pixels[base + 3] = 255;
-            next[idx] = 1;
-            newlyFilled++;
+        }
+        if (bordersHole) frontier.push(idx);
+      }
+    }
+
+    while (frontier.length > 0) {
+      const next = [];
+      for (let i = 0; i < frontier.length; i++) {
+        const srcIdx = frontier[i];
+        const srcY = (srcIdx / width) | 0;
+        const srcX = srcIdx - srcY * width;
+        const srcBase = srcIdx * 4;
+        for (let dy = -1; dy <= 1; dy++) {
+          const ny = srcY + dy;
+          if (ny < 0 || ny >= height) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = srcX + dx;
+            if (nx < 0 || nx >= width) continue;
+            const nIdx = ny * width + nx;
+            if (filled[nIdx]) continue;
+            filled[nIdx] = 1;
+            const nBase = nIdx * 4;
+            pixels[nBase] = pixels[srcBase];
+            pixels[nBase + 1] = pixels[srcBase + 1];
+            pixels[nBase + 2] = pixels[srcBase + 2];
+            pixels[nBase + 3] = 255;
+            next.push(nIdx);
           }
         }
       }
-      filled = next;
-      if (newlyFilled === 0) break;
+      frontier = next;
+    }
+
+    // Smooth previously-hole regions so the wavefront streaks blend out.
+    // Two passes of a 3x3 box blur, applied only to was-hole pixels.
+    const buffer = new Uint8ClampedArray(pixels);
+    for (let pass = 0; pass < 2; pass++) {
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const idx = y * width + x;
+          if (!wasHole[idx]) continue;
+          let r = 0, g = 0, b = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const nBase = ((y + dy) * width + (x + dx)) * 4;
+              r += pixels[nBase];
+              g += pixels[nBase + 1];
+              b += pixels[nBase + 2];
+            }
+          }
+          const base = idx * 4;
+          buffer[base] = r / 9;
+          buffer[base + 1] = g / 9;
+          buffer[base + 2] = b / 9;
+          buffer[base + 3] = 255;
+        }
+      }
+      pixels.set(buffer);
     }
 
     const out = makeCanvas(width, height);
@@ -509,6 +555,10 @@ export function initDepthBasedNVS() {
     image.data[base + 2] = b;
     image.data[base + 3] = a;
   }
+
+  const TARGET_YAW = -0.42;
+  const TARGET_SHIFT_X = -0.28;
+  const TARGET_SHIFT_Z = 0.12;
 
   function buildTargetWarp(rgbCanvas, depth) {
     const width = rgbCanvas.width;
@@ -534,12 +584,10 @@ export function initDepthBasedNVS() {
     const focal = width * 0.95;
     const cx = width / 2;
     const cy = height / 2;
-    const yaw = -0.28;
-    const cos = Math.cos(yaw);
-    const sin = Math.sin(yaw);
-    const targetShiftX = -0.18;
-    const targetShiftZ = 0.08;
+    const cos = Math.cos(TARGET_YAW);
+    const sin = Math.sin(TARGET_YAW);
 
+    // Forward-warp each source pixel with a 2x2 splat to avoid 1-pixel sampling gaps
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const idx = y * width + x;
@@ -548,31 +596,73 @@ export function initDepthBasedNVS() {
         const worldX = ((x - cx) / focal) * z;
         const worldY = ((y - cy) / focal) * z;
         const worldZ = z;
-        const camX = cos * worldX + sin * worldZ + targetShiftX;
-        const camZ = -sin * worldX + cos * worldZ + targetShiftZ;
+        const camX = cos * worldX + sin * worldZ + TARGET_SHIFT_X;
+        const camZ = -sin * worldX + cos * worldZ + TARGET_SHIFT_Z;
         const camY = worldY;
 
         if (camZ <= 0.2) continue;
 
-        const u = Math.round((focal * camX) / camZ + cx);
-        const v = Math.round((focal * camY) / camZ + cy);
-        if (u < 0 || u >= width || v < 0 || v >= height) continue;
-
-        const dst = v * width + u;
-        if (camZ >= zBuffer[dst]) continue;
-
-        zBuffer[dst] = camZ;
-        filled[dst] = 1;
+        const uF = (focal * camX) / camZ + cx;
+        const vF = (focal * camY) / camZ + cy;
+        const u0 = Math.floor(uF);
+        const v0 = Math.floor(vF);
         const srcBase = idx * 4;
-        writePixel(
-          outImage,
-          dst,
-          rgb.data[srcBase],
-          rgb.data[srcBase + 1],
-          rgb.data[srcBase + 2],
-          255,
-        );
+
+        for (let dv = 0; dv <= 1; dv++) {
+          const v = v0 + dv;
+          if (v < 0 || v >= height) continue;
+          for (let du = 0; du <= 1; du++) {
+            const u = u0 + du;
+            if (u < 0 || u >= width) continue;
+            const dst = v * width + u;
+            if (camZ >= zBuffer[dst]) continue;
+            zBuffer[dst] = camZ;
+            filled[dst] = 1;
+            writePixel(
+              outImage,
+              dst,
+              rgb.data[srcBase],
+              rgb.data[srcBase + 1],
+              rgb.data[srcBase + 2],
+              255,
+            );
+          }
+        }
       }
+    }
+
+    // Close 1-pixel speckle gaps: if a hole pixel has >=5 filled neighbors,
+    // average them. Real occlusion holes have far fewer filled neighbors and stay.
+    for (let pass = 0; pass < 2; pass++) {
+      const next = new Uint8Array(filled);
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const idx = y * width + x;
+          if (filled[idx]) continue;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nIdx = (y + dy) * width + (x + dx);
+              if (!filled[nIdx]) continue;
+              const base = nIdx * 4;
+              r += outImage.data[base];
+              g += outImage.data[base + 1];
+              b += outImage.data[base + 2];
+              count++;
+            }
+          }
+          if (count >= 5) {
+            const base = idx * 4;
+            outImage.data[base] = r / count;
+            outImage.data[base + 1] = g / count;
+            outImage.data[base + 2] = b / count;
+            outImage.data[base + 3] = 255;
+            next[idx] = 1;
+          }
+        }
+      }
+      filled.set(next);
     }
 
     for (let i = 0; i < width * height; i++) {
@@ -739,14 +829,20 @@ export function initDepthBasedNVS() {
     const yRot = cosP * dy - sinP * zRot;
     const zRot2 = sinP * dy + cosP * zRot;
 
-    const camDist = cloudBounds.size * 1.5;
+    const camDist = cloudBounds.size * 0.95;
     const camZ = zRot2 + camDist;
 
     if (camZ <= 0.05) {
       return { px: -9999, py: -9999, z: camZ };
     }
 
-    const focal = Math.min(width, height) * 0.85;
+    // Adaptive focal: scale so the cloud fills ~90% of whichever canvas axis is most constrained
+    const halfWorldX = (cloudBounds.sizeX / 2) * 1.12;
+    const halfWorldY = (cloudBounds.sizeY / 2) * 1.05;
+    const focalX = ((width * 0.46) * camDist) / halfWorldX;
+    const focalY = ((height * 0.46) * camDist) / halfWorldY;
+    const focal = Math.min(focalX, focalY);
+
     const px = width / 2 + (focal * xRot) / camZ;
     const py = height / 2 + (focal * yRot) / camZ;
 
@@ -760,13 +856,10 @@ export function initDepthBasedNVS() {
     const focal = width * 0.95;
     const cx = width / 2;
     const cy = height / 2;
-    const yaw = -0.28;
-    const cos = Math.cos(yaw);
-    const sin = Math.sin(yaw);
-    const targetShiftX = -0.18;
-    const targetShiftZ = 0.08;
-    const camX = cos * point.x + sin * point.z + targetShiftX;
-    const camZ = -sin * point.x + cos * point.z + targetShiftZ;
+    const cos = Math.cos(TARGET_YAW);
+    const sin = Math.sin(TARGET_YAW);
+    const camX = cos * point.x + sin * point.z + TARGET_SHIFT_X;
+    const camZ = -sin * point.x + cos * point.z + TARGET_SHIFT_Z;
     const camY = point.y;
 
     if (camZ <= 0.2) return null;
@@ -804,8 +897,8 @@ export function initDepthBasedNVS() {
     ctx.restore();
 
     const cellW = Math.max(2, rect.width / (sourceCanvas.width / 6));
-    const baseSize = Math.max(2.4, Math.min(width, height) / 240);
-    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+    const baseSize = Math.max(3.0, Math.min(width, height) / 170);
+    const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
 
     const particles = pointCloud.map((point) => {
       const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
@@ -835,8 +928,8 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    const baseSize = Math.max(2.4, Math.min(width, height) / 240);
-    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+    const baseSize = Math.max(3.0, Math.min(width, height) / 170);
+    const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
 
     const projected = pointCloud
       .map((point) => ({ point, ...cloudProjection(point, width, height, t, true) }))
@@ -869,8 +962,8 @@ export function initDepthBasedNVS() {
     ctx.drawImage(warpCanvas, rect.x, rect.y, rect.width, rect.height);
     ctx.restore();
 
-    const baseSize = Math.max(2.2, Math.min(width, height) / 260);
-    const refZ = cloudBounds ? cloudBounds.size * 1.5 : 2;
+    const baseSize = Math.max(2.8, Math.min(width, height) / 180);
+    const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
 
     const projected = [];
     for (const point of pointCloud) {
@@ -902,7 +995,7 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
     const rect = drawCanvasContained(warpCanvas, width, height, 0);
-    const pulse = 0.35 + Math.sin(t * 5) * 0.12;
+    const pulse = 0.55 + Math.sin(t * 2.4) * 0.08;
     ctx.save();
     ctx.globalAlpha = pulse;
     ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
