@@ -1006,14 +1006,14 @@ export function initDepthBasedNVS() {
   }
 
   // One-shot timeline for stage 4. `localT` is seconds since the cloud→warp
-  // transition completed (i.e., since the point cloud landed at source positions).
-  //   0 - 0.80 : hold at source view — the reconstruction (= the original image)
-  //   0.80 - 2.60 : rotate camera once from source to target
-  //   2.60+ : hold at the new viewpoint
+  // transition completed. A single smootherstep across the whole 3s phase —
+  // f'(0) = f''(0) = f'''(0) = 0, so motion ramps up with no perceptual snap.
+  // For the first ~0.4s alpha stays under 0.01 (effectively the source view),
+  // which gives the "hold on the original" moment without a hard hold→rotate edge.
   function warpStageState(localT) {
-    if (localT < 0.80) return { cameraAlpha: 0 };
-    if (localT < 2.60) return { cameraAlpha: easeInOutCubic((localT - 0.80) / 1.80) };
-    return { cameraAlpha: 1 };
+    if (localT >= 3.0) return { cameraAlpha: 1 };
+    const x = localT / 3.0;
+    return { cameraAlpha: x * x * x * (x * (x * 6 - 15) + 10) };
   }
 
   function drawCloudToWarp(width, height, t, progress) {
