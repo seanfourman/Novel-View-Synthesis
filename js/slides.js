@@ -1202,7 +1202,49 @@ export function initDepthBasedNVS() {
   }
 
   function advance() {
-    setStep(active + 1);
+    const next = active + 1;
+    if (active === 1 && next === 2) {
+      const procCanvas = document.getElementById("nvs-process-canvas");
+      if (procCanvas && board) {
+        // Snapshot the current canvas into an overlay image that will fade out
+        const overlay = document.createElement("img");
+        try {
+          overlay.src = procCanvas.toDataURL();
+        } catch (err) {
+          // toDataURL can fail on cross-origin content; fall back to normal advance
+          setStep(next);
+          return;
+        }
+        overlay.style.position = "absolute";
+        overlay.style.inset = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.objectFit = "cover";
+        overlay.style.pointerEvents = "none";
+        overlay.style.zIndex = "999";
+        overlay.style.transition = "opacity 0.85s cubic-bezier(.2,.9,.2,1)";
+        overlay.style.opacity = "1";
+        board.appendChild(overlay);
+
+        // Immediately advance so the new stage is rendered underneath
+        setStep(next);
+
+        // Fade the overlay out to reveal the new stage instantly underneath
+        requestAnimationFrame(() => (overlay.style.opacity = "0"));
+        overlay.addEventListener(
+          "transitionend",
+          () => {
+            try {
+              board.removeChild(overlay);
+            } catch {}
+          },
+          { once: true },
+        );
+        return;
+      }
+    }
+
+    setStep(next);
   }
 
   board.addEventListener("click", advance);
