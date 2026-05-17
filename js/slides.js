@@ -46,8 +46,8 @@ export function initTitleBg() {
   r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   r.setClearColor(0xffffff, 0);
 
-  const matRoom = new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.15 });
-  const matObj = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.3 });
+  const matRoom = new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.32 });
+  const matObj = new THREE.LineBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.58 });
 
   // 1. A static wireframe room bounds
   const roomGeom = new THREE.BoxGeometry(24, 10, 24);
@@ -58,7 +58,7 @@ export function initTitleBg() {
   // 2. A floor grid
   const floor = new THREE.GridHelper(24, 24, 0x6c5ce7, 0x6c5ce7);
   floor.material.transparent = true;
-  floor.material.opacity = 0.15;
+  floor.material.opacity = 0.26;
   floor.position.y = -1;
   scene.add(floor);
 
@@ -117,8 +117,8 @@ export function initTitleBg() {
 
   let state = 'HOLD';
   let timer = 0;
-  const HOLD_TIME = 6.0;
-  const MOVE_TIME = 4.5;
+  const HOLD_TIME = 1.8;
+  const MOVE_TIME = 2.2;
 
   const center = new THREE.Vector3(0, 1, 0);
 
