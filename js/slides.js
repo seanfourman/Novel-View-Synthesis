@@ -344,10 +344,20 @@ export function initDepthBasedNVS() {
 
     const scale = Math.min(
       1,
-      maxSide / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height),
+      maxSide /
+        Math.max(
+          img.naturalWidth || img.width,
+          img.naturalHeight || img.height,
+        ),
     );
-    const width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
-    const height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+    const width = Math.max(
+      1,
+      Math.round((img.naturalWidth || img.width) * scale),
+    );
+    const height = Math.max(
+      1,
+      Math.round((img.naturalHeight || img.height) * scale),
+    );
     const out = makeCanvas(width, height);
     const octx = out.getContext("2d");
     octx.imageSmoothingEnabled = true;
@@ -409,9 +419,12 @@ export function initDepthBasedNVS() {
     const step = Math.max(3, Math.floor(Math.max(width, height) / 200));
     const points = [];
 
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    let minZ = Infinity, maxZ = -Infinity;
+    let minX = Infinity,
+      maxX = -Infinity;
+    let minY = Infinity,
+      maxY = -Infinity;
+    let minZ = Infinity,
+      maxZ = -Infinity;
 
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -524,7 +537,9 @@ export function initDepthBasedNVS() {
         for (let x = 1; x < width - 1; x++) {
           const idx = y * width + x;
           if (!wasHole[idx]) continue;
-          let r = 0, g = 0, b = 0;
+          let r = 0,
+            g = 0,
+            b = 0;
           for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
               const nBase = ((y + dy) * width + (x + dx)) * 4;
@@ -639,7 +654,10 @@ export function initDepthBasedNVS() {
         for (let x = 1; x < width - 1; x++) {
           const idx = y * width + x;
           if (filled[idx]) continue;
-          let r = 0, g = 0, b = 0, count = 0;
+          let r = 0,
+            g = 0,
+            b = 0,
+            count = 0;
           for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
               if (dx === 0 && dy === 0) continue;
@@ -745,8 +763,7 @@ export function initDepthBasedNVS() {
       if (needsDepth) {
         if (!depthCanvas) setLoading("Estimating monocular depth...", true);
         await ensureDepthArtifacts();
-      }
-      else await ensureSourceImage();
+      } else await ensureSourceImage();
     } catch (err) {
       prepareError = err;
       console.error("failed to prepare depth-based NVS slide", err);
@@ -842,8 +859,8 @@ export function initDepthBasedNVS() {
     // Adaptive focal: scale so the cloud fills ~90% of whichever canvas axis is most constrained
     const halfWorldX = (cloudBounds.sizeX / 2) * 1.12;
     const halfWorldY = (cloudBounds.sizeY / 2) * 1.05;
-    const focalX = ((width * 0.46) * camDist) / halfWorldX;
-    const focalY = ((height * 0.46) * camDist) / halfWorldY;
+    const focalX = (width * 0.46 * camDist) / halfWorldX;
+    const focalY = (height * 0.46 * camDist) / halfWorldY;
     const focal = Math.min(focalX, focalY);
 
     const px = width / 2 + (focal * xRot) / camZ;
@@ -935,8 +952,14 @@ export function initDepthBasedNVS() {
     const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
 
     const projected = pointCloud
-      .map((point) => ({ point, ...cloudProjection(point, width, height, t, true) }))
-      .filter(({ px, py }) => px >= -10 && px <= width + 10 && py >= -10 && py <= height + 10);
+      .map((point) => ({
+        point,
+        ...cloudProjection(point, width, height, t, true),
+      }))
+      .filter(
+        ({ px, py }) =>
+          px >= -10 && px <= width + 10 && py >= -10 && py <= height + 10,
+      );
 
     projected.sort((a, b) => b.z - a.z);
 
@@ -952,8 +975,14 @@ export function initDepthBasedNVS() {
   function imageSplatSize(width, height) {
     if (!sourceCanvas) return 4;
     const rect = imageRect(width, height);
-    const fit = Math.min(rect.width / sourceCanvas.width, rect.height / sourceCanvas.height);
-    const step = Math.max(3, Math.floor(Math.max(sourceCanvas.width, sourceCanvas.height) / 200));
+    const fit = Math.min(
+      rect.width / sourceCanvas.width,
+      rect.height / sourceCanvas.height,
+    );
+    const step = Math.max(
+      3,
+      Math.floor(Math.max(sourceCanvas.width, sourceCanvas.height) / 200),
+    );
     return step * fit * 1.4;
   }
 
@@ -1053,7 +1082,13 @@ export function initDepthBasedNVS() {
 
     for (let i = 0; i < projected.length; i++) {
       const item = projected[i];
-      if (item.x < -10 || item.x > width + 10 || item.y < -10 || item.y > height + 10) continue;
+      if (
+        item.x < -10 ||
+        item.x > width + 10 ||
+        item.y < -10 ||
+        item.y > height + 10
+      )
+        continue;
       const size = baseSize * item.scale;
       const pt = item.pt;
       ctx.fillStyle = `rgb(${pt.r},${pt.g},${pt.b})`;
@@ -1073,7 +1108,12 @@ export function initDepthBasedNVS() {
     // timeline starts cleanly at 0 when the reconstruction finishes.
     const localT = Math.max(0, t - transitionDuration(transitionFrom, active));
     const { cameraAlpha } = warpStageState(localT);
-    drawSourceProjection(width, height, cameraAlpha, imageSplatSize(width, height));
+    drawSourceProjection(
+      width,
+      height,
+      cameraAlpha,
+      imageSplatSize(width, height),
+    );
   }
 
   function drawRefine(width, height, t) {
