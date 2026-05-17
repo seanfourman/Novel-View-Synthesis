@@ -946,8 +946,76 @@ export function initDepthBasedNVS() {
     ctx.globalAlpha = 1;
   }
 
+  function imageSplatSize(width, height) {
+    if (!sourceCanvas) return 4;
+    const rect = imageRect(width, height);
+    const fit = Math.min(rect.width / sourceCanvas.width, rect.height / sourceCanvas.height);
+    const step = Math.max(4, Math.floor(Math.max(sourceCanvas.width, sourceCanvas.height) / 140));
+    return step * fit * 1.25;
+  }
+
+  // Project the point cloud from a camera that is linearly interpolated between
+  // the source view (alpha=0, identity — recreates the original image) and the
+  // target view (alpha=1 — the novel viewpoint). Splats each point onto the
+  // canvas. Holes where occluded background would be appear naturally.
+  function drawSourceProjection(width, height, alpha, baseSize) {
+    if (!pointCloud.length || !sourceCanvas) return;
+
+    const focal = sourceCanvas.width * 0.95;
+    const cx = sourceCanvas.width / 2;
+    const cy = sourceCanvas.height / 2;
+    const yaw = TARGET_YAW * alpha;
+    const shiftX = TARGET_SHIFT_X * alpha;
+    const shiftZ = TARGET_SHIFT_Z * alpha;
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+
+    const rect = imageRect(width, height);
+    const scaleX = rect.width / sourceCanvas.width;
+    const scaleY = rect.height / sourceCanvas.height;
+
+    const projected = [];
+    for (let i = 0; i < pointCloud.length; i++) {
+      const pt = pointCloud[i];
+      const camX = cos * pt.x + sin * pt.z + shiftX;
+      const camZ = -sin * pt.x + cos * pt.z + shiftZ;
+      if (camZ <= 0.2) continue;
+      const u = (focal * camX) / camZ + cx;
+      const v = (focal * pt.y) / camZ + cy;
+      if (u < -40 || u >= sourceCanvas.width + 40) continue;
+      if (v < -40 || v >= sourceCanvas.height + 40) continue;
+      projected.push({ pt, u, v, z: camZ });
+    }
+
+    projected.sort((a, b) => b.z - a.z);
+
+    for (let i = 0; i < projected.length; i++) {
+      const item = projected[i];
+      const x = rect.x + item.u * scaleX;
+      const y = rect.y + item.v * scaleY;
+      if (x < -10 || x > width + 10 || y < -10 || y > height + 10) continue;
+      const sizeScale = Math.min(1.4, Math.max(0.7, 2.0 / item.z));
+      const size = baseSize * sizeScale;
+      const pt = item.pt;
+      ctx.fillStyle = `rgb(${pt.r},${pt.g},${pt.b})`;
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+    }
+  }
+
+  // Smooth oscillation between source view (0) and target view (1).
+  // Starts at source, holds briefly, eases to target, eases back. Repeats.
+  function warpCameraAlpha(t) {
+    if (t < 0.7) return 0;
+    const phase = ((t - 0.7) % 7) / 7;
+    if (phase < 0.07) return 0;
+    if (phase < 0.43) return easeInOutCubic((phase - 0.07) / 0.36);
+    if (phase < 0.5) return 1;
+    if (phase < 0.93) return 1 - easeInOutCubic((phase - 0.5) / 0.43);
+    return 0;
+  }
+
   function drawCloudToWarp(width, height, t, progress) {
-    if (!warpCanvas || !pointCloud.length || !sourceCanvas) {
+    if (!pointCloud.length || !sourceCanvas || !cloudBounds) {
       drawCloud(width, height, t);
       return;
     }
@@ -957,49 +1025,48 @@ export function initDepthBasedNVS() {
     ctx.fillRect(0, 0, width, height);
 
     const rect = imageRect(width, height);
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, p - 0.62) / 0.38;
-    ctx.drawImage(warpCanvas, rect.x, rect.y, rect.width, rect.height);
-    ctx.restore();
+    const scaleX = rect.width / sourceCanvas.width;
+    const scaleY = rect.height / sourceCanvas.height;
 
-    const baseSize = Math.max(2.8, Math.min(width, height) / 180);
-    const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
+    const cloudBase = Math.max(3.0, Math.min(width, height) / 170);
+    const imageBase = imageSplatSize(width, height);
+    const baseSize = lerp(cloudBase, imageBase, p);
 
     const projected = [];
-    for (const point of pointCloud) {
-      const start = cloudProjection(point, width, height, t, true);
-      const target = targetProjection(point);
-      if (!target) continue;
-      const endX = rect.x + (target.u / sourceCanvas.width) * rect.width;
-      const endY = rect.y + (target.v / sourceCanvas.height) * rect.height;
-      projected.push({ point, start, endX, endY, z: lerp(start.z, target.z, p) });
+    for (let i = 0; i < pointCloud.length; i++) {
+      const pt = pointCloud[i];
+      const cloud = cloudProjection(pt, width, height, t, true);
+      const sourceX = rect.x + pt.sx * scaleX;
+      const sourceY = rect.y + pt.sy * scaleY;
+      projected.push({
+        pt,
+        x: lerp(cloud.px, sourceX, p),
+        y: lerp(cloud.py, sourceY, p),
+        z: lerp(cloud.z, pt.z, p),
+        scale: lerp(1, Math.min(1.4, Math.max(0.7, 2.0 / pt.z)), p),
+      });
     }
 
     projected.sort((a, b) => b.z - a.z);
-    for (const item of projected) {
-      const x = lerp(item.start.px, item.endX, p);
-      const y = lerp(item.start.py, item.endY, p);
-      if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
-      const sizeScale = Math.min(1.6, refZ / Math.max(item.z, 0.1));
-      ctx.globalAlpha = 0.92 * (1 - Math.max(0, p - 0.78) / 0.22);
-      drawMovingPixel(item.point, x, y, baseSize * sizeScale, 1);
+
+    for (let i = 0; i < projected.length; i++) {
+      const item = projected[i];
+      if (item.x < -10 || item.x > width + 10 || item.y < -10 || item.y > height + 10) continue;
+      const size = baseSize * item.scale;
+      const pt = item.pt;
+      ctx.fillStyle = `rgb(${pt.r},${pt.g},${pt.b})`;
+      ctx.fillRect(item.x - size / 2, item.y - size / 2, size, size);
     }
-    ctx.globalAlpha = 1;
   }
 
   function drawWarp(width, height, t) {
-    if (!warpCanvas || !holeMaskCanvas || !holeMap) {
+    if (!pointCloud.length || !sourceCanvas) {
       drawCloud(width, height, t);
       return;
     }
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
-    const rect = drawCanvasContained(warpCanvas, width, height, 0);
-    const pulse = 0.55 + Math.sin(t * 2.4) * 0.08;
-    ctx.save();
-    ctx.globalAlpha = pulse;
-    ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
-    ctx.restore();
+    drawSourceProjection(width, height, warpCameraAlpha(t), imageSplatSize(width, height));
   }
 
   function drawRefine(width, height, t) {
@@ -1013,7 +1080,7 @@ export function initDepthBasedNVS() {
   }
 
   function drawWarpToRefine(width, height, t, progress) {
-    if (!refinedCanvas || !warpCanvas) {
+    if (!refinedCanvas || !pointCloud.length || !sourceCanvas) {
       drawWarp(width, height, t);
       return;
     }
@@ -1021,19 +1088,14 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    drawCanvasContained(warpCanvas, width, height, 0);
+    // Snap the camera to the target view so the cloud and the refined image
+    // share the same viewpoint — the crossfade then visibly fills the holes.
+    drawSourceProjection(width, height, 1, imageSplatSize(width, height));
+
     ctx.save();
     ctx.globalAlpha = p;
     drawCanvasContained(refinedCanvas, width, height, 0);
     ctx.restore();
-
-    if (holeMaskCanvas) {
-      const rect = drawCanvasContained(warpCanvas, width, height, 0);
-      ctx.save();
-      ctx.globalAlpha = (1 - p) * 0.42;
-      ctx.drawImage(holeMaskCanvas, rect.x, rect.y, rect.width, rect.height);
-      ctx.restore();
-    }
   }
 
   function drawResetToRgb(width, height, t, progress) {
