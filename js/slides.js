@@ -283,6 +283,7 @@ export function initDepthBasedNVS() {
   let transitionFrom = 0;
   let transitionStart = performance.now();
   let animStart = performance.now();
+  let capturedWarpCameraAlpha = 1;
   let sourceCanvas = null;
   let depthCanvas = null;
   let depthColorCanvas = null;
@@ -1728,17 +1729,29 @@ export function initDepthBasedNVS() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    const P1 = 0.22;  // end of pixel-return crossfade   (~1.0 s)
-    const P2 = 0.61;  // end of image hold               (~1.75 s)
-    const P3 = 0.83;  // end of background fade          (~1.0 s)
-    //          1.0   // end of cameras fade-in           (~0.75 s)
+    // Phase 1 is split into two sequential sub-phases so motion and opacity never
+    // change at the same time — eliminating the "jump" visual artefact.
+    const P1a = 0.09;  // sub-phase 1a: pixels glide back (~0.4 s) — pure motion
+    const P1b = 0.26;  // sub-phase 1b: crossfade         (~0.76 s) — pure opacity
+    const P2  = 0.64;  // end of image hold               (~1.7 s)
+    const P3  = 0.84;  // end of background fade          (~0.9 s)
+    //           1.0   // end of cameras fade-in           (~0.72 s)
 
-    if (progress < P1) {
-      const phase = easeInOutCubic(progress / P1);
+    if (progress < P1a) {
+      // Sub-phase 1a: un-shift pixels from where stage 4 left off back to the
+      // source-image positions. No opacity change — pure spatial motion.
+      const phase = easeInOutCubic(progress / P1a);
+      const camAlpha = lerp(capturedWarpCameraAlpha, 0, phase);
+      if (pointCloud.length)
+        drawSourceProjection(width, height, camAlpha, imageSplatSize(width, height));
+    } else if (progress < P1b) {
+      // Sub-phase 1b: pixels are now at source positions — crossfade to the smooth
+      // source image. No spatial movement, pure opacity change.
+      const phase = easeInOutCubic((progress - P1a) / (P1b - P1a));
       if (pointCloud.length) {
         ctx.save();
         ctx.globalAlpha = 1 - phase;
-        drawSourceProjection(width, height, 1 - phase, imageSplatSize(width, height));
+        drawSourceProjection(width, height, 0, imageSplatSize(width, height));
         ctx.restore();
       }
       ctx.save();
@@ -1929,6 +1942,14 @@ export function initDepthBasedNVS() {
         );
         return;
       }
+    }
+
+    // Capture warp camera state before setStep resets animStart, so phase 1 of
+    // the warp→orbit transition can start from exactly where stage 4 left off.
+    if (steps[active]?.mode === "warp") {
+      const currentT = (performance.now() - animStart) / 1000;
+      const localT = Math.max(0, currentT - transitionDuration(transitionFrom, active));
+      capturedWarpCameraAlpha = warpStageState(localT).cameraAlpha;
     }
 
     setStep(next);
