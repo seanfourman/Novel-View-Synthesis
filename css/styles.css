@@ -536,32 +536,69 @@ code {
   overflow: hidden;
   border: 2.5px solid var(--line);
   box-shadow: 0 16px 70px rgba(0, 0, 0, 0.13);
+  background: #f0f0f0;
 }
-.sts-media {
+/* Phase layers — only the active one is visible */
+.sts-layer {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.sts-nerf-vid {
+  display: block;
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.45s ease;
 }
-.sts-orb-wrap.playing .sts-nerf-vid {
-  opacity: 1;
-}
-.sts-toggle-btn {
+.sts-orb-wrap[data-phase="1"] #sts-img { opacity: 1; }
+.sts-orb-wrap[data-phase="2"] #sts-c2  { opacity: 1; }
+.sts-orb-wrap[data-phase="3"] #sts-img3 { opacity: 1; }
+/* Bottom UI overlay inside orb */
+.sts-orb-ui {
   position: absolute;
   bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  z-index: 10;
+  pointer-events: none;
+}
+.sts-phase-label {
+  font-size: 0.64rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 0.16rem 0.55rem;
+  border-radius: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.sts-phase-dots {
+  display: flex;
+  gap: 6px;
+}
+.sts-pdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.3s;
+}
+.sts-pdot.active {
+  background: var(--accent);
+}
+.sts-toggle-btn {
+  pointer-events: auto;
   background: rgba(10, 10, 10, 0.72);
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 0.5rem 1.3rem;
-  font-size: clamp(0.75rem, 0.9vw, 0.88rem);
+  padding: 0.48rem 1.25rem;
+  font-size: clamp(0.73rem, 0.88vw, 0.86rem);
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -570,14 +607,9 @@ code {
   transition: background 0.15s, transform 0.1s;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  z-index: 5;
 }
-.sts-toggle-btn:hover {
-  background: var(--accent);
-}
-.sts-toggle-btn:active {
-  transform: translateX(-50%) scale(0.94);
-}
+.sts-toggle-btn:hover { background: var(--accent); }
+.sts-toggle-btn:active { transform: scale(0.93); }
 .sts-bullets {
   list-style: none;
   display: flex;

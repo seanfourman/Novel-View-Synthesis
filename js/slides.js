@@ -2930,39 +2930,157 @@ export function initProblemVis() {
 }
 
 /* =========================================================
-   Slide 4: Static → Spatial — real image → NeRF video toggle
+   Slide 4: Static → Spatial — 3-phase NeRF pipeline demo
+   Phase 1 → input images (video)
+   Phase 2 → camera-sphere visualization (Three.js)
+   Phase 3 → 3D rotatable drum kit (Three.js)
    ========================================================= */
 export function initStaticToSpatial() {
-  const orb = document.getElementById("sts-orb");
-  const vid = document.getElementById("sts-vid");
-  const btn = document.getElementById("sts-btn");
-  if (!orb || !vid || !btn) return { tick() {} };
+  const orb  = document.getElementById("sts-orb");
+  const btn  = document.getElementById("sts-btn");
+  const lbl  = document.getElementById("sts-lbl");
+  const img1 = document.getElementById("sts-img");
+  const c2   = document.getElementById("sts-c2");
+  const img3 = document.getElementById("sts-img3");
+  if (!orb || !btn || !img1 || !c2 || !img3) return { tick() {} };
+  const pdots = Array.from(orb.querySelectorAll(".sts-pdot"));
 
-  vid.muted = true;
-  vid.loop = true;
-  vid.playsInline = true;
+  const PHASE_LABELS = ["", "תמונות קלט", "מיקום המצלמות", "NeRF – מבט חדש"];
+  const BTN_LABELS   = ["", "לשלב הבא ←", "לשלב הבא ←", "להתחלה"];
+  let phase = 1;
 
-  let isNerf = false;
+  // ── Phase 1: 20 evenly-spaced drum stills, slow cycling ──
+  const P1_SLOW = 42; // ticks between frames (~700ms at 60fps)
+  const p1Urls  = Array.from({ length: 20 }, (_, i) => `assets/test/r_${i * 10}.png`);
+  let p1Idx = 0, p1Tick = 0;
+  img1.src = p1Urls[0];
 
-  btn.addEventListener("click", () => {
-    isNerf = !isNerf;
-    orb.classList.toggle("playing", isNerf);
-    btn.textContent = isNerf ? "חזור לתמונה" : "הצג בNeRF";
-    if (isNerf) {
-      vid.play().catch(() => {});
-    } else {
-      vid.pause();
-      vid.currentTime = 0;
+  // ── Phase 2: Camera-sphere visualization ───────────────
+  const s2   = new THREE.Scene();
+  s2.background = new THREE.Color(0xf8f8f8);
+  const cam2 = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
+  const r2   = new THREE.WebGLRenderer({ canvas: c2, antialias: true });
+  r2.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  s2.add(new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.7));
+  const sl2 = new THREE.DirectionalLight(0xffffff, 0.9);
+  sl2.position.set(3, 5, 3); s2.add(sl2);
+
+  // Centre: drum kit billboard sprite (always faces camera)
+  const drumTex = new THREE.TextureLoader().load("assets/test/r_0.png");
+  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: drumTex }));
+  drumSprite.scale.set(1.7, 1.7, 1);
+  s2.add(drumSprite);
+
+  // Camera frustums on Fibonacci sphere
+  const N_CAM  = 24;
+  const CAM_R  = 2.6;
+  const fMat2  = new THREE.LineBasicMaterial({ color: 0x222222 });
+  const lMat2  = new THREE.LineBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.28 });
+
+  function makeFrustumGeo() {
+    const w = 0.10, h = 0.072, d = 0.22;
+    return new THREE.BufferGeometry().setFromPoints([
+      // Rect (sensor plane at z = –d, opening toward centre)
+      new THREE.Vector3(-w, -h, -d), new THREE.Vector3( w, -h, -d),
+      new THREE.Vector3( w, -h, -d), new THREE.Vector3( w,  h, -d),
+      new THREE.Vector3( w,  h, -d), new THREE.Vector3(-w,  h, -d),
+      new THREE.Vector3(-w,  h, -d), new THREE.Vector3(-w, -h, -d),
+      // Lines to apex (at camera position z = 0)
+      new THREE.Vector3(-w, -h, -d), new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3( w, -h, -d), new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3( w,  h, -d), new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-w,  h, -d), new THREE.Vector3(0, 0, 0),
+    ]);
+  }
+
+  const PHI_G = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N_CAM; i++) {
+    const y  = 1 - (i / (N_CAM - 1)) * 2;
+    const rv = Math.sqrt(Math.max(0, 1 - y * y));
+    const t  = PHI_G * i;
+    const x  = CAM_R * rv * Math.cos(t);
+    const yy = CAM_R * y;
+    const z  = CAM_R * rv * Math.sin(t);
+
+    const f = new THREE.LineSegments(makeFrustumGeo(), fMat2);
+    f.position.set(x, yy, z);
+    f.lookAt(0, 0, 0);
+    s2.add(f);
+
+    s2.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, yy, z), new THREE.Vector3(0, 0, 0),
+      ]),
+      lMat2,
+    ));
+  }
+  let theta2 = 0;
+  const updateCam2 = () => {
+    cam2.position.set(4.5 * Math.sin(theta2), 3, 4.5 * Math.cos(theta2));
+    cam2.lookAt(0, 0, 0);
+  };
+
+  // ── Phase 3: NeRF orbit — all 200 frames cycling ────────
+  const NERF_N   = 200;
+  const nerfUrls = Array.from({ length: NERF_N }, (_, i) => `assets/test/r_${i}.png`);
+  let p3Idx = 0, p3Tick = 0;
+  let p3Preloaded = false;
+
+  const preloadPhase3 = () => {
+    if (p3Preloaded) return;
+    p3Preloaded = true;
+    nerfUrls.forEach(url => { const pre = new Image(); pre.src = url; });
+  };
+
+  // ── Resize ─────────────────────────────────────────────
+  const resize = () => {
+    const s = orb.clientWidth | 0;
+    if (!s) return;
+    r2.setSize(s, s, false);
+    cam2.aspect = 1;
+    cam2.updateProjectionMatrix();
+  };
+  resize();
+  new ResizeObserver(resize).observe(orb);
+
+  // ── Phase transitions ──────────────────────────────────
+  function setPhase(p) {
+    phase = p;
+    orb.dataset.phase = String(p);
+    if (lbl) lbl.textContent = PHASE_LABELS[p];
+    if (btn) btn.textContent = BTN_LABELS[p];
+    pdots.forEach((d, i) => d.classList.toggle("active", i + 1 === p));
+    if (p === 3) {
+      preloadPhase3();
+      p3Idx = 0; p3Tick = 0;
+      img3.src = nerfUrls[0];
     }
-  });
+  }
+
+  btn.addEventListener("click", () => setPhase(phase === 3 ? 1 : phase + 1));
 
   return {
     tick(visible) {
-      if (!visible && isNerf && !vid.paused) {
-        vid.pause();
-      } else if (visible && isNerf && vid.paused) {
-        vid.play().catch(() => {});
+      if (!visible) return;
+      if (phase === 1) {
+        p1Tick++;
+        if (p1Tick >= P1_SLOW) {
+          p1Tick = 0;
+          p1Idx = (p1Idx + 1) % p1Urls.length;
+          img1.src = p1Urls[p1Idx];
+        }
+      }
+      if (phase === 2) { theta2 += 0.006; updateCam2(); r2.render(s2, cam2); }
+      if (phase === 3) {
+        p3Tick++;
+        if (p3Tick >= 2) {
+          p3Tick = 0;
+          p3Idx = (p3Idx + 1) % NERF_N;
+          img3.src = nerfUrls[p3Idx];
+        }
       }
     },
+    enter() {},
   };
 }

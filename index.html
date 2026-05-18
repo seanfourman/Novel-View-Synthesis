@@ -294,11 +294,19 @@
               <li>לנוע בתוך הסביבה</li>
               <li>להסתכל על אובייקטים מזוויות שונות</li>
             </ul>
-            <div class="sts-orb-wrap" id="sts-orb">
-              <img src="assets/images/trex.jpg" class="sts-media" alt="T-Rex scene input">
-              <video src="assets/videos/trex.mp4" class="sts-media sts-nerf-vid" id="sts-vid"
-                muted loop playsinline></video>
-              <button class="sts-toggle-btn" id="sts-btn">הצג בNeRF</button>
+            <div class="sts-orb-wrap" id="sts-orb" data-phase="1">
+              <img class="sts-layer" id="sts-img" alt="" />
+              <canvas class="sts-layer" id="sts-c2"></canvas>
+              <img class="sts-layer" id="sts-img3" alt="" />
+              <div class="sts-orb-ui">
+                <span class="sts-phase-label" id="sts-lbl">תמונות קלט</span>
+                <div class="sts-phase-dots">
+                  <span class="sts-pdot active" data-p="1"></span>
+                  <span class="sts-pdot" data-p="2"></span>
+                  <span class="sts-pdot" data-p="3"></span>
+                </div>
+                <button class="sts-toggle-btn" id="sts-btn">לשלב הבא ←</button>
+              </div>
             </div>
             <ul class="sts-bullets">
               <li>לחוות עומק ותנועה בצורה טבעית</li>
