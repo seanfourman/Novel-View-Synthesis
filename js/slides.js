@@ -2833,14 +2833,14 @@ export function initProblemVis() {
     py = t.clientY;
     canvas.style.cursor = "grabbing";
   };
+  // Max phi that keeps camera above floor (floor y = -0.5, add 0.2 margin)
+  const maxPhi = () => Math.acos(Math.max(-0.999, (-0.5 + 0.2 - target.y) / sph.r));
+
   const moveDrag = (e) => {
     if (!isDown) return;
     const t = e.touches ? e.touches[0] : e;
     sph.theta -= (t.clientX - px) * 0.007;
-    sph.phi = Math.max(
-      0.15,
-      Math.min(Math.PI * 0.85, sph.phi + (t.clientY - py) * 0.007),
-    );
+    sph.phi = Math.max(0.15, Math.min(maxPhi(), sph.phi + (t.clientY - py) * 0.007));
     px = t.clientX;
     py = t.clientY;
     applyCamera();
@@ -2862,6 +2862,7 @@ export function initProblemVis() {
       // Normalize across pixel (trackpad) and line (mouse wheel) deltaMode
       const delta = e.deltaMode === 0 ? e.deltaY * 0.02 : e.deltaY * 0.5;
       sph.r = Math.max(2.5, Math.min(12, sph.r + delta));
+      sph.phi = Math.min(sph.phi, maxPhi());
       applyCamera();
       e.preventDefault();
     },
