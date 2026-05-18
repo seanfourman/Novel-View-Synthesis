@@ -957,6 +957,17 @@ export function initDepthBasedNVS() {
     }
   }
 
+  function drawRgbToDepth(width, height, t, progress) {
+    drawRgb(width, height);
+    if (!depthCanvas) return;
+    const p = easeInOutCubic(progress);
+    const rect = imageRect(width, height);
+    ctx.save();
+    ctx.globalAlpha = p;
+    ctx.drawImage(depthCanvas, rect.x, rect.y, rect.width, rect.height);
+    ctx.restore();
+  }
+
   function drawDepthColor(width, height, t) {
     if (!depthColorCanvas) {
       drawDepth(width, height, t, 1);
@@ -1477,7 +1488,7 @@ export function initDepthBasedNVS() {
 
     if (fromMode === "rgb" && toMode === "depth") {
       if (!depthCanvas) drawRgb(width, height);
-      else drawDepth(width, height, t, easeInOutCubic(progress));
+      else drawRgbToDepth(width, height, t, progress);
       return;
     }
     if (fromMode === "depth" && toMode === "depthColor") {
