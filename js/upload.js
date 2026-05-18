@@ -1,4 +1,4 @@
-// upload.js — slide 2 is now a click-through NeRF process overview.
+// upload.js — slide 3 is now a click-through NeRF process overview.
 
 export function initUpload() {
   const root = document.getElementById('process-slide');

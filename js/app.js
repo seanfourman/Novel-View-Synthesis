@@ -101,17 +101,18 @@ function updateChrome() {
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
   0:  initTitleBg,        // slide 1
-  1:  initDepthBasedNVS,  // slide 2
-  2:  initApplications,   // slide 3
-  3:  initWhyHard,        // slide 4
-  4:  initClassic,        // slide 5
-  // slide 6 (NeRF intro) — no canvas
-  6:  initRotatable,      // slide 7
-  8:  initRayDemo,        // slide 9
-  9:  initTraining,       // slide 10
-  10: initClickableViews, // slide 11
-  11: initOrbitScrubber,  // slide 12
-  14: initEndBg,          // slide 15
+  // slide 2 (live viewer comparison) — iframes only
+  2:  initDepthBasedNVS,  // slide 3
+  3:  initApplications,   // slide 4
+  4:  initWhyHard,        // slide 5
+  5:  initClassic,        // slide 6
+  // slide 7 (NeRF intro) — no canvas
+  7:  initRotatable,      // slide 8
+  9:  initRayDemo,        // slide 10
+  10: initTraining,       // slide 11
+  11: initClickableViews, // slide 12
+  12: initOrbitScrubber,  // slide 13
+  15: initEndBg,          // slide 16
 };
 
 const sceneInstances = {};
@@ -129,10 +130,10 @@ function ensureSlideInit(idx) {
 }
 
 ensureSlideInit(0);
-ensureSlideInit(1);   // what-is slide
-ensureSlideInit(2);   // applications
-ensureSlideInit(3);   // why-hard
-ensureSlideInit(4);   // classic
+ensureSlideInit(2);   // depth-based NVS
+ensureSlideInit(3);   // applications
+ensureSlideInit(4);   // why-hard
+ensureSlideInit(5);   // classic
 
 /* ===================== Render loop ===================== */
 function loop() {

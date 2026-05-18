@@ -227,7 +227,7 @@ export function initTitleBg() {
 }
 
 /* =========================================================
-   Slide 2: Concrete single-image depth-based NVS pipeline
+   Slide 3: Concrete single-image depth-based NVS pipeline
    ========================================================= */
 export function initDepthBasedNVS() {
   const root = document.getElementById("nvs-slide");
@@ -1978,22 +1978,22 @@ export function initDepthBasedNVS() {
 }
 
 /* =========================================================
-   Slides 3–5: NeRF project-page videos
+   Slides 4–6: NeRF project-page videos
    ========================================================= */
 export function initApplications() {
-  return controlVideos(document.querySelectorAll('.slide[data-id="3"] video'));
-}
-
-export function initWhyHard() {
   return controlVideos(document.querySelectorAll('.slide[data-id="4"] video'));
 }
 
-export function initClassic() {
+export function initWhyHard() {
   return controlVideos(document.querySelectorAll('.slide[data-id="5"] video'));
 }
 
+export function initClassic() {
+  return controlVideos(document.querySelectorAll('.slide[data-id="6"] video'));
+}
+
 /* =========================================================
-   Slide 6: Old approaches — two NeRF clips, autoplay loop
+   Old approaches — two NeRF clips, autoplay loop
    ========================================================= */
 export function initOldApproaches() {
   const vids = document.querySelectorAll(".old-card video");
@@ -2014,7 +2014,7 @@ export function initOldApproaches() {
 }
 
 /* =========================================================
-   Slide 7: Rotatable — drag horizontally to scrub through orbit video
+   Slide 8: Rotatable — drag horizontally to scrub through orbit video
    ========================================================= */
 export function initRotatable() {
   const stage = document.getElementById("rotatable-stage");
@@ -2351,7 +2351,7 @@ export function initRayDemo() {
 }
 
 /* =========================================================
-   Slide 10: Training — prediction sharpens, error fades
+   Slide 11: Training — prediction sharpens, error fades
    ========================================================= */
 export function initTraining() {
   const pred = document.querySelector(".train-video.pred");
@@ -2418,7 +2418,7 @@ export function initTraining() {
 }
 
 /* =========================================================
-   Slide 11: Clickable viewpoints — camera buttons mapped to video time
+   Slide 12: Clickable viewpoints — camera buttons mapped to video time
    ========================================================= */
 export function initClickableViews() {
   const v = document.getElementById("view-video");
@@ -2528,7 +2528,7 @@ export function initClickableViews() {
 }
 
 /* =========================================================
-   Slide 12: Orbit scrubber — slider maps to video time
+   Slide 13: Orbit scrubber — slider maps to video time
    ========================================================= */
 export function initOrbitScrubber() {
   const v = document.getElementById("orbit-video");
