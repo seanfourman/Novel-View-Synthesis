@@ -767,7 +767,9 @@ export function initDepthBasedNVS() {
   async function loadOrbitAssets() {
     const [iso, grid] = await Promise.all([
       loadImageCanvas("assets/images/redtoyota_isolated.jpg").catch(() => null),
-      loadImageCanvas("assets/images/redtoyota_orbit_grid.jpg").catch(() => null),
+      loadImageCanvas("assets/images/redtoyota_orbit_grid.jpg", 960).catch(
+        () => null,
+      ),
     ]);
     isolatedCanvas = iso;
     orbitGridCanvas = grid;
