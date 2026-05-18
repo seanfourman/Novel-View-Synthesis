@@ -46,83 +46,24 @@
         <div class="scroll-cue">↓</div>
       </section>
 
-      <!-- ============ SLIDE 2: CLICK-THROUGH PROCESS ============ -->
+      <!-- ============ SLIDE 2: MODEL PROCESS ============ -->
       <section class="slide" data-id="2">
-        <div class="process-slide" id="process-slide">
-          <div class="kicker">כל התהליך, במקום אחד</div>
-          <h2>מתמונות קלט <em>למבטים חדשים</em></h2>
+        <div class="nvs-process-slide" id="nvs-slide">
+          <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
+          <h2>מה באמת עובר דרך המודל?</h2>
           <p class="lead small">
-            לחיצה על העכבר מקדמת את הסיפור: אוספים תמונות, שולחים קרניים, לומדים שדה קרינה, ומרנדרים מצלמה חדשה.
+            זה pipeline אמיתי אחד מתוך משפחת NVS: מתחילים מתמונת RGB, מעריכים עומק, מרימים פיקסלים למרחב, מקרינים למצלמה חדשה, ואז ממלאים אזורים שלא נראו במקור.
           </p>
 
-          <div class="process-board" tabindex="0">
-            <div class="process-step active" data-step="0">
-              <div class="process-media-grid">
-                <video class="asset-video" src="assets/videos/fern_200k_rgb.mp4" poster="assets/images/fern_200k_rgb.jpg" muted loop playsinline preload="auto"></video>
-                <video class="asset-video" src="assets/videos/trex.mp4" poster="assets/images/trex.jpg" muted loop playsinline preload="auto"></video>
-                <video class="asset-video" src="assets/videos/redtoyota.mp4" poster="assets/images/redtoyota.jpg" muted loop playsinline preload="auto"></video>
-              </div>
-              <div class="process-copy">
-                <div class="process-num">01</div>
-                <h3>תמונות קלט עם תנוחות מצלמה</h3>
-                <p>לא תמונה אחת: NeRF מקבל אוסף תמונות של אותה סצנה, וכל תמונה מגיעה עם מיקום וכיוון מצלמה.</p>
-              </div>
-            </div>
-
-            <div class="process-step" data-step="1">
-              <div class="process-single-media">
-                <video class="asset-video" src="assets/videos/depth_ornament.mp4" poster="assets/images/depth_ornament.jpg" muted loop playsinline preload="auto"></video>
-              </div>
-              <div class="process-copy">
-                <div class="process-num">02</div>
-                <h3>קרניים ודגימות לאורך כל פיקסל</h3>
-                <p>לכל פיקסל שולחים קרן, דוגמים נקודות במרחב, ומבקשים מהמודל צבע וצפיפות. העומק יוצא מתוך אותה אינטגרציה.</p>
-              </div>
-            </div>
-
-            <div class="process-step" data-step="2">
-              <div class="process-field-stack">
-                <video class="asset-video" src="assets/videos/viewdirs_website_stove.mp4" poster="assets/images/viewdirs_website.jpg" muted loop playsinline preload="auto"></video>
-                <div class="process-field">
-                <div class="field-inputs" dir="ltr">
-                  <span>x,y,z</span>
-                  <span>θ,φ</span>
-                </div>
-                <div class="field-mlp">
-                  <span></span><span></span><span></span><span></span><span></span>
-                </div>
-                <div class="field-outputs" dir="ltr">
-                  <span>RGB</span>
-                  <span>σ</span>
-                </div>
-                </div>
-              </div>
-              <div class="process-copy">
-                <div class="process-num">03</div>
-                <h3>שדה קרינה רציף</h3>
-                <p>הרשת לא שומרת תמונות. היא לומדת פונקציה רציפה: איפה יש חומר, איזה צבע הוא פולט, ואיך הוא משתנה לפי כיוון צפייה.</p>
-              </div>
-            </div>
-
-            <div class="process-step" data-step="3">
-              <div class="process-media-grid">
-                <video class="asset-video" src="assets/videos/synth_grid_3.mp4" poster="assets/images/synth_grid_website.jpg" muted loop playsinline preload="auto"></video>
-                <video class="asset-video" src="assets/videos/website_360.mp4" poster="assets/images/website_360.jpg" muted loop playsinline preload="auto"></video>
-              </div>
-              <div class="process-copy">
-                <div class="process-num">04</div>
-                <h3>מצלמה חדשה, פריים חדש</h3>
-                <p>עכשיו אפשר לבחור נקודת מבט שלא הייתה בקלט. NeRF מריץ קרניים מחדש ומייצר תמונה עקבית מהשדה שנלמד.</p>
-              </div>
-            </div>
+          <div class="nvs-process-board nvs-single-stage" id="nvs-process-board" tabindex="0" aria-label="Click to advance the novel view synthesis process">
+            <canvas id="nvs-process-canvas" aria-label="Actual intermediate image for a depth-based novel view synthesis pipeline"></canvas>
+            <div class="nvs-loading" id="nvs-loading" hidden>Loading depth model...</div>
           </div>
-
-          <div class="process-controls">
-            <button class="process-dot active" data-step="0">1</button>
-            <button class="process-dot" data-step="1">2</button>
-            <button class="process-dot" data-step="2">3</button>
-            <button class="process-dot" data-step="3">4</button>
-            <button class="process-next" id="process-next">לחצו להתקדמות</button>
+          <div class="nvs-stage-caption">
+            <h3 id="nvs-step-title">קלט: תמונת RGB</h3>
+            <p id="nvs-step-text">
+              תמונה אחת מהמצלמה, בלי עומק מפורש.
+            </p>
           </div>
         </div>
       </section>

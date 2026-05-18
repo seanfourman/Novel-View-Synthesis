@@ -1,11 +1,10 @@
 // app.js — entry point: scroll/keyboard navigation and slide visibility tracking.
 
 import {
-  initTitleBg, initApplications, initWhyHard, initClassic,
+  initTitleBg, initDepthBasedNVS, initApplications, initWhyHard, initClassic,
   initOldApproaches, initRotatable, initRayDemo, initTraining,
   initClickableViews, initOrbitScrubber, initEndBg,
 } from './slides.js';
-import { initUpload } from './upload.js';
 
 const deck = document.getElementById('deck');
 const slides = Array.from(document.querySelectorAll('.slide'));
@@ -102,7 +101,7 @@ function updateChrome() {
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
   0:  initTitleBg,        // slide 1
-  1:  initUpload,         // slide 2 process
+  1:  initDepthBasedNVS,  // slide 2
   2:  initApplications,   // slide 3
   3:  initWhyHard,        // slide 4
   4:  initClassic,        // slide 5
@@ -130,7 +129,7 @@ function ensureSlideInit(idx) {
 }
 
 ensureSlideInit(0);
-ensureSlideInit(1);   // process slide
+ensureSlideInit(1);   // what-is slide
 ensureSlideInit(2);   // applications
 ensureSlideInit(3);   // why-hard
 ensureSlideInit(4);   // classic
