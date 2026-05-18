@@ -279,6 +279,12 @@ code {
   border: 0;
   background: #050505;
 }
+.matterport-clean-frame iframe {
+  width: calc(100% + 140px);
+  height: calc(100% + 150px);
+  transform: translate(-70px, -60px);
+  transform-origin: top left;
+}
 .live-tour-label {
   position: absolute;
   top: 12px;
@@ -1307,6 +1313,11 @@ code {
     text-align: right;
   }
   .live-tour-grid { grid-template-columns: 1fr; }
+  .matterport-clean-frame iframe {
+    width: calc(100% + 100px);
+    height: calc(100% + 120px);
+    transform: translate(-50px, -48px);
+  }
   .nvs-stage-caption {
     width: min(var(--nvs-display-width, 780px), calc(100vw - 2rem));
     padding-inline: 0.85rem;
