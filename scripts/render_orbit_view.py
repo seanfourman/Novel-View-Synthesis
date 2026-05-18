@@ -2,7 +2,7 @@
 Object-centric novel view of the red Toyota for slide 2.
 
 Replaces the depth-warp + LaMa approach (which had no 3D priors and just stretched
-edge pixels into a hallucinated road/silver car) with Zero123++ — a multi-view
+edge pixels into a hallucinated road/silver car) with Zero123++ - a multi-view
 diffusion model trained on Objaverse. The model has learned what cars look like
 from arbitrary angles, so it can actually render the same vehicle from a rotated
 camera position.
@@ -18,8 +18,8 @@ Pipeline:
 Why view 1 by default:
   Zero123++ v1.2 returns a 640x960 grid of 6 fixed views at azimuths
   (30°, 90°, 150°, 210°, 270°, 330°) and alternating elevations (+20°, -10°).
-  View 1 (+30°, +20°) is the smallest orbit step — "camera moved a bit to the
-  right, looking slightly down" — which matches the slide's narrative best.
+  View 1 (+30°, +20°) is the smallest orbit step - "camera moved a bit to the
+  right, looking slightly down" - which matches the slide's narrative best.
 
 Run locally (CPU; expect ~5-15 min for 36 inference steps):
     pip install diffusers accelerate rembg onnxruntime

@@ -1,8 +1,8 @@
-// scene.js — procedural showcase scene used across the deck.
+// scene.js - procedural showcase scene used across the deck.
 // One reusable "diorama" that looks different from every angle, so it
 // works as a believable novel-view-synthesis subject.
 
-import * as THREE from 'three';
+import * as THREE from "three";
 
 /** Build a small, colorful diorama: ground + cottage + tree + rocks + flag. */
 export function buildDiorama() {
@@ -11,7 +11,7 @@ export function buildDiorama() {
   // ---------- ground disk ----------
   const ground = new THREE.Mesh(
     new THREE.CylinderGeometry(3.6, 3.6, 0.25, 64),
-    new THREE.MeshStandardMaterial({ color: 0x9bd17a, roughness: 0.95 })
+    new THREE.MeshStandardMaterial({ color: 0x9bd17a, roughness: 0.95 }),
   );
   ground.position.y = -0.125;
   ground.receiveShadow = true;
@@ -20,7 +20,7 @@ export function buildDiorama() {
   // tiny dirt path
   const path = new THREE.Mesh(
     new THREE.PlaneGeometry(0.7, 2.6),
-    new THREE.MeshStandardMaterial({ color: 0xc9a875, roughness: 1 })
+    new THREE.MeshStandardMaterial({ color: 0xc9a875, roughness: 1 }),
   );
   path.rotation.x = -Math.PI / 2;
   path.position.set(0.4, 0.005, 1.0);
@@ -34,16 +34,17 @@ export function buildDiorama() {
   // walls
   const walls = new THREE.Mesh(
     new THREE.BoxGeometry(1.6, 1.1, 1.4),
-    new THREE.MeshStandardMaterial({ color: 0xf2e3c6, roughness: 0.85 })
+    new THREE.MeshStandardMaterial({ color: 0xf2e3c6, roughness: 0.85 }),
   );
   walls.position.y = 0.55;
-  walls.castShadow = true; walls.receiveShadow = true;
+  walls.castShadow = true;
+  walls.receiveShadow = true;
   cottage.add(walls);
 
   // roof (prism via cone with 4 sides)
   const roof = new THREE.Mesh(
     new THREE.ConeGeometry(1.35, 0.9, 4),
-    new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.7 })
+    new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.7 }),
   );
   roof.position.y = 1.55;
   roof.rotation.y = Math.PI / 4;
@@ -53,7 +54,7 @@ export function buildDiorama() {
   // door
   const door = new THREE.Mesh(
     new THREE.BoxGeometry(0.32, 0.55, 0.05),
-    new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.6 })
+    new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.6 }),
   );
   door.position.set(0, 0.28, 0.71);
   cottage.add(door);
@@ -68,7 +69,7 @@ export function buildDiorama() {
         metalness: 0.3,
         emissive: 0x143a55,
         emissiveIntensity: 0.4,
-      })
+      }),
     );
     win.position.set(side * 0.45, 0.7, 0.71);
     cottage.add(win);
@@ -77,9 +78,12 @@ export function buildDiorama() {
   const winB = new THREE.Mesh(
     new THREE.BoxGeometry(0.28, 0.28, 0.05),
     new THREE.MeshStandardMaterial({
-      color: 0x67c2ff, roughness: 0.2, metalness: 0.3,
-      emissive: 0x143a55, emissiveIntensity: 0.4
-    })
+      color: 0x67c2ff,
+      roughness: 0.2,
+      metalness: 0.3,
+      emissive: 0x143a55,
+      emissiveIntensity: 0.4,
+    }),
   );
   winB.position.set(0, 0.7, -0.71);
   cottage.add(winB);
@@ -87,7 +91,7 @@ export function buildDiorama() {
   // chimney
   const chimney = new THREE.Mesh(
     new THREE.BoxGeometry(0.2, 0.55, 0.2),
-    new THREE.MeshStandardMaterial({ color: 0x8a6f5a, roughness: 0.9 })
+    new THREE.MeshStandardMaterial({ color: 0x8a6f5a, roughness: 0.9 }),
   );
   chimney.position.set(-0.5, 1.5, -0.3);
   cottage.add(chimney);
@@ -99,14 +103,18 @@ export function buildDiorama() {
   tree.position.set(1.4, 0, 0.4);
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(0.12, 0.16, 0.9, 12),
-    new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.9 })
+    new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.9 }),
   );
   trunk.position.y = 0.45;
   trunk.castShadow = true;
   tree.add(trunk);
 
   // 3-stacked leaves
-  const leafMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.7, flatShading: true });
+  const leafMat = new THREE.MeshStandardMaterial({
+    color: 0x2e8b57,
+    roughness: 0.7,
+    flatShading: true,
+  });
   const leaves = [
     [0.6, 0.95],
     [0.5, 1.3],
@@ -121,7 +129,11 @@ export function buildDiorama() {
   group.add(tree);
 
   // ---------- rocks ----------
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 1, flatShading: true });
+  const rockMat = new THREE.MeshStandardMaterial({
+    color: 0x8a8a8a,
+    roughness: 1,
+    flatShading: true,
+  });
   const rockData = [
     [1.3, 0.18, -1.1, 0.32, 0.3],
     [-1.7, 0.14, 0.8, 0.26, 1.1],
@@ -133,14 +145,19 @@ export function buildDiorama() {
     const r = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), rockMat);
     r.position.set(x, y, z);
     r.rotation.y = rot;
-    r.castShadow = true; r.receiveShadow = true;
+    r.castShadow = true;
+    r.receiveShadow = true;
     group.add(r);
   }
 
   // ---------- flag pole ----------
   const flagPole = new THREE.Mesh(
     new THREE.CylinderGeometry(0.025, 0.025, 1.4, 10),
-    new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.4, metalness: 0.6 })
+    new THREE.MeshStandardMaterial({
+      color: 0x444444,
+      roughness: 0.4,
+      metalness: 0.6,
+    }),
   );
   flagPole.position.set(0.5, 0.7, -1.6);
   flagPole.castShadow = true;
@@ -148,15 +165,30 @@ export function buildDiorama() {
 
   const flag = new THREE.Mesh(
     new THREE.PlaneGeometry(0.45, 0.28),
-    new THREE.MeshStandardMaterial({ color: 0xff5a36, roughness: 0.7, side: THREE.DoubleSide })
+    new THREE.MeshStandardMaterial({
+      color: 0xff5a36,
+      roughness: 0.7,
+      side: THREE.DoubleSide,
+    }),
   );
   flag.position.set(0.73, 1.25, -1.6);
   group.add(flag);
 
   // ---------- bushes ----------
-  const bushMat = new THREE.MeshStandardMaterial({ color: 0x5cb85c, roughness: 0.9, flatShading: true });
-  for (const pos of [[-1.2, 0, -1.4], [1.9, 0, -0.8], [-0.4, 0, 1.8]]) {
-    const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28, 0), bushMat);
+  const bushMat = new THREE.MeshStandardMaterial({
+    color: 0x5cb85c,
+    roughness: 0.9,
+    flatShading: true,
+  });
+  for (const pos of [
+    [-1.2, 0, -1.4],
+    [1.9, 0, -0.8],
+    [-0.4, 0, 1.8],
+  ]) {
+    const bush = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.28, 0),
+      bushMat,
+    );
     bush.position.set(pos[0], 0.2, pos[2]);
     bush.castShadow = true;
     group.add(bush);
@@ -186,7 +218,7 @@ export function makeStudio(container, opts = {}) {
   const scene = new THREE.Scene();
   if (!transparent) scene.background = new THREE.Color(background);
 
-  // lighting — bright key + warm fill + cool rim
+  // lighting - bright key + warm fill + cool rim
   const hemi = new THREE.HemisphereLight(0xffffff, 0xc8d8e8, 0.55);
   scene.add(hemi);
 
@@ -246,11 +278,17 @@ export function makeStudio(container, opts = {}) {
 
 /** Position camera at angle (theta in radians, around Y) at given radius/height,
  *  looking at the diorama center. */
-export function placeCamera(camera, theta, radius = 5.5, height = 2.4, target = [0, 0.8, 0]) {
+export function placeCamera(
+  camera,
+  theta,
+  radius = 5.5,
+  height = 2.4,
+  target = [0, 0.8, 0],
+) {
   camera.position.set(
     Math.cos(theta) * radius,
     height,
-    Math.sin(theta) * radius
+    Math.sin(theta) * radius,
   );
   camera.lookAt(target[0], target[1], target[2]);
 }
@@ -266,10 +304,14 @@ export function placeCamera(camera, theta, radius = 5.5, height = 2.4, target = 
 let _shared = null;
 function getShared() {
   if (_shared) return _shared;
-  const canvas = document.createElement('canvas');
-  canvas.width = 256; canvas.height = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
   const renderer = new THREE.WebGLRenderer({
-    canvas, antialias: true, preserveDrawingBuffer: true, alpha: true,
+    canvas,
+    antialias: true,
+    preserveDrawingBuffer: true,
+    alpha: true,
   });
   renderer.setClearColor(0xffffff, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -282,13 +324,13 @@ function getShared() {
 }
 
 /** Render `scene` from `camera` and copy the result to `target` (a 2D canvas).
- *  target.getContext('2d') is used — after this call target is a 2D canvas
+ *  target.getContext('2d') is used - after this call target is a 2D canvas
  *  forever. `quality` (default 1) shrinks the offscreen render size to
  *  produce a blurry/low-fi look when upscaled. */
 export function renderTile(target, scene, camera, quality = 1) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = (target.clientWidth | 0) || 1;
-  const h = (target.clientHeight | 0) || 1;
+  const w = target.clientWidth | 0 || 1;
+  const h = target.clientHeight | 0 || 1;
   const bw = Math.max(1, Math.round(w * dpr));
   const bh = Math.max(1, Math.round(h * dpr));
   const rw = Math.max(1, Math.round(bw * quality));
@@ -299,16 +341,20 @@ export function renderTile(target, scene, camera, quality = 1) {
 
   const { canvas: off, renderer } = getShared();
   if (off.width !== rw || off.height !== rh) {
-    off.width = rw; off.height = rh;
+    off.width = rw;
+    off.height = rh;
   }
   renderer.setSize(rw, rh, false);
   if (camera.isPerspectiveCamera) {
     const a = w / h;
-    if (camera.aspect !== a) { camera.aspect = a; camera.updateProjectionMatrix(); }
+    if (camera.aspect !== a) {
+      camera.aspect = a;
+      camera.updateProjectionMatrix();
+    }
   }
   renderer.render(scene, camera);
 
-  const ctx = target.getContext('2d');
+  const ctx = target.getContext("2d");
   ctx.imageSmoothingEnabled = quality >= 1;
   ctx.clearRect(0, 0, bw, bh);
   ctx.drawImage(off, 0, 0, bw, bh);

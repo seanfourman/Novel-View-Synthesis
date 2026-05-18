@@ -1,11 +1,11 @@
-// views.js — reusable depth-displaced plane scene.
+// views.js - reusable depth-displaced plane scene.
 //
 // Given a photo + depth map, builds a tessellated plane mesh in Three.js whose
 // vertices are pushed forward proportional to depth. Renderable from any
-// camera angle — this is the workhorse for all photo-based visualizations on
+// camera angle - this is the workhorse for all photo-based visualizations on
 // slides 3–6.
 
-import * as THREE from 'three';
+import * as THREE from "three";
 
 const _shared = {
   canvas: null,
@@ -14,10 +14,14 @@ const _shared = {
 
 function ensureRenderer() {
   if (_shared.renderer) return _shared;
-  const c = document.createElement('canvas');
-  c.width = 512; c.height = 512;
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 512;
   const r = new THREE.WebGLRenderer({
-    canvas: c, antialias: true, preserveDrawingBuffer: true, alpha: true,
+    canvas: c,
+    antialias: true,
+    preserveDrawingBuffer: true,
+    alpha: true,
   });
   r.outputColorSpace = THREE.SRGBColorSpace;
   r.setClearColor(0xffffff, 1);
@@ -26,7 +30,7 @@ function ensureRenderer() {
   return _shared;
 }
 
-const VERT = /* glsl */`
+const VERT = /* glsl */ `
   uniform sampler2D depthMap;
   uniform float strength;
   varying vec2 vUv;
@@ -41,7 +45,7 @@ const VERT = /* glsl */`
   }
 `;
 
-const FRAG_BASIC = /* glsl */`
+const FRAG_BASIC = /* glsl */ `
   uniform sampler2D image;
   uniform float bgFill;
   varying vec2 vUv;
@@ -51,7 +55,7 @@ const FRAG_BASIC = /* glsl */`
   }
 `;
 
-const FRAG_SPECULAR = /* glsl */`
+const FRAG_SPECULAR = /* glsl */ `
   uniform sampler2D image;
   uniform vec3  lightPos;       // in normalized UV space (with .z = height)
   uniform float specStrength;
@@ -70,7 +74,7 @@ const FRAG_SPECULAR = /* glsl */`
   }
 `;
 
-const FRAG_HEATMAP = /* glsl */`
+const FRAG_HEATMAP = /* glsl */ `
   uniform sampler2D image;
   uniform float mixAmt;
   varying vec2 vUv;
@@ -94,7 +98,7 @@ const FRAG_HEATMAP = /* glsl */`
   }
 `;
 
-const FRAG_FLAT = /* glsl */`
+const FRAG_FLAT = /* glsl */ `
   uniform sampler2D image;
   varying vec2 vUv;
   void main() {
@@ -112,7 +116,7 @@ const FRAG_FLAT = /* glsl */`
  */
 export function buildDepthScene(imageCanvas, depthCanvas, options = {}) {
   const {
-    shader = 'basic',
+    shader = "basic",
     strength = 0.42,
     flat = false,
     tess = 180,
@@ -120,7 +124,8 @@ export function buildDepthScene(imageCanvas, depthCanvas, options = {}) {
   } = options;
 
   const aspect = imageCanvas.width / imageCanvas.height;
-  const W = 2, H = 2 / aspect;
+  const W = 2,
+    H = 2 / aspect;
   const segX = aspect >= 1 ? tess : Math.max(40, Math.round(tess * aspect));
   const segY = aspect >= 1 ? Math.max(40, Math.round(tess / aspect)) : tess;
 
@@ -137,21 +142,21 @@ export function buildDepthScene(imageCanvas, depthCanvas, options = {}) {
   depthTex.magFilter = THREE.LinearFilter;
 
   const uniforms = {
-    image:     { value: imageTex },
-    depthMap:  { value: depthTex },
-    strength:  { value: flat ? 0.0 : strength },
-    bgFill:    { value: 1.0 },
+    image: { value: imageTex },
+    depthMap: { value: depthTex },
+    strength: { value: flat ? 0.0 : strength },
+    bgFill: { value: 1.0 },
   };
   let frag = FRAG_BASIC;
-  if (shader === 'specular') {
+  if (shader === "specular") {
     frag = FRAG_SPECULAR;
-    uniforms.lightPos     = { value: new THREE.Vector3(0.5, 0.5, 0.5) };
+    uniforms.lightPos = { value: new THREE.Vector3(0.5, 0.5, 0.5) };
     uniforms.specStrength = { value: 0.85 };
-    uniforms.specSize     = { value: 0.04 };
-  } else if (shader === 'heatmap') {
+    uniforms.specSize = { value: 0.04 };
+  } else if (shader === "heatmap") {
     frag = FRAG_HEATMAP;
     uniforms.mixAmt = { value: 0.55 };
-  } else if (shader === 'flat') {
+  } else if (shader === "flat") {
     frag = FRAG_FLAT;
   }
 
@@ -171,19 +176,31 @@ export function buildDepthScene(imageCanvas, depthCanvas, options = {}) {
   // hard edge of the plane. Use a faint colored quad behind.
   const bg = new THREE.Mesh(
     new THREE.PlaneGeometry(W * 1.3, H * 1.3),
-    new THREE.MeshBasicMaterial({ color: 0xf2f2f2 })
+    new THREE.MeshBasicMaterial({ color: 0xf2f2f2 }),
   );
   bg.position.z = -0.5;
   scene.add(bg);
 
-  return { scene, mesh, geom, material, uniforms, imageTex, depthTex, aspect, W, H };
+  return {
+    scene,
+    mesh,
+    geom,
+    material,
+    uniforms,
+    imageTex,
+    depthTex,
+    aspect,
+    W,
+    H,
+  };
 }
 
 /** A live wireframe version of the depth-displaced mesh, baked once. */
 export function buildWireframeScene(imageCanvas, depthCanvas, options = {}) {
   const { strength = 0.42, tess = 80, bgColor = 0xffffff } = options;
   const aspect = imageCanvas.width / imageCanvas.height;
-  const W = 2, H = 2 / aspect;
+  const W = 2,
+    H = 2 / aspect;
   const segX = aspect >= 1 ? tess : Math.max(30, Math.round(tess * aspect));
   const segY = aspect >= 1 ? Math.max(30, Math.round(tess / aspect)) : tess;
 
@@ -191,8 +208,9 @@ export function buildWireframeScene(imageCanvas, depthCanvas, options = {}) {
   // bake depth into positions
   const pos = geom.attributes.position;
   const uv = geom.attributes.uv;
-  const dctx = depthCanvas.getContext('2d');
-  const dw = depthCanvas.width, dh = depthCanvas.height;
+  const dctx = depthCanvas.getContext("2d");
+  const dw = depthCanvas.width,
+    dh = depthCanvas.height;
   const data = dctx.getImageData(0, 0, dw, dh).data;
   for (let i = 0; i < pos.count; i++) {
     const u = uv.getX(i);
@@ -206,7 +224,10 @@ export function buildWireframeScene(imageCanvas, depthCanvas, options = {}) {
   geom.computeVertexNormals();
 
   const mat = new THREE.MeshBasicMaterial({
-    color: 0x333333, wireframe: true, transparent: true, opacity: 0.7,
+    color: 0x333333,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.7,
   });
   const mesh = new THREE.Mesh(geom, mat);
   const scene = new THREE.Scene();
@@ -219,25 +240,27 @@ export function buildWireframeScene(imageCanvas, depthCanvas, options = {}) {
 export function renderTo(targetCanvas, scene, camera) {
   const { canvas: off, renderer } = ensureRenderer();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const w = (targetCanvas.clientWidth | 0) || 1;
-  const h = (targetCanvas.clientHeight | 0) || 1;
+  const w = targetCanvas.clientWidth | 0 || 1;
+  const h = targetCanvas.clientHeight | 0 || 1;
   const bw = Math.max(1, Math.round(w * dpr));
   const bh = Math.max(1, Math.round(h * dpr));
 
   if (targetCanvas.width !== bw) targetCanvas.width = bw;
   if (targetCanvas.height !== bh) targetCanvas.height = bh;
   if (off.width !== bw || off.height !== bh) {
-    off.width = bw; off.height = bh;
+    off.width = bw;
+    off.height = bh;
   }
   renderer.setSize(bw, bh, false);
   if (camera.isPerspectiveCamera) {
     const a = w / h;
     if (Math.abs(camera.aspect - a) > 1e-3) {
-      camera.aspect = a; camera.updateProjectionMatrix();
+      camera.aspect = a;
+      camera.updateProjectionMatrix();
     }
   }
   renderer.render(scene, camera);
-  const ctx = targetCanvas.getContext('2d');
+  const ctx = targetCanvas.getContext("2d");
   ctx.clearRect(0, 0, bw, bh);
   ctx.drawImage(off, 0, 0, bw, bh);
 }

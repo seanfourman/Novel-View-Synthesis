@@ -1,4 +1,4 @@
-// slides.js — per-slide initializers.
+// slides.js - per-slide initializers.
 
 import * as THREE from "three";
 
@@ -36,7 +36,7 @@ function controlVideos(videoList) {
 }
 
 /* =========================================================
-   Slide 1: Title — wireframe background
+   Slide 1: Title - wireframe background
    ========================================================= */
 export function initTitleBg() {
   const canvas = document.getElementById("title-bg");
@@ -650,7 +650,10 @@ export function initDepthBasedNVS() {
     for (const point of points) {
       const x = Math.max(
         0,
-        Math.min(width - 1, Math.round((point.sx / sourceCanvas.width) * width)),
+        Math.min(
+          width - 1,
+          Math.round((point.sx / sourceCanvas.width) * width),
+        ),
       );
       const y = Math.max(
         0,
@@ -772,7 +775,7 @@ export function initDepthBasedNVS() {
 
   // Stage 4 used to "reproject to the right" with a 24° yaw + shift. With the
   // new object-centric pipeline (stage 5 = 6 orbit views from Zero123++) that
-  // specific direction doesn't belong anymore — the depth-based projection just
+  // specific direction doesn't belong anymore - the depth-based projection just
   // collapses the cloud back to the source image plane, no camera movement.
   const TARGET_YAW = 0;
   const TARGET_SHIFT_X = 0;
@@ -925,11 +928,14 @@ export function initDepthBasedNVS() {
 
   // Cell offsets (sx, sy) inside the 640×960 orbit_grid image. Each cell is 320×320.
   // Order matches view1..view6 in scripts/render_orbit_view.py (azimuths
-  // 30, 90, 150, 210, 270, 330 — going round the car).
+  // 30, 90, 150, 210, 270, 330 - going round the car).
   const ORBIT_VIEW_OFFSETS = [
-    [0, 0],   [320, 0],
-    [0, 320], [320, 320],
-    [0, 640], [320, 640],
+    [0, 0],
+    [320, 0],
+    [0, 320],
+    [320, 320],
+    [0, 640],
+    [320, 640],
   ];
 
   // Compute one cell of the 3×2 display grid (3 cols, 2 rows) inside the stage canvas.
@@ -955,8 +961,14 @@ export function initDepthBasedNVS() {
     const fit = fitRect(320, 320, w, h, 0);
     ctx.drawImage(
       orbitGridCanvas,
-      sx, sy, 320, 320,
-      x + fit.x, y + fit.y, fit.width, fit.height,
+      sx,
+      sy,
+      320,
+      320,
+      x + fit.x,
+      y + fit.y,
+      fit.width,
+      fit.height,
     );
   }
 
@@ -1351,8 +1363,8 @@ export function initDepthBasedNVS() {
   }
 
   // Project the point cloud from a camera that is linearly interpolated between
-  // the source view (alpha=0, identity — recreates the original image) and the
-  // target view (alpha=1 — the novel viewpoint). Splats each point onto the
+  // the source view (alpha=0, identity - recreates the original image) and the
+  // target view (alpha=1 - the novel viewpoint). Splats each point onto the
   // canvas. Holes where occluded background would be appear naturally.
   function drawSourceProjection(width, height, alpha, baseSize) {
     if (!pointCloud.length || !sourceCanvas) return;
@@ -1399,7 +1411,7 @@ export function initDepthBasedNVS() {
   }
 
   // One-shot timeline for stage 4. `localT` is seconds since the cloud→warp
-  // transition completed. A single smootherstep across the whole 3s phase —
+  // transition completed. A single smootherstep across the whole 3s phase -
   // f'(0) = f''(0) = f'''(0) = 0, so motion ramps up with no perceptual snap.
   // For the first ~0.4s alpha stays under 0.01 (effectively the source view),
   // which gives the "hold on the original" moment without a hard hold→rotate edge.
@@ -1463,9 +1475,7 @@ export function initDepthBasedNVS() {
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.lineWidth = active ? 2.1 * scale : 1.4 * scale;
-    ctx.strokeStyle = active
-      ? "rgba(255,90,54,0.82)"
-      : "rgba(30,38,58,0.36)";
+    ctx.strokeStyle = active ? "rgba(255,90,54,0.82)" : "rgba(30,38,58,0.36)";
     ctx.fillStyle = active ? "rgba(255,90,54,0.95)" : "#fff";
     ctx.beginPath();
     ctx.moveTo(7 * scale, -4 * scale);
@@ -1481,7 +1491,7 @@ export function initDepthBasedNVS() {
   }
 
   // Draws only the orbit ellipse + camera markers at the given alpha.
-  // Does NOT draw a background fill or the isolated car — use on top of an
+  // Does NOT draw a background fill or the isolated car - use on top of an
   // existing car render so the cameras can fade in independently.
   function drawOrbitOverlay(width, height, t, alpha) {
     if (alpha <= 0) return;
@@ -1705,8 +1715,14 @@ export function initDepthBasedNVS() {
         ctx.globalAlpha = cf;
         ctx.drawImage(
           orbitGridCanvas,
-          sx, sy, 320, 320,
-          curX, curY, curW, curH,
+          sx,
+          sy,
+          320,
+          320,
+          curX,
+          curY,
+          curW,
+          curH,
         );
         ctx.restore();
       }
@@ -1721,7 +1737,7 @@ export function initDepthBasedNVS() {
   //   P3  .. 1.0 (~0.75 s)  orbit ellipse + cameras fade in.
   function drawWarpToOrbit(width, height, t, progress) {
     if (!isolatedCanvas) {
-      // Fallback: no orbit assets — just show the warp projection.
+      // Fallback: no orbit assets - just show the warp projection.
       drawWarp(width, height, t);
       return;
     }
@@ -1730,22 +1746,27 @@ export function initDepthBasedNVS() {
     ctx.fillRect(0, 0, width, height);
 
     // Phase 1 is split into two sequential sub-phases so motion and opacity never
-    // change at the same time — eliminating the "jump" visual artefact.
-    const P1a = 0.09;  // sub-phase 1a: pixels glide back (~0.4 s) — pure motion
-    const P1b = 0.26;  // sub-phase 1b: crossfade         (~0.76 s) — pure opacity
-    const P2  = 0.64;  // end of image hold               (~1.7 s)
-    const P3  = 0.84;  // end of background fade          (~0.9 s)
+    // change at the same time - eliminating the "jump" visual artefact.
+    const P1a = 0.09; // sub-phase 1a: pixels glide back (~0.4 s) - pure motion
+    const P1b = 0.26; // sub-phase 1b: crossfade         (~0.76 s) - pure opacity
+    const P2 = 0.64; // end of image hold               (~1.7 s)
+    const P3 = 0.84; // end of background fade          (~0.9 s)
     //           1.0   // end of cameras fade-in           (~0.72 s)
 
     if (progress < P1a) {
       // Sub-phase 1a: un-shift pixels from where stage 4 left off back to the
-      // source-image positions. No opacity change — pure spatial motion.
+      // source-image positions. No opacity change - pure spatial motion.
       const phase = easeInOutCubic(progress / P1a);
       const camAlpha = lerp(capturedWarpCameraAlpha, 0, phase);
       if (pointCloud.length)
-        drawSourceProjection(width, height, camAlpha, imageSplatSize(width, height));
+        drawSourceProjection(
+          width,
+          height,
+          camAlpha,
+          imageSplatSize(width, height),
+        );
     } else if (progress < P1b) {
-      // Sub-phase 1b: pixels are now at source positions — crossfade to the smooth
+      // Sub-phase 1b: pixels are now at source positions - crossfade to the smooth
       // source image. No spatial movement, pure opacity change.
       const phase = easeInOutCubic((progress - P1a) / (P1b - P1a));
       if (pointCloud.length) {
@@ -1850,7 +1871,8 @@ export function initDepthBasedNVS() {
       drawDepthColor(width, height, t);
     else if (steps[active].mode === "cloud") drawCloud(width, height, t);
     else if (steps[active].mode === "warp") drawWarp(width, height, t);
-    else if (steps[active].mode === "orbit") drawObjectOrbit(width, height, t, 1);
+    else if (steps[active].mode === "orbit")
+      drawObjectOrbit(width, height, t, 1);
     else if (steps[active].mode === "refine") drawRefine(width, height, t);
   }
 
@@ -1948,7 +1970,10 @@ export function initDepthBasedNVS() {
     // the warp→orbit transition can start from exactly where stage 4 left off.
     if (steps[active]?.mode === "warp") {
       const currentT = (performance.now() - animStart) / 1000;
-      const localT = Math.max(0, currentT - transitionDuration(transitionFrom, active));
+      const localT = Math.max(
+        0,
+        currentT - transitionDuration(transitionFrom, active),
+      );
       capturedWarpCameraAlpha = warpStageState(localT).cameraAlpha;
     }
 
@@ -1993,7 +2018,7 @@ export function initClassic() {
 }
 
 /* =========================================================
-   Old approaches — two NeRF clips, autoplay loop
+   Old approaches - two NeRF clips, autoplay loop
    ========================================================= */
 export function initOldApproaches() {
   const vids = document.querySelectorAll(".old-card video");
@@ -2014,7 +2039,7 @@ export function initOldApproaches() {
 }
 
 /* =========================================================
-   Slide 8: Rotatable — drag horizontally to scrub through orbit video
+   Slide 8: Rotatable - drag horizontally to scrub through orbit video
    ========================================================= */
 export function initRotatable() {
   const stage = document.getElementById("rotatable-stage");
@@ -2081,7 +2106,7 @@ export function initRotatable() {
 }
 
 /* =========================================================
-   Slide 10: Ray demo — KEEP procedural (pedagogical)
+   Slide 10: Ray demo - KEEP procedural (pedagogical)
    ========================================================= */
 export function initRayDemo() {
   const container = document.getElementById("ray-stage");
@@ -2351,7 +2376,7 @@ export function initRayDemo() {
 }
 
 /* =========================================================
-   Slide 11: Training — prediction sharpens, error fades
+   Slide 11: Training - prediction sharpens, error fades
    ========================================================= */
 export function initTraining() {
   const pred = document.querySelector(".train-video.pred");
@@ -2418,7 +2443,7 @@ export function initTraining() {
 }
 
 /* =========================================================
-   Slide 12: Clickable viewpoints — camera buttons mapped to video time
+   Slide 12: Clickable viewpoints - camera buttons mapped to video time
    ========================================================= */
 export function initClickableViews() {
   const v = document.getElementById("view-video");
@@ -2528,7 +2553,7 @@ export function initClickableViews() {
 }
 
 /* =========================================================
-   Slide 13: Orbit scrubber — slider maps to video time
+   Slide 13: Orbit scrubber - slider maps to video time
    ========================================================= */
 export function initOrbitScrubber() {
   const v = document.getElementById("orbit-video");
@@ -2649,6 +2674,212 @@ export function initEndBg() {
         d.position.x = Math.cos(d.userData.t) * d.userData.r;
         d.position.z = Math.sin(d.userData.t) * d.userData.r;
       }
+      r.render(scene, camera);
+    },
+  };
+}
+
+/* =========================================================
+   Slide 3: The Problem - orbit camera + photo capture
+   ========================================================= */
+export function initProblemVis() {
+  const canvas = document.getElementById("problem-canvas");
+  if (!canvas) return { tick() {} };
+  const pv3d         = document.getElementById("pv-3d");
+  const photoBtn     = document.getElementById("photo-btn");
+  const flash        = document.getElementById("pv-flash");
+  const stampOverlay = document.getElementById("pv-stamp-overlay");
+  const stampInner   = stampOverlay.querySelector(".pv-stamp-inner");
+  const stampImg     = document.getElementById("pv-stamp-img");
+  const stampClose   = document.getElementById("pv-stamp-close");
+
+  // ── Scene ──────────────────────────────────────────────
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f0f0);
+  scene.fog = new THREE.Fog(0xf0f0f0, 22, 38);
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+
+  const r = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    preserveDrawingBuffer: true,
+  });
+  r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  r.shadowMap.enabled = true;
+  r.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // ── Lights ─────────────────────────────────────────────
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd0d0d0, 0.9));
+
+  const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+  sun.position.set(7, 13, 8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -10;
+  sun.shadow.camera.right = sun.shadow.camera.top = 10;
+  scene.add(sun);
+
+  const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+  fill.position.set(-5, 6, -8);
+  scene.add(fill);
+
+  // ── Ground ─────────────────────────────────────────────
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(22, 22),
+    new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.9 }),
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.5;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const grid = new THREE.GridHelper(20, 20, 0xc0c0c0, 0xcecece);
+  grid.position.y = -0.494;
+  scene.add(grid);
+
+  // ── Objects ────────────────────────────────────────────
+  // All use MeshStandardMaterial (PBR) - shading gradients are dramatic and clearly 3D.
+  // Each object also gets a dark edge outline so the geometry reads instantly.
+  const std = (color, roughness = 0.55, metalness = 0.05) =>
+    new THREE.MeshStandardMaterial({ color, roughness, metalness });
+
+  const withEdges = (mesh, geo) => {
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geo),
+      new THREE.LineBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.18,
+      }),
+    );
+    mesh.add(edges);
+    return mesh;
+  };
+
+  const add = (geo, mat, x, y, z, ry = 0) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.rotation.y = ry;
+    m.castShadow = m.receiveShadow = true;
+    withEdges(m, geo);
+    scene.add(m);
+    return m;
+  };
+
+  add(new THREE.SphereGeometry(1.15, 32, 32),   std(0xff5a36, 0.3, 0.06),  -0.3,  0.65,  1.2);
+  add(new THREE.BoxGeometry(1.3, 1.3, 1.3),     std(0x2ecc71, 0.4, 0.05),   0.7,  0.15, -0.5, Math.PI / 5);
+  add(new THREE.CylinderGeometry(0.48, 0.6, 2.6, 32), std(0x6c5ce7, 0.3, 0.1), -2.3, 0.8, -0.3);
+  const torusGeo = new THREE.TorusGeometry(0.72, 0.27, 24, 64);
+  const torus = add(torusGeo, std(0x0984e3, 0.25, 0.15), 2.3, 0.4, 0.6);
+  torus.rotation.x = Math.PI / 2.8;
+  add(new THREE.OctahedronGeometry(0.85),        std(0xfdcb6e, 0.3, 0.08),   0.4,  0.35, -2.1);
+  add(new THREE.ConeGeometry(0.45, 1.4, 24),     std(0xe84393, 0.35, 0.1),  -2.5,  0.2,  -2.0);
+
+  // ── Orbit camera ──────────────────────────────────────
+  // Spherical coords: theta = horizontal angle, phi = vertical angle
+  const sph = { theta: 0.4, phi: 1.05, r: 9 };
+  const target = new THREE.Vector3(0, 0.4, 0);
+
+  const applyCamera = () => {
+    const sinPhi = Math.sin(sph.phi);
+    camera.position.set(
+      target.x + sph.r * sinPhi * Math.sin(sph.theta),
+      target.y + sph.r * Math.cos(sph.phi),
+      target.z + sph.r * sinPhi * Math.cos(sph.theta),
+    );
+    camera.lookAt(target);
+  };
+  applyCamera();
+
+  let isDown = false,
+    px = 0,
+    py = 0;
+  const startDrag = (e) => {
+    isDown = true;
+    const t = e.touches ? e.touches[0] : e;
+    px = t.clientX;
+    py = t.clientY;
+    canvas.style.cursor = "grabbing";
+  };
+  const moveDrag = (e) => {
+    if (!isDown) return;
+    const t = e.touches ? e.touches[0] : e;
+    sph.theta -= (t.clientX - px) * 0.007;
+    sph.phi = Math.max(
+      0.15,
+      Math.min(Math.PI * 0.85, sph.phi + (t.clientY - py) * 0.007),
+    );
+    px = t.clientX;
+    py = t.clientY;
+    applyCamera();
+  };
+  const endDrag = () => {
+    isDown = false;
+    canvas.style.cursor = "grab";
+  };
+
+  canvas.addEventListener("mousedown", startDrag);
+  canvas.addEventListener("touchstart", startDrag, { passive: true });
+  window.addEventListener("mousemove", moveDrag);
+  window.addEventListener("touchmove", moveDrag, { passive: true });
+  window.addEventListener("mouseup", endDrag);
+  window.addEventListener("touchend", endDrag);
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      // Normalize across pixel (trackpad) and line (mouse wheel) deltaMode
+      const delta = e.deltaMode === 0 ? e.deltaY * 0.02 : e.deltaY * 0.5;
+      sph.r = Math.max(2.5, Math.min(12, sph.r + delta));
+      applyCamera();
+      e.preventDefault();
+    },
+    { passive: false },
+  );
+  canvas.style.cursor = "grab";
+
+  // ── Resize ─────────────────────────────────────────────
+  const resize = () => {
+    const w = pv3d.clientWidth | 0,
+      h = pv3d.clientHeight | 0;
+    if (!w || !h) return;
+    r.setSize(w, h, false);
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  };
+  resize();
+  new ResizeObserver(resize).observe(pv3d);
+
+  // ── Photo capture → stamp animation ────────────────────
+  const openStamp = () => {
+    r.render(scene, camera);
+    stampImg.src = canvas.toDataURL("image/jpeg", 0.93);
+    // Reset animation so it replays every time
+    stampInner.style.animation = "none";
+    stampOverlay.offsetHeight; // force reflow
+    stampInner.style.animation = "";
+    stampOverlay.classList.add("active");
+  };
+
+  const closeStamp = () => stampOverlay.classList.remove("active");
+
+  photoBtn.addEventListener("click", () => {
+    flash.classList.add("active");
+    setTimeout(() => flash.classList.remove("active"), 220);
+    setTimeout(openStamp, 180);
+  });
+
+  stampClose.addEventListener("click", closeStamp);
+
+  // ── Tick ───────────────────────────────────────────────
+  let t = 0;
+  return {
+    tick(visible) {
+      if (!visible) return;
+      t += 0.012;
+      torus.rotation.z = t;
       r.render(scene, camera);
     },
   };

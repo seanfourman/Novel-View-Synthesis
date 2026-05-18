@@ -1,7 +1,7 @@
 """
 Offline novel-view renderer for slide 2.
 
-Goal: produce assets/images/redtoyota_novel_view.jpg — a clean RGB image of the
+Goal: produce assets/images/redtoyota_novel_view.jpg - a clean RGB image of the
 red Toyota viewed from a slightly rotated/shifted camera, used as the "refinement
 result" frame in the depth-based NVS pipeline slide.
 
@@ -42,7 +42,7 @@ DEFAULT_SRC = REPO_ROOT / "assets" / "images" / "redtoyota.jpg"
 DEFAULT_OUT = REPO_ROOT / "assets" / "images" / "redtoyota_novel_view.jpg"
 DEFAULT_WARP_DEBUG = REPO_ROOT / "assets" / "images" / "redtoyota_warp_debug.jpg"
 
-# Must match js/slides.js — keep these in sync.
+# Must match js/slides.js - keep these in sync.
 TARGET_YAW = -0.42
 TARGET_SHIFT_X = -0.28
 TARGET_SHIFT_Z = 0.12
@@ -106,7 +106,7 @@ def forward_warp(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Forward-warp rgb into the target camera, returning (warped_rgb, hole_mask).
 
-    Mirrors js/slides.js::buildTargetWarp exactly — same yaw, shifts, focal,
+    Mirrors js/slides.js::buildTargetWarp exactly - same yaw, shifts, focal,
     z-lift formula, 2x2 splat, and z-buffer ordering.
     """
     height, width, _ = rgb.shape
