@@ -2910,12 +2910,17 @@ export function initProblemVis() {
   });
 
   stampClose.addEventListener("click", closeStamp);
+  window.addEventListener("wheel", closeStamp, { passive: true });
+  window.addEventListener("keydown", (e) => {
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","PageUp","PageDown"," "].includes(e.key))
+      closeStamp();
+  }, { passive: true });
 
   // ── Tick ───────────────────────────────────────────────
   let t = 0;
   return {
     tick(visible) {
-      if (!visible) return;
+      if (!visible) closeStamp();
       t += 0.012;
       torus.rotation.z = t;
       r.render(scene, camera);
