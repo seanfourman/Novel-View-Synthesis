@@ -184,9 +184,20 @@
                 <canvas id="problem-canvas"></canvas>
                 <div id="pv-flash" class="pv-flash"></div>
                 <button class="photo-btn" id="photo-btn" title="צלם תמונה">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    width="22"
+                    height="22"
+                  >
+                    <path
+                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                    />
+                    <circle cx="12" cy="13" r="4" />
                   </svg>
                 </button>
               </div>
@@ -195,8 +206,9 @@
             <!-- Text + loss items -->
             <div class="problem-text">
               <p class="problem-intro">
-                המציאות סביבנו היא תלת-ממדית, רציפה ומלאה במידע מרחבי.<br>
-                אבל מצלמה רגילה מתעדת את העולם כתמונה דו-ממדית בלבד - היא מקרינה את הסצנה אל מישור שטוח.
+                המציאות סביבנו היא תלת-ממדית, רציפה ומלאה במידע מרחבי.<br />
+                אבל מצלמה רגילה מתעדת את העולם כתמונה דו-ממדית בלבד - היא מקרינה
+                את הסצנה אל מישור שטוח.
               </p>
               <p class="problem-sublabel">
                 בתהליך הזה חלק גדול מהמידע הולך לאיבוד:
@@ -283,11 +295,18 @@
       <!-- ============ SLIDE 4: STATIC → SPATIAL ============ -->
       <section class="slide" data-id="4">
         <div class="sts-layout">
-          <h2 class="sts-title">המעבר מתמונה סטטית <span class="accent">לחוויה מרחבית</span></h2>
+          <h2 class="sts-title">
+            המעבר מתמונה סטטית <span class="accent">לחוויה מרחבית</span>
+          </h2>
           <div class="sts-sub-block">
-            <p class="sts-sub">תמונה רגילה מציגה את הסצנה מנקודת מבט אחת בלבד.<br>
-              אך במערכות מודרניות המשתמש משנה את מיקומו וזווית הראייה שלו כל הזמן.</p>
-            <p class="sts-pre">ב־VR, במשחקים, ברובוטיקה ובמערכות AR נדרש ייצוג שמאפשר:</p>
+            <p class="sts-sub">
+              תמונה רגילה מציגה את הסצנה מנקודת מבט אחת בלבד.<br />
+              אך במערכות מודרניות המשתמש משנה את מיקומו וזווית הראייה שלו כל
+              הזמן.
+            </p>
+            <p class="sts-pre">
+              ב-VR, במשחקים, ברובוטיקה ובמערכות AR נדרש ייצוג שמאפשר:
+            </p>
           </div>
           <div class="sts-center-row">
             <ul class="sts-bullets">
@@ -298,22 +317,16 @@
               <img class="sts-layer" id="sts-img" alt="" />
               <canvas class="sts-layer" id="sts-c2"></canvas>
               <img class="sts-layer" id="sts-img3" alt="" />
-              <div class="sts-orb-ui">
-                <span class="sts-phase-label" id="sts-lbl">תמונות קלט</span>
-                <div class="sts-phase-dots">
-                  <span class="sts-pdot active" data-p="1"></span>
-                  <span class="sts-pdot" data-p="2"></span>
-                  <span class="sts-pdot" data-p="3"></span>
-                </div>
-                <button class="sts-toggle-btn" id="sts-btn">לשלב הבא ←</button>
-              </div>
             </div>
             <ul class="sts-bullets">
               <li>לחוות עומק ותנועה בצורה טבעית</li>
               <li>ליצור מעבר רציף בין נקודות מבט</li>
             </ul>
           </div>
-          <p class="sts-footer">כדי לאפשר חוויה כזו, המערכת צריכה להבין כיצד העולם נראה גם מחוץ לתמונות שצולמו בפועל.</p>
+          <p class="sts-footer">
+            כדי לאפשר חוויה כזו, המערכת צריכה להבין כיצד העולם נראה גם מחוץ
+            לתמונות שצולמו בפועל.
+          </p>
         </div>
       </section>
 
@@ -447,7 +460,7 @@
               <div class="app-info">
                 <div class="app-title">🎮 VR · סטריאו</div>
                 <div class="app-sub">
-                  פיצול לעין שמאל ועין ימין - תלת־ממד אמיתי במציאות מדומה.
+                  פיצול לעין שמאל ועין ימין - תלת-ממד אמיתי במציאות מדומה.
                 </div>
               </div>
             </div>
@@ -478,7 +491,7 @@
                 preload="auto"
               ></video>
               <div class="app-info">
-                <div class="app-title">🤖 הבנה תלת־ממדית</div>
+                <div class="app-title">🤖 הבנה תלת-ממדית</div>
                 <div class="app-sub">
                   רובוטים ומכוניות אוטונומיות מקבלות מבנה גיאומטרי מתמונה רגילה.
                 </div>
@@ -600,7 +613,7 @@
               ></video>
               <div class="old-info">
                 <div class="old-title">סיור תמונות (Photo Tour)</div>
-                <div class="old-pros">+ פוטו־ריאליסטי בנקודות שצולמו</div>
+                <div class="old-pros">+ פוטו-ריאליסטי בנקודות שצולמו</div>
                 <div class="old-cons">
                   − מגבילים אותך לנתיב מוגדר · קפיצות בין מבטים
                 </div>
@@ -635,7 +648,7 @@
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
-            <h2>אובייקט תלת־ממדי שהרשת <em>מכירה</em></h2>
+            <h2>אובייקט תלת-ממדי שהרשת <em>מכירה</em></h2>
             <p class="lead small">
               אחרי האימון, NeRF מחזיק את הסצנה כולה בתוך המשקלים שלו. גררו ימינה
               ושמאלה כדי להסתכל עליו מכל זווית - כל פריים הוא מבט שעובד מחדש
@@ -667,7 +680,7 @@
             <div class="io-side inputs">
               <div class="io-row">
                 <div class="io-sym">x, y, z</div>
-                <div class="io-desc">נקודה במרחב התלת־ממדי</div>
+                <div class="io-desc">נקודה במרחב התלת-ממדי</div>
               </div>
               <div class="io-row">
                 <div class="io-sym">θ, φ</div>
@@ -894,7 +907,7 @@
               <div class="next-title">Gaussian Splatting</div>
               <div class="next-sub">2023 · INRIA</div>
               <div class="next-text">
-                מחליפים את הרשת במיליוני נקודות תלת־ממדיות מטושטשות. רנדור בזמן
+                מחליפים את הרשת במיליוני נקודות תלת-ממדיות מטושטשות. רנדור בזמן
                 אמת. State of the art.
               </div>
             </div>
@@ -913,7 +926,7 @@
               <code dir="ltr">(x,y,z,dir) → (color, density)</code>.
             </li>
             <li>מעבדים כל מצלמה חדשה ע&quot;י שליחת קרניים וחיבור דגימות.</li>
-            <li>התוצאה: עולם תלת־ממדי שאפשר לטוס בתוכו.</li>
+            <li>התוצאה: עולם תלת-ממדי שאפשר לטוס בתוכו.</li>
           </ul>
           <p class="lead small thanks">תודה רבה.</p>
           <canvas id="end-bg"></canvas>

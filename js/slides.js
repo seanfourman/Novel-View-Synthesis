@@ -2937,16 +2937,11 @@ export function initProblemVis() {
    ========================================================= */
 export function initStaticToSpatial() {
   const orb  = document.getElementById("sts-orb");
-  const btn  = document.getElementById("sts-btn");
-  const lbl  = document.getElementById("sts-lbl");
   const img1 = document.getElementById("sts-img");
   const c2   = document.getElementById("sts-c2");
   const img3 = document.getElementById("sts-img3");
-  if (!orb || !btn || !img1 || !c2 || !img3) return { tick() {} };
-  const pdots = Array.from(orb.querySelectorAll(".sts-pdot"));
+  if (!orb || !img1 || !c2 || !img3) return { tick() {} };
 
-  const PHASE_LABELS = ["", "תמונות קלט", "מיקום המצלמות", "NeRF – מבט חדש"];
-  const BTN_LABELS   = ["", "לשלב הבא ←", "לשלב הבא ←", "להתחלה"];
   let phase = 1;
 
   // ── Phase 1: 20 evenly-spaced drum stills, slow cycling ──
@@ -2957,7 +2952,7 @@ export function initStaticToSpatial() {
 
   // ── Phase 2: Camera-sphere visualization ───────────────
   const s2   = new THREE.Scene();
-  s2.background = new THREE.Color(0xf8f8f8);
+  s2.background = new THREE.Color(0xf0f0f0);
   const cam2 = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
   const r2   = new THREE.WebGLRenderer({ canvas: c2, antialias: true });
   r2.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -2966,10 +2961,10 @@ export function initStaticToSpatial() {
   const sl2 = new THREE.DirectionalLight(0xffffff, 0.9);
   sl2.position.set(3, 5, 3); s2.add(sl2);
 
-  // Centre: drum kit billboard sprite (always faces camera)
-  const drumTex = new THREE.TextureLoader().load("assets/test/r_0.png");
-  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: drumTex }));
-  drumSprite.scale.set(1.7, 1.7, 1);
+  // Centre: drum kit billboard sprite, transparent background
+  const drumTex    = new THREE.TextureLoader().load("assets/test/r_0_alpha.png");
+  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: drumTex, transparent: true }));
+  drumSprite.scale.set(1.8, 1.8, 1);
   s2.add(drumSprite);
 
   // Camera frustums on Fibonacci sphere
@@ -3048,9 +3043,6 @@ export function initStaticToSpatial() {
   function setPhase(p) {
     phase = p;
     orb.dataset.phase = String(p);
-    if (lbl) lbl.textContent = PHASE_LABELS[p];
-    if (btn) btn.textContent = BTN_LABELS[p];
-    pdots.forEach((d, i) => d.classList.toggle("active", i + 1 === p));
     if (p === 3) {
       preloadPhase3();
       p3Idx = 0; p3Tick = 0;
@@ -3058,7 +3050,7 @@ export function initStaticToSpatial() {
     }
   }
 
-  btn.addEventListener("click", () => setPhase(phase === 3 ? 1 : phase + 1));
+  orb.addEventListener("click", () => setPhase(phase === 3 ? 1 : phase + 1));
 
   return {
     tick(visible) {
