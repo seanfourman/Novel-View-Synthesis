@@ -1,7 +1,6 @@
 // slides.js — per-slide initializers.
 
 import * as THREE from "three";
-import { estimateDepth, preloadModel } from "./depth.js";
 
 function primeVideo(video, play = false) {
   if (!video) return;
@@ -332,11 +331,6 @@ export function initDepthBasedNVS() {
     if (!loading) return;
     loading.textContent = message;
     loading.hidden = !show;
-  }
-
-  function updateProgress(info) {
-    const message = info?.text || "Loading depth model...";
-    if (active > 0) setLoading(message, true);
   }
 
   const clamp01 = (value) => Math.max(0, Math.min(1, value));
@@ -851,17 +845,17 @@ export function initDepthBasedNVS() {
     depthPromise = (async () => {
       await ensureSourceImage();
 
-      if (active > 0) setLoading("Estimating monocular depth...", true);
-      const warmup = preloadModel(updateProgress);
-      await warmup.catch(() => {});
-      depthCanvas = await estimateDepth(sourceCanvas, updateProgress);
-      depthColorCanvas = await loadImageCanvas(
-        "assets/generated/single_image_pipeline/03_depth_colormap.png",
-        sourceCanvas.width,
-      ).catch((err) => {
-        console.warn("color depth artifact failed to load", err);
-        return null;
-      });
+      if (active > 0) setLoading("Loading generated depth maps...", true);
+      [depthCanvas, depthColorCanvas] = await Promise.all([
+        loadImageCanvas(
+          "assets/generated/single_image_pipeline/02_depth_gray.png",
+          sourceCanvas.width,
+        ),
+        loadImageCanvas(
+          "assets/generated/single_image_pipeline/03_depth_colormap.png",
+          sourceCanvas.width,
+        ),
+      ]);
 
       if (active > 0) setLoading("Building RGB-D proxy...", true);
       pointCloud = buildPointCloud(sourceCanvas, depthCanvas);
@@ -892,13 +886,13 @@ export function initDepthBasedNVS() {
   async function prepareRealArtifacts(needsDepth = false) {
     try {
       if (needsDepth) {
-        if (!depthCanvas) setLoading("Estimating monocular depth...", true);
+        if (!depthCanvas) setLoading("Loading generated depth maps...", true);
         await ensureDepthArtifacts();
       } else await ensureSourceImage();
     } catch (err) {
       prepareError = err;
       console.error("failed to prepare depth-based NVS slide", err);
-      setLoading("Depth pipeline failed. Check network/model loading.", true);
+      setLoading("Depth assets failed to load.", true);
       render();
     }
   }
@@ -1538,7 +1532,7 @@ export function initDepthBasedNVS() {
       ctx.textAlign = "center";
       ctx.font = "15px JetBrains Mono, monospace";
       ctx.fillStyle = "#d63031";
-      ctx.fillText("Depth pipeline failed to load", width / 2, height / 2);
+      ctx.fillText("Depth assets failed to load", width / 2, height / 2);
       return;
     }
 
