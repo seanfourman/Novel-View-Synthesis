@@ -263,13 +263,18 @@ export function initDepthBasedNVS() {
       mode: "cloud",
     },
     {
-      title: "הקרנה למבט חדש",
-      text: "הנקודות מוקרנות למצלמת יעד חדשה.",
+      title: "בידוד האובייקט",
+      text: "חותכים את המכונית מהרקע ומגדירים מסלול מצלמות סביבו.",
       mode: "warp",
     },
     {
-      title: "השלמת חורים",
-      text: "רשת refinement ממלאת אזורים שלא נראו.",
+      title: "מסלול מצלמות",
+      text: "6 זוויות צפייה שנבחרו סביב האובייקט.",
+      mode: "orbit",
+    },
+    {
+      title: "מבטים חדשים",
+      text: "אותו אובייקט משוחזר מכמה זוויות מצלמה.",
       mode: "refine",
     },
   ];
@@ -288,6 +293,8 @@ export function initDepthBasedNVS() {
   let holeMap = null;
   let refinedCanvas = null;
   let isolatedCanvas = null;
+  let isolatedBounds = null;
+  let isolatedOutlineCanvas = null;
   let orbitGridCanvas = null;
   let prepareError = null;
   let sourcePromise = null;
@@ -345,7 +352,8 @@ export function initDepthBasedNVS() {
     if (fromMode === "depth" && toMode === "depthColor") return 0.9;
     if (fromMode === "depthColor" && toMode === "cloud") return 1.85;
     if (fromMode === "cloud" && toMode === "warp") return 1.65;
-    if (fromMode === "warp" && toMode === "refine") return 3.0;
+    if (fromMode === "warp" && toMode === "orbit") return 4.5;
+    if (fromMode === "orbit" && toMode === "refine") return 2.5;
     return 1.0;
   }
 
@@ -432,6 +440,141 @@ export function initDepthBasedNVS() {
     return source
       .getContext("2d", { willReadFrequently: true })
       .getImageData(0, 0, source.width, source.height);
+  }
+
+  function isObjectPixel(r, g, b, a) {
+    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+    const darkness = 255 - Math.min(r, g, b);
+    return a > 16 && (darkness > 18 || chroma > 14);
+  }
+
+  function findNonWhiteBounds(src) {
+    const image = getImageDataFrom(src);
+    const { data, width, height } = image;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        const a = data[idx + 3];
+
+        if (isObjectPixel(r, g, b, a)) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+
+    if (maxX < 0) {
+      return { x: 0, y: 0, width, height };
+    }
+
+    const pad = 10;
+    const x = Math.max(0, minX - pad);
+    const y = Math.max(0, minY - pad);
+    const right = Math.min(width, maxX + pad + 1);
+    const bottom = Math.min(height, maxY + pad + 1);
+    return { x, y, width: right - x, height: bottom - y };
+  }
+
+  function buildObjectOutline(src, bounds) {
+    const sourceImage = getImageDataFrom(src);
+    const srcData = sourceImage.data;
+    const width = bounds.width;
+    const height = bounds.height;
+    const mask = new Uint8Array(width * height);
+    const exterior = new Uint8Array(width * height);
+    const edge = new Uint8Array(width * height);
+    const queue = [];
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const sx = bounds.x + x;
+        const sy = bounds.y + y;
+        const srcIdx = (sy * sourceImage.width + sx) * 4;
+        mask[y * width + x] = isObjectPixel(
+          srcData[srcIdx],
+          srcData[srcIdx + 1],
+          srcData[srcIdx + 2],
+          srcData[srcIdx + 3],
+        )
+          ? 1
+          : 0;
+      }
+    }
+
+    const addExterior = (x, y) => {
+      if (x < 0 || x >= width || y < 0 || y >= height) return;
+      const idx = y * width + x;
+      if (mask[idx] || exterior[idx]) return;
+      exterior[idx] = 1;
+      queue.push(idx);
+    };
+
+    for (let x = 0; x < width; x++) {
+      addExterior(x, 0);
+      addExterior(x, height - 1);
+    }
+    for (let y = 0; y < height; y++) {
+      addExterior(0, y);
+      addExterior(width - 1, y);
+    }
+
+    for (let q = 0; q < queue.length; q++) {
+      const idx = queue[q];
+      const x = idx % width;
+      const y = Math.floor(idx / width);
+      addExterior(x - 1, y);
+      addExterior(x + 1, y);
+      addExterior(x, y - 1);
+      addExterior(x, y + 1);
+    }
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = y * width + x;
+        if (exterior[idx]) continue;
+        if (
+          exterior[idx - 1] ||
+          exterior[idx + 1] ||
+          exterior[idx - width] ||
+          exterior[idx + width] ||
+          exterior[idx - width - 1] ||
+          exterior[idx - width + 1] ||
+          exterior[idx + width - 1] ||
+          exterior[idx + width + 1]
+        ) {
+          edge[idx] = 1;
+        }
+      }
+    }
+
+    const outline = makeCanvas(width, height);
+    const outlineCtx = outline.getContext("2d");
+    const outlineImage = outlineCtx.createImageData(width, height);
+    const out = outlineImage.data;
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        if (!edge[y * width + x]) continue;
+        const outIdx = (y * width + x) * 4;
+        out[outIdx] = 255;
+        out[outIdx + 1] = 90;
+        out[outIdx + 2] = 54;
+        out[outIdx + 3] = 190;
+      }
+    }
+
+    outlineCtx.putImageData(outlineImage, 0, 0);
+    return outline;
   }
 
   function depthAt(depthData, idx) {
@@ -772,6 +915,9 @@ export function initDepthBasedNVS() {
       ),
     ]);
     isolatedCanvas = iso;
+    isolatedBounds = iso ? findNonWhiteBounds(iso) : null;
+    isolatedOutlineCanvas =
+      iso && isolatedBounds ? buildObjectOutline(iso, isolatedBounds) : null;
     orbitGridCanvas = grid;
     return Boolean(iso && grid);
   }
@@ -1262,6 +1408,158 @@ export function initDepthBasedNVS() {
     return { cameraAlpha: x * x * x * (x * (x * 6 - 15) + 10) };
   }
 
+  function isolatedCropRect() {
+    if (!isolatedCanvas) return null;
+    return (
+      isolatedBounds || {
+        x: 0,
+        y: 0,
+        width: isolatedCanvas.width,
+        height: isolatedCanvas.height,
+      }
+    );
+  }
+
+  function objectStageRect(width, height) {
+    const crop = isolatedCropRect();
+    if (!crop) return null;
+    return fitRect(crop.width, crop.height, width, height, 44);
+  }
+
+  function drawIsolatedObject(rect) {
+    const crop = isolatedCropRect();
+    if (!crop || !isolatedCanvas) return;
+    ctx.drawImage(
+      isolatedCanvas,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      rect.x,
+      rect.y,
+      rect.width,
+      rect.height,
+    );
+  }
+
+  function drawObjectHighlight(rect) {
+    if (!isolatedOutlineCanvas) return;
+    ctx.save();
+    ctx.drawImage(
+      isolatedOutlineCanvas,
+      rect.x,
+      rect.y,
+      rect.width,
+      rect.height,
+    );
+    ctx.restore();
+  }
+
+  function drawOrbitCamera(x, y, targetX, targetY, scale, active) {
+    const angle = Math.atan2(targetY - y, targetX - x);
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.lineWidth = active ? 2.1 * scale : 1.4 * scale;
+    ctx.strokeStyle = active
+      ? "rgba(255,90,54,0.82)"
+      : "rgba(30,38,58,0.36)";
+    ctx.fillStyle = active ? "rgba(255,90,54,0.95)" : "#fff";
+    ctx.beginPath();
+    ctx.moveTo(7 * scale, -4 * scale);
+    ctx.lineTo(28 * scale, -13 * scale);
+    ctx.moveTo(7 * scale, 4 * scale);
+    ctx.lineTo(28 * scale, 13 * scale);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 5.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draws only the orbit ellipse + camera markers at the given alpha.
+  // Does NOT draw a background fill or the isolated car — use on top of an
+  // existing car render so the cameras can fade in independently.
+  function drawOrbitOverlay(width, height, t, alpha) {
+    if (alpha <= 0) return;
+    const rect = objectStageRect(width, height);
+    if (!rect) return;
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height * 0.54;
+    const radiusX = Math.min(width * 0.44, rect.width * 0.6);
+    const radiusY = Math.min(height * 0.24, rect.height * 0.43);
+    const activeMarker = Math.floor((((t * 0.55) % 6) + 6) % 6);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "rgba(108,92,231,0.28)";
+    ctx.lineWidth = Math.max(1.5, Math.min(width, height) * 0.004);
+    ctx.setLineDash([12, 12]);
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (let i = 0; i < 6; i++) {
+      const angle = -Math.PI + i * (Math.PI / 3);
+      const x = centerX + Math.cos(angle) * radiusX;
+      const y = centerY + Math.sin(angle) * radiusY;
+      const isActive = i === activeMarker;
+      const pulse = isActive ? 1 + Math.sin(t * 4.0) * 0.12 : 1;
+      drawOrbitCamera(x, y, centerX, centerY, pulse, isActive);
+    }
+    ctx.restore();
+  }
+
+  function drawObjectOrbit(width, height, t, alpha = 1) {
+    if (alpha <= 0) return;
+    if (!isolatedCanvas) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      if (sourceCanvas) drawCanvasContained(sourceCanvas, width, height, 0);
+      ctx.restore();
+      return;
+    }
+
+    const rect = objectStageRect(width, height);
+    if (!rect) return;
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height * 0.54;
+    const radiusX = Math.min(width * 0.44, rect.width * 0.6);
+    const radiusY = Math.min(height * 0.24, rect.height * 0.43);
+    const activeMarker = Math.floor((((t * 0.55) % 6) + 6) % 6);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+
+    drawIsolatedObject(rect);
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(108,92,231,0.28)";
+    ctx.lineWidth = Math.max(1.5, Math.min(width, height) * 0.004);
+    ctx.setLineDash([12, 12]);
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    for (let i = 0; i < 6; i++) {
+      const angle = -Math.PI + i * (Math.PI / 3);
+      const x = centerX + Math.cos(angle) * radiusX;
+      const y = centerY + Math.sin(angle) * radiusY;
+      const isActive = i === activeMarker;
+      const pulse = isActive ? 1 + Math.sin(t * 4.0) * 0.12 : 1;
+      drawOrbitCamera(x, y, centerX, centerY, pulse, isActive);
+    }
+
+    drawObjectHighlight(rect);
+    ctx.restore();
+  }
+
   function drawCloudToWarp(width, height, t, progress) {
     if (!pointCloud.length || !sourceCanvas || !cloudBounds) {
       drawCloud(width, height, t);
@@ -1334,7 +1632,7 @@ export function initDepthBasedNVS() {
   }
 
   function drawRefine(width, height, t) {
-    // New: stage 5 displays the six orbit views generated by Zero123++ in a 3×2 grid
+    // Stage 6 displays the six orbit views generated by Zero123++ in a 3×2 grid
     // on white. (Falls back to the BFS refined canvas when offline assets are missing.)
     if (orbitGridCanvas) {
       ctx.fillStyle = "#fff";
@@ -1351,18 +1649,14 @@ export function initDepthBasedNVS() {
     drawCanvasContained(refinedCanvas, width, height, 0);
   }
 
-  // splitT: 0 = six copies overlapping at the source-image rect; 1 = six cells in the grid.
+  // splitT: 0 = six copies overlapping at the isolated-object rect; 1 = six cells in the grid.
   // For the second half of the animation each copy crossfades from the isolated car
   // into its specific orbit view, so the car visibly "rotates" into a different angle.
   function drawSplitToGrid(width, height, splitT) {
     const eased = easeInOutCubic(splitT);
-    const srcFit = fitRect(
-      isolatedCanvas.width,
-      isolatedCanvas.height,
-      width,
-      height,
-      0,
-    );
+    const crop = isolatedCropRect();
+    const srcFit = objectStageRect(width, height);
+    if (!crop || !srcFit) return;
 
     for (let i = 0; i < 6; i++) {
       const cell = gridCellRect(i, width, height);
@@ -1378,12 +1672,32 @@ export function initDepthBasedNVS() {
       const curH = lerp(srcFit.height, tgtH, eased);
 
       if (splitT < 0.5) {
-        ctx.drawImage(isolatedCanvas, curX, curY, curW, curH);
+        ctx.drawImage(
+          isolatedCanvas,
+          crop.x,
+          crop.y,
+          crop.width,
+          crop.height,
+          curX,
+          curY,
+          curW,
+          curH,
+        );
       } else {
         const cf = (splitT - 0.5) / 0.5;
         ctx.save();
         ctx.globalAlpha = 1 - cf;
-        ctx.drawImage(isolatedCanvas, curX, curY, curW, curH);
+        ctx.drawImage(
+          isolatedCanvas,
+          crop.x,
+          crop.y,
+          crop.width,
+          crop.height,
+          curX,
+          curY,
+          curW,
+          curH,
+        );
         ctx.restore();
         const [sx, sy] = ORBIT_VIEW_OFFSETS[i];
         ctx.save();
@@ -1398,71 +1712,72 @@ export function initDepthBasedNVS() {
     }
   }
 
-  function drawWarpToRefine(width, height, t, progress) {
-    // Fall back to the legacy single-image refinement when offline assets aren't
-    // present yet (i.e. before scripts/render_orbit_view.py has been run).
-    if (!isolatedCanvas || !orbitGridCanvas) {
-      if (!refinedCanvas || !pointCloud.length || !sourceCanvas) {
-        drawWarp(width, height, t);
-        return;
-      }
-      const pf = easeInOutCubic(progress);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, width, height);
-      drawSourceProjection(width, height, 1, imageSplatSize(width, height));
-      ctx.save();
-      ctx.globalAlpha = pf;
-      drawCanvasContained(refinedCanvas, width, height, 0);
-      ctx.restore();
+  // Transition: warp (pixel projection) → orbit (cameras circle).
+  // Four beats over 4.5 s:
+  //   0.00 .. P1  (~1.0 s)  warp pixels crossfade into the original photo.
+  //   P1  .. P2  (~1.75 s)  hold the full source image.
+  //   P2  .. P3  (~1.0 s)  background fades to white, isolated car appears.
+  //   P3  .. 1.0 (~0.75 s)  orbit ellipse + cameras fade in.
+  function drawWarpToOrbit(width, height, t, progress) {
+    if (!isolatedCanvas) {
+      // Fallback: no orbit assets — just show the warp projection.
+      drawWarp(width, height, t);
       return;
     }
 
-    const p = easeInOutCubic(progress);
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, width, height);
 
-    // Three beats matching the narrative shift to an object-centric model:
-    //   0.00 .. 0.30  warp "un-shifts" back to the source viewpoint and
-    //                  crossfades into the source RGB. (cameraAlpha goes 1→0
-    //                  so the right-shifted warp slides back to centered.)
-    //   0.30 .. 0.55  the parking-lot background fades to white, leaving
-    //                  just the isolated car. ("we abandon the scene and
-    //                  isolate the object.")
-    //   0.55 .. 1.00  the isolated car duplicates into six copies that
-    //                  spread out into a 3×2 grid; each copy rotates into
-    //                  its own angle — the six Zero123++ orbit views.
-    const P1 = 0.30;
-    const P2 = 0.55;
+    const P1 = 0.22;  // end of pixel-return crossfade   (~1.0 s)
+    const P2 = 0.61;  // end of image hold               (~1.75 s)
+    const P3 = 0.83;  // end of background fade          (~1.0 s)
+    //          1.0   // end of cameras fade-in           (~0.75 s)
 
-    if (p < P1 && pointCloud.length) {
-      const phase = p / P1;
-      ctx.save();
-      ctx.globalAlpha = 1 - phase;
-      drawSourceProjection(
-        width,
-        height,
-        1 - phase, // cameraAlpha animates 1 → 0 (un-shifts the warp)
-        imageSplatSize(width, height),
-      );
-      ctx.restore();
+    if (progress < P1) {
+      const phase = easeInOutCubic(progress / P1);
+      if (pointCloud.length) {
+        ctx.save();
+        ctx.globalAlpha = 1 - phase;
+        drawSourceProjection(width, height, 1 - phase, imageSplatSize(width, height));
+        ctx.restore();
+      }
       ctx.save();
       ctx.globalAlpha = phase;
       drawCanvasContained(sourceCanvas, width, height, 0);
       ctx.restore();
-    } else if (p < P2) {
-      const phase = (p - P1) / (P2 - P1);
+    } else if (progress < P2) {
+      drawCanvasContained(sourceCanvas, width, height, 0);
+    } else if (progress < P3) {
+      const phase = easeInOutCubic((progress - P2) / (P3 - P2));
+      const rect = objectStageRect(width, height);
       ctx.save();
       ctx.globalAlpha = 1 - phase;
       drawCanvasContained(sourceCanvas, width, height, 0);
       ctx.restore();
-      ctx.save();
-      ctx.globalAlpha = phase;
-      drawCanvasContained(isolatedCanvas, width, height, 0);
-      ctx.restore();
+      if (rect) {
+        ctx.save();
+        ctx.globalAlpha = phase;
+        drawIsolatedObject(rect);
+        ctx.restore();
+      }
     } else {
-      const phase = (p - P2) / (1 - P2);
-      drawSplitToGrid(width, height, phase);
+      const phase = easeInOutCubic((progress - P3) / (1 - P3));
+      const rect = objectStageRect(width, height);
+      if (rect) drawIsolatedObject(rect);
+      drawOrbitOverlay(width, height, t, phase);
     }
+  }
+
+  // Transition: orbit (cameras circle) → refine (6-view grid).
+  // The isolated car copies split out into the 3×2 Zero123++ grid over 2.5 s.
+  function drawOrbitToRefine(width, height, t, progress) {
+    if (!isolatedCanvas || !orbitGridCanvas) {
+      drawRefine(width, height, t);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    drawSplitToGrid(width, height, progress);
   }
 
   function drawResetToRgb(width, height, t, progress) {
@@ -1499,8 +1814,12 @@ export function initDepthBasedNVS() {
       drawCloudToWarp(width, height, t, progress);
       return;
     }
-    if (fromMode === "warp" && toMode === "refine") {
-      drawWarpToRefine(width, height, t, progress);
+    if (fromMode === "warp" && toMode === "orbit") {
+      drawWarpToOrbit(width, height, t, progress);
+      return;
+    }
+    if (fromMode === "orbit" && toMode === "refine") {
+      drawOrbitToRefine(width, height, t, progress);
       return;
     }
     if (fromMode === "refine" && toMode === "rgb") {
@@ -1518,6 +1837,7 @@ export function initDepthBasedNVS() {
       drawDepthColor(width, height, t);
     else if (steps[active].mode === "cloud") drawCloud(width, height, t);
     else if (steps[active].mode === "warp") drawWarp(width, height, t);
+    else if (steps[active].mode === "orbit") drawObjectOrbit(width, height, t, 1);
     else if (steps[active].mode === "refine") drawRefine(width, height, t);
   }
 
