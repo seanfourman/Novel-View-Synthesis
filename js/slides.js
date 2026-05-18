@@ -2685,13 +2685,13 @@ export function initEndBg() {
 export function initProblemVis() {
   const canvas = document.getElementById("problem-canvas");
   if (!canvas) return { tick() {} };
-  const pv3d         = document.getElementById("pv-3d");
-  const photoBtn     = document.getElementById("photo-btn");
-  const flash        = document.getElementById("pv-flash");
+  const pv3d = document.getElementById("pv-3d");
+  const photoBtn = document.getElementById("photo-btn");
+  const flash = document.getElementById("pv-flash");
   const stampOverlay = document.getElementById("pv-stamp-overlay");
-  const stampInner   = stampOverlay.querySelector(".pv-stamp-inner");
-  const stampImg     = document.getElementById("pv-stamp-img");
-  const stampClose   = document.getElementById("pv-stamp-close");
+  const stampInner = stampOverlay.querySelector(".pv-stamp-inner");
+  const stampImg = document.getElementById("pv-stamp-img");
+  const stampClose = document.getElementById("pv-stamp-close");
 
   // ── Scene ──────────────────────────────────────────────
   const scene = new THREE.Scene();
@@ -2767,14 +2767,45 @@ export function initProblemVis() {
     return m;
   };
 
-  add(new THREE.SphereGeometry(1.15, 32, 32),   std(0xff5a36, 0.3, 0.06),  -0.3,  0.65,  1.2);
-  add(new THREE.BoxGeometry(1.3, 1.3, 1.3),     std(0x2ecc71, 0.4, 0.05),   0.7,  0.15, -0.5, Math.PI / 5);
-  add(new THREE.CylinderGeometry(0.48, 0.6, 2.6, 32), std(0x6c5ce7, 0.3, 0.1), -2.3, 0.8, -0.3);
+  add(
+    new THREE.SphereGeometry(1.15, 32, 32),
+    std(0xff5a36, 0.3, 0.06),
+    -0.3,
+    0.65,
+    1.2,
+  );
+  add(
+    new THREE.BoxGeometry(1.3, 1.3, 1.3),
+    std(0x2ecc71, 0.4, 0.05),
+    0.7,
+    0.15,
+    -0.5,
+    Math.PI / 5,
+  );
+  add(
+    new THREE.CylinderGeometry(0.48, 0.6, 2.6, 32),
+    std(0x6c5ce7, 0.3, 0.1),
+    -2.3,
+    0.8,
+    -0.3,
+  );
   const torusGeo = new THREE.TorusGeometry(0.72, 0.27, 24, 64);
   const torus = add(torusGeo, std(0x0984e3, 0.25, 0.15), 2.3, 0.4, 0.6);
   torus.rotation.x = Math.PI / 2.8;
-  add(new THREE.OctahedronGeometry(0.85),        std(0xfdcb6e, 0.3, 0.08),   0.4,  0.35, -2.1);
-  add(new THREE.ConeGeometry(0.45, 1.4, 24),     std(0xe84393, 0.35, 0.1),  -2.5,  0.2,  -2.0);
+  add(
+    new THREE.OctahedronGeometry(0.85),
+    std(0xfdcb6e, 0.3, 0.08),
+    0.4,
+    0.35,
+    -2.1,
+  );
+  add(
+    new THREE.ConeGeometry(0.45, 1.4, 24),
+    std(0xe84393, 0.35, 0.1),
+    -2.5,
+    0.2,
+    -2.0,
+  );
 
   // ── Orbit camera ──────────────────────────────────────
   // Spherical coords: theta = horizontal angle, phi = vertical angle
@@ -2856,6 +2887,13 @@ export function initProblemVis() {
   const openStamp = () => {
     r.render(scene, camera);
     stampImg.src = canvas.toDataURL("image/jpeg", 0.93);
+    // Position centered on the canvas, slightly lower than mid
+    const rect = pv3d.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height * 0.5;
+    stampOverlay.style.left = cx + "px";
+    stampOverlay.style.top = cy + "px";
+    stampOverlay.style.transform = "translate(-50%, -50%)";
     // Reset animation so it replays every time
     stampInner.style.animation = "none";
     stampOverlay.offsetHeight; // force reflow

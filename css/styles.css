@@ -560,9 +560,9 @@ code {
 /* ── Photo stamp — flies in from the left ────────────── */
 .pv-stamp-overlay {
   position: fixed;
-  left: 3vw;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  transform: none;
   z-index: 9999;
   pointer-events: none;
 }
@@ -592,7 +592,7 @@ code {
 }
 .pv-stamp-img {
   display: block;
-  width: clamp(180px, 22vw, 300px);
+  width: clamp(260px, 32vw, 460px);
   height: auto;
   border-radius: 1px;
 }
