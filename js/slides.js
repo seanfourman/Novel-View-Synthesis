@@ -503,6 +503,31 @@ export function initDepthBasedNVS() {
     return points;
   }
 
+  function attachDepthColors(points) {
+    if (!depthColorCanvas) return;
+    const depthColor = getImageDataFrom(depthColorCanvas);
+    const width = depthColorCanvas.width;
+    const height = depthColorCanvas.height;
+
+    for (const point of points) {
+      const x = Math.max(
+        0,
+        Math.min(width - 1, Math.round((point.sx / sourceCanvas.width) * width)),
+      );
+      const y = Math.max(
+        0,
+        Math.min(
+          height - 1,
+          Math.round((point.sy / sourceCanvas.height) * height),
+        ),
+      );
+      const idx = (y * width + x) * 4;
+      point.depthR = depthColor.data[idx];
+      point.depthG = depthColor.data[idx + 1];
+      point.depthB = depthColor.data[idx + 2];
+    }
+  }
+
   function buildRefinedResult(warpCanvasIn, holesMask) {
     const width = warpCanvasIn.width;
     const height = warpCanvasIn.height;
@@ -840,6 +865,7 @@ export function initDepthBasedNVS() {
 
       if (active > 0) setLoading("Building RGB-D proxy...", true);
       pointCloud = buildPointCloud(sourceCanvas, depthCanvas);
+      attachDepthColors(pointCloud);
       const warp = buildTargetWarp(sourceCanvas, depthCanvas);
       warpCanvas = warp.warp;
       holeMaskCanvas = warp.mask;
@@ -957,11 +983,48 @@ export function initDepthBasedNVS() {
   }
 
   function drawDepthColorToCloud(width, height, t, progress) {
-    drawDepthToCloud(width, height, t, progress);
-    if (!depthColorCanvas || progress >= 0.24) return;
+    if (!pointCloud.length || !sourceCanvas) {
+      drawDepthColor(width, height, t);
+      return;
+    }
+
+    const pixelP = easeInOutCubic(clamp01(progress / 0.28));
+    const moveP = easeInOutCubic(clamp01((progress - 0.18) / 0.82));
+    const colorP = easeInOutCubic(clamp01((progress - 0.32) / 0.52));
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    const rect = imageRect(width, height);
+
     ctx.save();
-    ctx.globalAlpha = 1 - progress / 0.24;
-    drawDepthColorImage(width, height);
+    ctx.globalAlpha = 1 - pixelP;
+    if (depthColorCanvas) drawDepthColorImage(width, height);
+    else drawDepth(width, height, t, 1);
+    ctx.restore();
+
+    const cellW = Math.max(2, rect.width / (sourceCanvas.width / 6));
+    const baseSize = Math.max(3.0, Math.min(width, height) / 170);
+    const refZ = cloudBounds ? cloudBounds.size * 0.95 : 2;
+
+    const particles = pointCloud.map((point) => {
+      const startX = rect.x + (point.sx / sourceCanvas.width) * rect.width;
+      const startY = rect.y + (point.sy / sourceCanvas.height) * rect.height;
+      const end = cloudProjection(point, width, height, t, true);
+      return { point, startX, startY, end };
+    });
+
+    particles.sort((a, b) => b.end.z - a.end.z);
+
+    ctx.save();
+    ctx.globalAlpha = pixelP;
+    for (const item of particles) {
+      const x = lerp(item.startX, item.end.px, moveP);
+      const y = lerp(item.startY, item.end.py, moveP);
+      if (x < -12 || x > width + 12 || y < -12 || y > height + 12) continue;
+      const sizeScale = Math.min(1.7, refZ / Math.max(item.end.z, 0.1));
+      const endSize = baseSize * sizeScale;
+      const size = lerp(cellW, endSize, moveP);
+      drawDepthColorPixel(item.point, x, y, size, colorP);
+    }
     ctx.restore();
   }
 
@@ -1035,6 +1098,14 @@ export function initDepthBasedNVS() {
     const green = Math.round(lerp(g, point.g, depthMix));
     const b = Math.round(lerp(g, point.b, depthMix));
     ctx.fillStyle = `rgb(${r},${green},${b})`;
+    ctx.fillRect(x - size / 2, y - size / 2, size, size);
+  }
+
+  function drawDepthColorPixel(point, x, y, size, rgbMix) {
+    const r = Math.round(lerp(point.depthR ?? point.r, point.r, rgbMix));
+    const g = Math.round(lerp(point.depthG ?? point.g, point.g, rgbMix));
+    const b = Math.round(lerp(point.depthB ?? point.b, point.b, rgbMix));
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
     ctx.fillRect(x - size / 2, y - size / 2, size, size);
   }
 
