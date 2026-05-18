@@ -101,18 +101,19 @@ function updateChrome() {
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
   0:  initTitleBg,        // slide 1
-  // slide 2 (live viewer comparison) — iframes only
-  2:  initDepthBasedNVS,  // slide 3
-  3:  initApplications,   // slide 4
-  4:  initWhyHard,        // slide 5
-  5:  initClassic,        // slide 6
-  // slide 7 (NeRF intro) — no canvas
-  7:  initRotatable,      // slide 8
-  9:  initRayDemo,        // slide 10
-  10: initTraining,       // slide 11
-  11: initClickableViews, // slide 12
-  12: initOrbitScrubber,  // slide 13
-  15: initEndBg,          // slide 16
+  // slide 2 (spatial transition) — no canvas
+  // slide 3 (live viewer comparison) — iframes only
+  3:  initDepthBasedNVS,  // slide 4
+  4:  initApplications,   // slide 5
+  5:  initWhyHard,        // slide 6
+  6:  initClassic,        // slide 7
+  // slide 8 (NeRF intro) — no canvas
+  8:  initRotatable,      // slide 9
+  10: initRayDemo,        // slide 11
+  11: initTraining,       // slide 12
+  12: initClickableViews, // slide 13
+  13: initOrbitScrubber,  // slide 14
+  16: initEndBg,          // slide 17
 };
 
 const sceneInstances = {};
