@@ -254,6 +254,11 @@ export function initDepthBasedNVS() {
       mode: "depth",
     },
     {
+      title: "עומק בצבע",
+      text: "אותה מפת עומק, רק בצבע כדי לקרוא אותה מהר יותר.",
+      mode: "depthColor",
+    },
+    {
       title: "הרמת RGB-D",
       text: "כל פיקסל מקבל עומק וזז לנקודה במרחב.",
       mode: "cloud",
@@ -276,6 +281,7 @@ export function initDepthBasedNVS() {
   let animStart = performance.now();
   let sourceCanvas = null;
   let depthCanvas = null;
+  let depthColorCanvas = null;
   let pointCloud = [];
   let cloudBounds = null;
   let warpCanvas = null;
@@ -293,6 +299,33 @@ export function initDepthBasedNVS() {
     c.width = width;
     c.height = height;
     return c;
+  }
+
+  function updateStageSize() {
+    const sourceW = sourceCanvas?.width || 504;
+    const sourceH = sourceCanvas?.height || 384;
+    const naturalWidth = sourceW * 1.55;
+    const ratio = sourceW / sourceH;
+    const slide = root.closest(".slide");
+    const viewportW = slide?.clientWidth || window.innerWidth;
+    const viewportH = slide?.clientHeight || window.innerHeight;
+    const compact = viewportH <= 820;
+    const widthLimit = Math.max(340, viewportW - (compact ? 144 : 56));
+    const reservedHeight =
+      viewportH <= 660 ? 260 : viewportH <= 720 ? 276 : compact ? 300 : 324;
+    const heightLimit = Math.max(280, viewportH - reservedHeight);
+    const displayWidth = Math.round(
+      Math.max(340, Math.min(naturalWidth, widthLimit, heightLimit * ratio)),
+    );
+    const nextRatio = `${sourceW} / ${sourceH}`;
+    const nextWidth = `${displayWidth}px`;
+
+    if (root.style.getPropertyValue("--nvs-source-ratio") !== nextRatio) {
+      root.style.setProperty("--nvs-source-ratio", nextRatio);
+    }
+    if (root.style.getPropertyValue("--nvs-display-width") !== nextWidth) {
+      root.style.setProperty("--nvs-display-width", nextWidth);
+    }
   }
 
   function setLoading(message, show = true) {
@@ -315,7 +348,8 @@ export function initDepthBasedNVS() {
     const fromMode = steps[from]?.mode;
     const toMode = steps[to]?.mode;
     if (fromMode === "rgb" && toMode === "depth") return 1.15;
-    if (fromMode === "depth" && toMode === "cloud") return 1.85;
+    if (fromMode === "depth" && toMode === "depthColor") return 0.9;
+    if (fromMode === "depthColor" && toMode === "cloud") return 1.85;
     if (fromMode === "cloud" && toMode === "warp") return 1.65;
     if (fromMode === "warp" && toMode === "refine") return 3.0;
     return 1.0;
@@ -771,14 +805,7 @@ export function initDepthBasedNVS() {
       setLoading("Loading input image...", true);
       sourceCanvas = await loadImageCanvas("assets/images/redtoyota.jpg");
       root.style.setProperty("--nvs-source-width", `${sourceCanvas.width}px`);
-      root.style.setProperty(
-        "--nvs-display-width",
-        `${Math.round(sourceCanvas.width * 1.55)}px`,
-      );
-      root.style.setProperty(
-        "--nvs-source-ratio",
-        `${sourceCanvas.width} / ${sourceCanvas.height}`,
-      );
+      updateStageSize();
       setLoading("", false);
       render();
       setTimeout(() => {
@@ -803,6 +830,13 @@ export function initDepthBasedNVS() {
       const warmup = preloadModel(updateProgress);
       await warmup.catch(() => {});
       depthCanvas = await estimateDepth(sourceCanvas, updateProgress);
+      depthColorCanvas = await loadImageCanvas(
+        "assets/generated/single_image_pipeline/03_depth_colormap.png",
+        sourceCanvas.width,
+      ).catch((err) => {
+        console.warn("color depth artifact failed to load", err);
+        return null;
+      });
 
       if (active > 0) setLoading("Building RGB-D proxy...", true);
       pointCloud = buildPointCloud(sourceCanvas, depthCanvas);
@@ -895,6 +929,40 @@ export function initDepthBasedNVS() {
       ctx.fillStyle = "rgba(0,0,0,0.18)";
       ctx.fillRect(rect.x + revealWidth - 1, rect.y, 2, rect.height);
     }
+  }
+
+  function drawDepthColor(width, height, t) {
+    if (!depthColorCanvas) {
+      drawDepth(width, height, t, 1);
+      return;
+    }
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    drawDepthColorImage(width, height);
+  }
+
+  function drawDepthColorImage(width, height) {
+    const rect = imageRect(width, height);
+    ctx.drawImage(depthColorCanvas, rect.x, rect.y, rect.width, rect.height);
+  }
+
+  function drawDepthToDepthColor(width, height, t, progress) {
+    drawDepth(width, height, t, 1);
+    if (!depthColorCanvas) return;
+    const p = easeInOutCubic(progress);
+    ctx.save();
+    ctx.globalAlpha = p;
+    drawDepthColorImage(width, height);
+    ctx.restore();
+  }
+
+  function drawDepthColorToCloud(width, height, t, progress) {
+    drawDepthToCloud(width, height, t, progress);
+    if (!depthColorCanvas || progress >= 0.24) return;
+    ctx.save();
+    ctx.globalAlpha = 1 - progress / 0.24;
+    drawDepthColorImage(width, height);
+    ctx.restore();
   }
 
   function cloudProjection(point, width, height, _t, animated = true) {
@@ -1341,8 +1409,12 @@ export function initDepthBasedNVS() {
       else drawDepth(width, height, t, easeInOutCubic(progress));
       return;
     }
-    if (fromMode === "depth" && toMode === "cloud") {
-      drawDepthToCloud(width, height, t, progress);
+    if (fromMode === "depth" && toMode === "depthColor") {
+      drawDepthToDepthColor(width, height, t, progress);
+      return;
+    }
+    if (fromMode === "depthColor" && toMode === "cloud") {
+      drawDepthColorToCloud(width, height, t, progress);
       return;
     }
     if (fromMode === "cloud" && toMode === "warp") {
@@ -1364,12 +1436,15 @@ export function initDepthBasedNVS() {
   function drawCurrentStage(width, height, t) {
     if (steps[active].mode === "rgb") drawRgb(width, height);
     else if (steps[active].mode === "depth") drawDepth(width, height, t);
+    else if (steps[active].mode === "depthColor")
+      drawDepthColor(width, height, t);
     else if (steps[active].mode === "cloud") drawCloud(width, height, t);
     else if (steps[active].mode === "warp") drawWarp(width, height, t);
     else if (steps[active].mode === "refine") drawRefine(width, height, t);
   }
 
   function render() {
+    updateStageSize();
     const { width, height } = sizeCanvas();
     const now = performance.now();
     const t = (now - animStart) / 1000;
@@ -1417,7 +1492,7 @@ export function initDepthBasedNVS() {
 
   function advance() {
     const next = active + 1;
-    if (active === 1 && next === 2) {
+    if (active === 2 && next === 3) {
       const procCanvas = document.getElementById("nvs-process-canvas");
       if (procCanvas && board) {
         // Snapshot the current canvas into an overlay image that will fade out
@@ -1469,6 +1544,7 @@ export function initDepthBasedNVS() {
     }
   });
 
+  updateStageSize();
   new ResizeObserver(render).observe(stage);
   setStep(0);
 

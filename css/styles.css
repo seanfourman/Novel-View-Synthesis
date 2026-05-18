@@ -59,6 +59,10 @@ code, .mono {
   overflow: hidden;
 }
 
+.slide[data-id="2"] {
+  padding-block: clamp(0.8rem, 2vh, 1.8rem);
+}
+
 /* ---------- common layout ---------- */
 .centered {
   width: 100%; max-width: 1100px;
@@ -282,12 +286,30 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: clamp(0.25rem, 0.8vh, 0.65rem);
   text-align: center;
 }
 
+.nvs-process-slide .kicker {
+  margin-bottom: 0;
+}
+
+.nvs-process-slide h2 {
+  font-size: clamp(1.65rem, 3vw, 2.85rem);
+  line-height: 1.04;
+}
+
+.nvs-process-slide .lead {
+  max-width: 980px;
+}
+
+.nvs-process-slide .lead.small {
+  font-size: clamp(0.84rem, 0.95vw, 0.98rem);
+  line-height: 1.35;
+}
+
 .nvs-process-board {
-  margin-top: 0.8rem;
+  margin-top: clamp(0.1rem, 0.6vh, 0.45rem);
   cursor: pointer;
 }
 
@@ -319,8 +341,8 @@ code {
 
 .nvs-stage-caption {
   width: min(var(--nvs-display-width, 780px), calc(100vw - 3rem));
-  margin: 0.95rem auto 0;
-  padding: 0.72rem 1.1rem;
+  margin: clamp(0.25rem, 0.65vh, 0.6rem) auto 0;
+  padding: 0.54rem 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -359,7 +381,7 @@ code {
   margin: 0;
   color: var(--ink-soft);
   font-size: clamp(0.84rem, 0.95vw, 0.95rem);
-  line-height: 1;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
