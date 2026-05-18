@@ -3,6 +3,7 @@
 import {
   initTitleBg,
   initProblemVis,
+  initStaticToSpatial,
   initDepthBasedNVS,
   initApplications,
   initWhyHard,
@@ -130,21 +131,22 @@ function updateChrome() {
 
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
-  0: initTitleBg, // slide 1
-  // slide 2 (spatial transition) - no canvas
-  2: initProblemVis, // slide 3
-  // slide 4 (live viewer comparison) - iframes only
-  4: initDepthBasedNVS, // slide 5
-  5: initApplications, // slide 6
-  6: initWhyHard, // slide 7
-  7: initClassic, // slide 8
-  // slide 9 (NeRF intro) - no canvas
-  9: initRotatable, // slide 10
-  11: initRayDemo, // slide 12
-  12: initTraining, // slide 13
-  13: initClickableViews, // slide 14
-  14: initOrbitScrubber, // slide 15
-  17: initEndBg, // slide 18
+  0:  initTitleBg,          // slide 1
+  // slide 2 (spatial domains) — no canvas
+  2:  initProblemVis,       // slide 3
+  3:  initStaticToSpatial,  // slide 4
+  // slide 5 (live room tour) — iframes only
+  5:  initDepthBasedNVS,    // slide 6
+  6:  initApplications,     // slide 7
+  7:  initWhyHard,          // slide 8
+  8:  initClassic,          // slide 9
+  // slide 10 (NeRF intro) — no canvas
+  10: initRotatable,        // slide 11
+  12: initRayDemo,          // slide 13
+  13: initTraining,         // slide 14
+  14: initClickableViews,   // slide 15
+  15: initOrbitScrubber,    // slide 16
+  18: initEndBg,            // slide 19
 };
 
 const sceneInstances = {};
@@ -165,10 +167,8 @@ function ensureSlideInit(idx) {
 }
 
 ensureSlideInit(0);
-ensureSlideInit(2); // depth-based NVS
-ensureSlideInit(3); // applications
-ensureSlideInit(4); // why-hard
-ensureSlideInit(5); // classic
+ensureSlideInit(2);
+ensureSlideInit(3);
 
 /* ===================== Render loop ===================== */
 function loop() {

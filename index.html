@@ -280,8 +280,37 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 4: LIVE ROOM TOUR COMPARISON ============ -->
+      <!-- ============ SLIDE 4: STATIC → SPATIAL ============ -->
       <section class="slide" data-id="4">
+        <div class="sts-layout">
+          <h2 class="sts-title">המעבר מתמונה סטטית <span class="accent">לחוויה מרחבית</span></h2>
+          <div class="sts-sub-block">
+            <p class="sts-sub">תמונה רגילה מציגה את הסצנה מנקודת מבט אחת בלבד.<br>
+              אך במערכות מודרניות המשתמש משנה את מיקומו וזווית הראייה שלו כל הזמן.</p>
+            <p class="sts-pre">ב־VR, במשחקים, ברובוטיקה ובמערכות AR נדרש ייצוג שמאפשר:</p>
+          </div>
+          <div class="sts-center-row">
+            <ul class="sts-bullets">
+              <li>לנוע בתוך הסביבה</li>
+              <li>להסתכל על אובייקטים מזוויות שונות</li>
+            </ul>
+            <div class="sts-orb-wrap" id="sts-orb">
+              <img src="assets/images/trex.jpg" class="sts-media" alt="T-Rex scene input">
+              <video src="assets/videos/trex.mp4" class="sts-media sts-nerf-vid" id="sts-vid"
+                muted loop playsinline></video>
+              <button class="sts-toggle-btn" id="sts-btn">הצג בNeRF</button>
+            </div>
+            <ul class="sts-bullets">
+              <li>לחוות עומק ותנועה בצורה טבעית</li>
+              <li>ליצור מעבר רציף בין נקודות מבט</li>
+            </ul>
+          </div>
+          <p class="sts-footer">כדי לאפשר חוויה כזו, המערכת צריכה להבין כיצד העולם נראה גם מחוץ לתמונות שצולמו בפועל.</p>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 5: LIVE ROOM TOUR COMPARISON ============ -->
+      <section class="slide" data-id="5">
         <div class="live-tour-slide">
           <div class="live-tour-head">
             <h2>
@@ -344,7 +373,7 @@
       </section>
 
       <!-- ============ SLIDE 3: MODEL PROCESS ============ -->
-      <section class="slide" data-id="5">
+      <section class="slide" data-id="6">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -376,7 +405,7 @@
       </section>
 
       <!-- ============ SLIDE 4: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="6">
+      <section class="slide" data-id="7">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -452,7 +481,7 @@
       </section>
 
       <!-- ============ SLIDE 5: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="7">
+      <section class="slide" data-id="8">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -525,7 +554,7 @@
       </section>
 
       <!-- ============ SLIDE 6: CLASSIC METHODS (visual) ============ -->
-      <section class="slide" data-id="8">
+      <section class="slide" data-id="9">
         <div class="centered wide">
           <div class="kicker">לפני NeRF</div>
           <h2>איך זה נעשה <em>בעבר</em></h2>
@@ -578,7 +607,7 @@
       </section>
 
       <!-- ============ SLIDE 7: NERF INTRO ============ -->
-      <section class="slide" data-id="9">
+      <section class="slide" data-id="10">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -594,7 +623,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="10">
+      <section class="slide" data-id="11">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -622,7 +651,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="11">
+      <section class="slide" data-id="12">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -669,7 +698,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="12">
+      <section class="slide" data-id="13">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -695,7 +724,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="13">
+      <section class="slide" data-id="14">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -741,7 +770,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="14">
+      <section class="slide" data-id="15">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -769,7 +798,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="15">
+      <section class="slide" data-id="16">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -805,7 +834,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -834,7 +863,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -865,7 +894,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

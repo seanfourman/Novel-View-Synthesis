@@ -2928,3 +2928,41 @@ export function initProblemVis() {
     },
   };
 }
+
+/* =========================================================
+   Slide 4: Static → Spatial — real image → NeRF video toggle
+   ========================================================= */
+export function initStaticToSpatial() {
+  const orb = document.getElementById("sts-orb");
+  const vid = document.getElementById("sts-vid");
+  const btn = document.getElementById("sts-btn");
+  if (!orb || !vid || !btn) return { tick() {} };
+
+  vid.muted = true;
+  vid.loop = true;
+  vid.playsInline = true;
+
+  let isNerf = false;
+
+  btn.addEventListener("click", () => {
+    isNerf = !isNerf;
+    orb.classList.toggle("playing", isNerf);
+    btn.textContent = isNerf ? "חזור לתמונה" : "הצג בNeRF";
+    if (isNerf) {
+      vid.play().catch(() => {});
+    } else {
+      vid.pause();
+      vid.currentTime = 0;
+    }
+  });
+
+  return {
+    tick(visible) {
+      if (!visible && isNerf && !vid.paused) {
+        vid.pause();
+      } else if (visible && isNerf && vid.paused) {
+        vid.play().catch(() => {});
+      }
+    },
+  };
+}
