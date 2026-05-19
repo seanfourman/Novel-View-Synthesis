@@ -534,44 +534,47 @@
             <button class="cp-back-btn" aria-label="חזור">&#8594;</button>
           </div>
 
-          <!-- LiDAR Panel -->
+          <!-- Light Fields Panel -->
           <div class="cp-panel cp-lidar" data-side="lidar">
             <div class="cp-content">
               <div class="cp-tag">02</div>
-              <h2 class="cp-title">LiDAR / 3D Scanning</h2>
+              <h2 class="cp-title">Light Fields</h2>
               <p class="cp-desc">
-                LiDAR היא גישה המבוססת על חיישנים אקטיביים ששולחים קרני לייזר ומודדים את זמן החזרה
-                שלהן כדי לחשב עומק ומרחקים במרחב.
+                Light Fields היא גישה שמנסה לייצג את הדרך שבה קרני אור נעות בתוך הסצנה מזוויות שונות.
+                במקום לבנות מודל גיאומטרי מלא של הסביבה, המערכת שומרת מידע על איך האובייקטים נראים
+                ממספר גדול של נקודות מבט.
               </p>
               <div class="cp-results">
-                <p class="cp-results-label">באמצעות המדידות האלו ניתן ליצור:</p>
+                <p class="cp-results-label">באמצעות המידע הזה ניתן:</p>
                 <ul>
-                  <li>Point Cloud צפוף</li>
-                  <li>מידע עומק מדויק</li>
-                  <li>שחזור גיאומטרי של הסביבה</li>
+                  <li>לייצר מבטים חדשים בין מצלמות</li>
+                  <li>ליצור תחושת עומק ותנועה טבעית יותר</li>
+                  <li>לבצע שינויי זווית בצורה רציפה יחסית</li>
                 </ul>
               </div>
               <div class="cp-cols">
                 <div class="cp-col cp-pros">
                   <div class="cp-col-title">יתרונות</div>
                   <ul>
-                    <li>דיוק גבוה מאוד בעומק ובמבנה גיאומטרי</li>
-                    <li>מתאים לסביבות גדולות ומורכבות</li>
-                    <li>נפוץ במיפוי תלת־ממדי וברכבים אוטונומיים</li>
+                    <li>מאפשר יצירת זוויות חדשות בצורה טבעית</li>
+                    <li>שומר מידע חזותי עשיר של הסצנה</li>
+                    <li>יוצר תחושת עומק טובה יחסית</li>
                   </ul>
                 </div>
                 <div class="cp-col cp-cons">
                   <div class="cp-col-title">חסרונות</div>
                   <ul>
-                    <li>דורש ציוד וחומרה ייעודיים</li>
-                    <li>יקר יחסית לשיטות מבוססות תמונות</li>
-                    <li>מתקשה עם זכוכית, מים והשתקפויות</li>
+                    <li>דורש מספר עצום של תמונות וזוויות צילום</li>
+                    <li>צורך הרבה זיכרון ואחסון</li>
+                    <li>מוגבל לתנועות קטנות בין מצלמות</li>
+                    <li>קשה לייצג סצנות גדולות ומורכבות</li>
                   </ul>
                 </div>
               </div>
             </div>
+            <div class="cp-select-wipe"></div>
             <div class="cp-charge-bar"><div class="cp-charge-fill"></div></div>
-            <div class="cp-collapsed-label">LiDAR</div>
+            <div class="cp-collapsed-label">Light Fields</div>
             <button class="cp-back-btn" aria-label="חזור">&#8592;</button>
           </div>
         </div>
