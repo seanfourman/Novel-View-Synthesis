@@ -3013,12 +3013,13 @@ export function initStaticToSpatial() {
     );
   };
 
-  // Concentric latitude rings — upper hemisphere only
+  // Concentric latitude rings — dome + base ring at drum level
   const domeRings = [
-    { el: 10, count: 8, offset: 0 },
-    { el: 32, count: 7, offset: Math.PI / 7 },
-    { el: 54, count: 5, offset: Math.PI / 5 },
-    { el: 74, count: 3, offset: Math.PI / 6 },
+    { el: -12, count: 9, offset: Math.PI / 9 },
+    { el: 10,  count: 8, offset: 0 },
+    { el: 32,  count: 7, offset: Math.PI / 7 },
+    { el: 54,  count: 5, offset: Math.PI / 5 },
+    { el: 74,  count: 3, offset: Math.PI / 6 },
   ];
   const toRad = d => d * Math.PI / 180;
   for (const { el, count, offset } of domeRings) {
