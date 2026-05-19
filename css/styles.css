@@ -2487,6 +2487,26 @@ code {
 /* Divider line between panels */
 .cp-sfm { border-left: 1.5px solid rgba(0,0,0,0.1); }
 
+/* ── Panel visualizations ── */
+.cp-vis {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(180px, 26vw, 340px);
+  aspect-ratio: 400 / 340;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s 0.3s;
+  z-index: 0;
+}
+
+.cp-vis-sfm  { left:  clamp(1rem, 4%, 4rem); }
+.cp-vis-lf   { left:  clamp(1rem, 4%, 4rem); }
+
+.compare-split[data-active="sfm"]   .cp-vis-sfm,
+.compare-split[data-active="lidar"] .cp-vis-lf  { opacity: 1; }
+
 .slide[data-id="7"] {
   padding: 0;
   align-items: stretch;

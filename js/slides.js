@@ -3453,6 +3453,228 @@ export function initSfMLiDAR() {
   const pressing = { sfm: false, lidar: false };
   let   active   = null;
 
+  const VIS_ACCENT = "#ff5a36";
+  const VIS_INK    = "#1a1a1a";
+
+  // ── SfM panel canvas: scattered photos → orbital camera rig (academic style) ──
+  const sfmVisDraw = (() => {
+    const cv = split.querySelector(".cp-vis-sfm");
+    if (!cv) return () => {};
+    const ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height;
+    const sc = W / 400;
+    const photos = [
+      [50, 50, -0.30], [94, 34, 0.18], [142, 56, -0.12],
+      [30, 112, 0.14], [84, 108, -0.24], [138, 110, 0.22],
+      [52, 172, -0.08], [100, 162, 0.26], [148, 178, -0.18],
+    ];
+
+    const drawPolaroid = (px, py, angle) => {
+      ctx.save(); ctx.translate(px*sc, py*sc); ctx.rotate(angle);
+      const pw = 42*sc, ph = 50*sc;
+      ctx.fillStyle = "rgba(0,0,0,0.11)"; ctx.fillRect(-pw/2+2*sc, -ph/2+2*sc, pw, ph);
+      ctx.fillStyle = "#edeae4"; ctx.fillRect(-pw/2, -ph/2, pw, ph);
+      ctx.fillStyle = "#bdb9b2"; ctx.fillRect(-pw/2+4*sc, -ph/2+4*sc, pw-8*sc, ph-14*sc);
+      ctx.fillStyle = "#8e8a84";
+      ctx.beginPath(); ctx.arc(0, -ph/2+14*sc, 6*sc, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, -ph/2+26*sc, 8*sc, 10*sc, 0, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    };
+
+    // Orbit centre in right zone
+    const ox = 306*sc, oy = H*0.50;
+    const rx = 74*sc, ry1 = 43*sc, ry2 = 22*sc;
+    const N = 26;
+    let t = 0;
+
+    return () => {
+      t++;
+      ctx.clearRect(0, 0, W, H);
+      photos.forEach(([x, y, a]) => drawPolaroid(x, y, a));
+
+      // Arrow
+      const ax = 178*sc, ay = H*0.5, aw = 26*sc, ah = 7*sc;
+      ctx.fillStyle = "#909090";
+      ctx.beginPath();
+      ctx.moveTo(ax, ay-ah/2); ctx.lineTo(ax+aw-ah, ay-ah/2);
+      ctx.lineTo(ax+aw-ah, ay-ah); ctx.lineTo(ax+aw, ay);
+      ctx.lineTo(ax+aw-ah, ay+ah); ctx.lineTo(ax+aw-ah, ay+ah/2);
+      ctx.lineTo(ax, ay+ah/2); ctx.closePath(); ctx.fill();
+
+      const rot = t * 0.007;
+
+      // Two orbit rings
+      const outer = Array.from({length: N}, (_, i) => {
+        const a = (i/N)*Math.PI*2 + rot;
+        return { x: ox+Math.cos(a)*rx, y: oy+Math.sin(a)*ry1, z: Math.sin(a) };
+      });
+      const inner = Array.from({length: N}, (_, i) => {
+        const a = (i/N)*Math.PI*2 - rot*0.55 + Math.PI*0.18;
+        return { x: ox+Math.cos(a)*rx*0.72, y: oy+Math.sin(a)*ry2, z: Math.sin(a) };
+      });
+
+      // Back-half triangular mesh
+      ctx.lineWidth = 0.8*sc;
+      for (let i = 0; i < N; i++) {
+        const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
+        if (o.z > 0 || inn.z > 0) continue;
+        ctx.strokeStyle = "rgba(175,38,28,0.13)";
+        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(inn.x,inn.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+      }
+
+      // Back-half orbit arcs
+      ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,Math.PI,Math.PI*2);
+      ctx.strokeStyle = "rgba(175,38,28,0.38)"; ctx.lineWidth = 1.5*sc; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,Math.PI,Math.PI*2);
+      ctx.strokeStyle = "rgba(175,38,28,0.30)"; ctx.lineWidth = 1.2*sc; ctx.stroke();
+
+      // Central figurine silhouette
+      ctx.fillStyle = "#a8a4a0";
+      ctx.beginPath(); ctx.arc(ox, oy-20*sc, 12*sc, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(ox, oy+5*sc, 15*sc, 20*sc, 0, 0, Math.PI*2); ctx.fill();
+
+      // Front-half mesh
+      ctx.lineWidth = 0.8*sc;
+      for (let i = 0; i < N; i++) {
+        const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
+        if (o.z <= 0 || inn.z <= 0) continue;
+        ctx.strokeStyle = "rgba(175,38,28,0.13)";
+        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(inn.x,inn.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+      }
+
+      // Front-half orbit arcs
+      ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,0,Math.PI);
+      ctx.strokeStyle = "rgba(175,38,28,0.80)"; ctx.lineWidth = 2*sc; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,0,Math.PI);
+      ctx.strokeStyle = "rgba(175,38,28,0.68)"; ctx.lineWidth = 1.6*sc; ctx.stroke();
+
+      // Camera dots along outer orbit
+      for (let i = 0; i < N; i++) {
+        const o = outer[i];
+        ctx.beginPath(); ctx.arc(o.x, o.y, 2.8*sc, 0, Math.PI*2);
+        ctx.fillStyle = o.z > 0 ? "rgba(175,38,28,0.88)" : "rgba(175,38,28,0.32)";
+        ctx.fill();
+      }
+    };
+  })();
+
+  // ── Light Fields panel canvas: camera plane array → scene → image plane ──
+  const lfVisDraw = (() => {
+    const cv = split.querySelector(".cp-vis-lf");
+    if (!cv) return () => {};
+    const ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height;
+    const sc = W / 400;
+
+    // 3×4 camera grid on the left
+    const ROWS = 4, COLS = 3;
+    const cams = [];
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        cams.push({
+          x: (52 + c*38)*sc,
+          y: H*0.18 + r*(H*0.64/( ROWS-1)),
+          ph: (r*COLS+c)*0.6,
+        });
+
+    // Scene centre
+    const sx = 248*sc, sy = H*0.5;
+    // Image plane x
+    const ipx = 358*sc;
+
+    const drawCamIcon = (x, y) => {
+      ctx.fillStyle = "#888";
+      ctx.fillRect(x-9*sc, y-5*sc, 18*sc, 10*sc);
+      ctx.beginPath(); ctx.arc(x+10*sc, y, 4*sc, 0, Math.PI*2);
+      ctx.fillStyle = "#444"; ctx.fill();
+      ctx.beginPath(); ctx.arc(x+10*sc, y, 2*sc, 0, Math.PI*2);
+      ctx.fillStyle = "#111"; ctx.fill();
+    };
+
+    let t = 0;
+    return () => {
+      t++;
+      ctx.clearRect(0, 0, W, H);
+
+      // Rays from cameras → scene
+      cams.forEach(cam => {
+        const pulse = 0.5 + 0.5*Math.sin(t*0.024 + cam.ph);
+        ctx.beginPath();
+        ctx.moveTo(cam.x+10*sc, cam.y);
+        ctx.lineTo(sx, sy);
+        ctx.strokeStyle = `rgba(175,38,28,${0.05 + pulse*0.28})`;
+        ctx.lineWidth = 0.9*sc;
+        ctx.stroke();
+      });
+
+      // Rays continuing scene → image plane (diverging)
+      cams.forEach(cam => {
+        const pulse = 0.5 + 0.5*Math.sin(t*0.024 + cam.ph + 0.8);
+        const slope = (cam.y - sy) / (cam.x - sx);
+        const iy = sy + slope*(ipx - sx);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(ipx, iy);
+        ctx.strokeStyle = `rgba(175,38,28,${0.04 + pulse*0.16})`;
+        ctx.lineWidth = 0.7*sc;
+        ctx.stroke();
+      });
+
+      // Grid connector lines on camera plane
+      ctx.strokeStyle = "rgba(0,0,0,0.10)"; ctx.lineWidth = sc;
+      for (let r = 0; r < ROWS; r++) {
+        ctx.beginPath();
+        for (let c = 0; c < COLS; c++) {
+          const cam = cams[r*COLS+c];
+          c === 0 ? ctx.moveTo(cam.x, cam.y) : ctx.lineTo(cam.x, cam.y);
+        }
+        ctx.stroke();
+      }
+      for (let c = 0; c < COLS; c++) {
+        ctx.beginPath();
+        for (let r = 0; r < ROWS; r++) {
+          const cam = cams[r*COLS+c];
+          r === 0 ? ctx.moveTo(cam.x, cam.y) : ctx.lineTo(cam.x, cam.y);
+        }
+        ctx.stroke();
+      }
+
+      // Camera icons
+      cams.forEach(cam => drawCamIcon(cam.x, cam.y));
+
+      // Scene: 3D sphere
+      const sg = ctx.createRadialGradient(sx-6*sc, sy-8*sc, 2*sc, sx, sy, 24*sc);
+      sg.addColorStop(0, "#d8d4cf");
+      sg.addColorStop(1, "#8a8680");
+      ctx.beginPath(); ctx.arc(sx, sy, 24*sc, 0, Math.PI*2);
+      ctx.fillStyle = sg; ctx.fill();
+      ctx.beginPath(); ctx.arc(sx, sy, 24*sc, 0, Math.PI*2);
+      ctx.strokeStyle = "rgba(0,0,0,0.14)"; ctx.lineWidth = sc; ctx.stroke();
+
+      // Image plane (vertical bar)
+      ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 2.5*sc;
+      ctx.beginPath(); ctx.moveTo(ipx, H*0.12); ctx.lineTo(ipx, H*0.88); ctx.stroke();
+      // Tick marks on plane
+      ctx.lineWidth = sc;
+      for (let i = 0; i <= 8; i++) {
+        const ty = H*0.12 + i*(H*0.76/8);
+        ctx.beginPath(); ctx.moveTo(ipx-4*sc, ty); ctx.lineTo(ipx+4*sc, ty); ctx.stroke();
+      }
+
+      // Labels
+      ctx.fillStyle = "rgba(0,0,0,0.38)";
+      ctx.font = `bold ${9*sc}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("Camera Array", (52+38)*sc, H*0.93);
+      ctx.fillText("Scene", sx, H*0.93);
+      ctx.fillText("Image", ipx, H*0.93);
+    };
+  })();
+
   const CHARGE_RATE = 1 / 100; // ~1.7 s hold to select
   const DRAIN_RATE  = 1 / 25;  // drains faster than it charges
 
@@ -3499,7 +3721,9 @@ export function initSfMLiDAR() {
 
   return {
     tick(visible) {
-      if (!visible || active) return;
+      if (!visible) return;
+      if (active === "sfm")   { sfmVisDraw(); return; }
+      if (active === "lidar") { lfVisDraw();  return; }
       ["sfm", "lidar"].forEach(side => {
         if (pressing[side]) {
           charges[side] = Math.min(1, charges[side] + CHARGE_RATE);
