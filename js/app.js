@@ -135,8 +135,8 @@ const sceneRegistry = {
   // slide 2 (spatial domains) — no canvas
   2:  initProblemVis,       // slide 3
   3:  initStaticToSpatial,  // slide 4
-  4:  initClassic,          // slide 5
-  // slide 6 (live room tour) — iframes only
+  // slide 5 (live room tour) — iframes only
+  5:  initClassic,          // slide 6
   6:  initDepthBasedNVS,    // slide 7
   7:  initApplications,     // slide 8
   8:  initWhyHard,          // slide 9
