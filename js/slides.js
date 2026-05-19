@@ -2130,15 +2130,36 @@ export function initClassic() {
         ? [ax+(t/cross)*rx, ay+(t/cross)*ry] : null;
     };
     const pts = [];
+    const SWEEP_F = 220, PAUSE_F = 70, CYCLE = SWEEP_F + PAUSE_F;
     let t = 0;
     return () => {
       t++;
+      const phase = t % CYCLE;
+      if (phase === 0) pts.length = 0;
+      const sweeping = phase < SWEEP_F;
+
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+
+      // draw walls gray
       ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1.2;
       walls.forEach(([x1,y1,x2,y2]) => {
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       });
-      const sweep = (t * 0.014 % Math.PI) - Math.PI * 0.5;
+
+      // paint blue over walls where laser hit (only during sweep, clears on reset)
+      if (sweeping) {
+        pts.forEach(p => {
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(10,80,200,0.85)"; ctx.fill();
+        });
+      }
+
+      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = ACCENT; ctx.fill();
+
+      if (!sweeping) return;
+
+      const sweep = (phase / SWEEP_F) * Math.PI - Math.PI * 0.5;
       const ang = -Math.PI / 2 + sweep;
       const edx = Math.cos(ang) * H * 1.6, edy = Math.sin(ang) * H * 1.6;
       let hit = null, minD = Infinity;
@@ -2147,7 +2168,7 @@ export function initClassic() {
         if (h) { const d=Math.hypot(h[0]-sx,h[1]-sy); if(d<minD){minD=d;hit=h;} }
       });
       const beamEnd = hit ? [hit[0], hit[1]] : [sx + edx * 0.25, sy + edy * 0.25];
-      if (hit) pts.push({ x:hit[0], y:hit[1], age:0 });
+      if (hit) pts.push({ x:hit[0], y:hit[1] });
       // glow halo under beam
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
       ctx.strokeStyle = "rgba(255,90,54,0.15)"; ctx.lineWidth = 2.5; ctx.stroke();
@@ -2163,15 +2184,6 @@ export function initClassic() {
         ctx.beginPath(); ctx.arc(hit[0], hit[1], 6, 0, Math.PI * 2);
         ctx.fillStyle = ig; ctx.fill();
       }
-      pts.forEach(p => {
-        p.age++;
-        const a = Math.max(0, 1 - p.age / 280);
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(10,80,200,${Math.min(1, a * 1.6)})`; ctx.fill();
-      });
-      if (pts.length > 240) pts.splice(0, pts.length - 240);
-      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2);
-      ctx.fillStyle = ACCENT; ctx.fill();
     };
   })();
 
@@ -2188,11 +2200,11 @@ export function initClassic() {
       t++;
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
       grid.forEach(cam => {
-        const pulse = 0.5 + 0.5 * Math.sin(t * 0.055 + cam.ph);
+        const pulse = 0.5 + 0.5 * Math.sin(t * 0.028 + cam.ph);
         ctx.beginPath(); ctx.moveTo(cam.x, cam.y); ctx.lineTo(cx, cy);
-        ctx.strokeStyle = `rgba(255,90,54,${0.1 + pulse * 0.28})`; ctx.lineWidth = 0.9; ctx.stroke();
-        ctx.beginPath(); ctx.arc(cam.x, cam.y, 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(26,26,26,${0.45 + pulse * 0.55})`; ctx.fill();
+        ctx.strokeStyle = `rgba(255,90,54,${0.04 + pulse * 0.82})`; ctx.lineWidth = 0.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cam.x, cam.y, 1 + pulse * 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(26,26,26,${0.15 + pulse * 0.85})`; ctx.fill();
       });
       ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
       ctx.fillStyle = ACCENT; ctx.fill();
