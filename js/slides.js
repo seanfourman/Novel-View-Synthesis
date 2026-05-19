@@ -2169,35 +2169,61 @@ export function initClassic() {
     };
   })();
 
-  // ── Photogrammetry: spinning cube + orbiting camera ──
+  // ── Photogrammetry: rotating vase wireframe + orbiting camera ──
   const photoDraw = (() => {
     const ctx = cPhoto.getContext("2d");
     const W = cPhoto.width, H = cPhoto.height, cx = W / 2, cy = H / 2;
-    const S = 26;
-    const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-    const v3 = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    const S = 20;
+    const STEPS = 10; // rotational segments
+    // Vase profile: {y, r} pairs from bottom to top
+    const profile = [
+      {y:-2.8, r:0.25},
+      {y:-2.2, r:1.4},
+      {y:-1.2, r:1.7},
+      {y: 0.0, r:1.3},
+      {y: 1.2, r:1.6},
+      {y: 2.0, r:1.1},
+      {y: 2.5, r:0.7},
+      {y: 2.8, r:0.8},
+    ];
+    const RINGS = profile.length;
+    // Build vertices
+    const v3 = [];
+    for (let r = 0; r < RINGS; r++) {
+      for (let s = 0; s < STEPS; s++) {
+        const a = (s / STEPS) * Math.PI * 2;
+        v3.push([Math.cos(a) * profile[r].r, profile[r].y, Math.sin(a) * profile[r].r]);
+      }
+    }
+    // Build edges: ring edges + vertical edges
+    const edges = [];
+    for (let r = 0; r < RINGS; r++) {
+      for (let s = 0; s < STEPS; s++) {
+        edges.push([r*STEPS+s, r*STEPS+(s+1)%STEPS]);       // ring
+        if (r < RINGS-1) edges.push([r*STEPS+s, (r+1)*STEPS+s]); // vertical
+      }
+    }
     let t = 0;
     return () => {
       t++;
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-      const rx = t * 0.013, ry = t * 0.019;
+      const rx = t * 0.008, ry = t * 0.018;
       const cX = Math.cos(rx), sX = Math.sin(rx), cY = Math.cos(ry), sY = Math.sin(ry);
       const proj = v3.map(([x, y, z]) => {
-        const y2 = y * cX - z * sX, z2 = y * sX + z * cX;
-        const x3 = x * cY + z2 * sY;
-        return [cx + x3 * S, cy + y2 * S];
+        const y2 = y*cX - z*sX, z2 = y*sX + z*cX;
+        const x3 = x*cY + z2*sY;
+        return [cx + x3*S, cy - y2*S];
       });
-      ctx.strokeStyle = INK; ctx.lineWidth = 1.4;
+      ctx.strokeStyle = "rgba(26,26,26,0.7)"; ctx.lineWidth = 1;
       edges.forEach(([a, b]) => {
         ctx.beginPath(); ctx.moveTo(...proj[a]); ctx.lineTo(...proj[b]); ctx.stroke();
       });
+      // Orbiting camera
       const ca = t * 0.032;
-      const bx = cx + Math.cos(ca) * W * 0.41, by = cy + Math.sin(ca) * H * 0.37;
+      const bx = cx + Math.cos(ca)*W*0.41, by = cy + Math.sin(ca)*H*0.37;
       ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
       ctx.strokeStyle = "rgba(255,90,54,0.22)"; ctx.lineWidth = 0.9; ctx.stroke();
-      ctx.fillStyle = ACCENT; ctx.fillRect(bx - 5, by - 3.5, 10, 7);
-      ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = INK; ctx.fill();
+      ctx.fillStyle = ACCENT; ctx.fillRect(bx-5, by-3.5, 10, 7);
     };
   })();
 
