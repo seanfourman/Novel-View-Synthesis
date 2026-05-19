@@ -2274,19 +2274,29 @@ code {
 .cp-sfm  { background: #f8f7f4; border-left: 1px solid rgba(0,0,0,0.07); }
 .cp-lidar { background: #f2f1ee; }
 
-/* Glow overlay driven by --charge (0–1) */
+/* Glow overlay — spreads from the center divider outward, mirrored */
 .cp-panel::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center,
-    rgba(255,90,54,0.55) 0%,
-    rgba(255,90,54,0.18) 50%,
-    transparent 80%
-  );
   opacity: var(--charge, 0);
   pointer-events: none;
-  box-shadow: inset 0 0 80px rgba(255,90,54,0.3);
+}
+/* SfM = right panel: glow flows from left (center) → right */
+.cp-sfm::before {
+  background: linear-gradient(to right,
+    rgba(255,120,80,0.38) 0%,
+    rgba(255,120,80,0.14) 55%,
+    transparent 90%
+  );
+}
+/* LiDAR = left panel: glow flows from right (center) → left */
+.cp-lidar::before {
+  background: linear-gradient(to left,
+    rgba(255,120,80,0.38) 0%,
+    rgba(255,120,80,0.14) 55%,
+    transparent 90%
+  );
 }
 
 /* Border glow */
@@ -2294,9 +2304,9 @@ code {
   content: "";
   position: absolute;
   inset: 0;
-  border: 3px solid rgba(255,90,54,0);
-  border-color: rgba(255,90,54, calc(var(--charge, 0) * 0.9));
-  box-shadow: 0 0 calc(var(--charge, 0) * 40px) rgba(255,90,54, calc(var(--charge, 0) * 0.4));
+  border: 2px solid rgba(255,120,80,0);
+  border-color: rgba(255,120,80, calc(var(--charge, 0) * 0.6));
+  box-shadow: 0 0 calc(var(--charge, 0) * 30px) rgba(255,120,80, calc(var(--charge, 0) * 0.25));
   pointer-events: none;
 }
 
