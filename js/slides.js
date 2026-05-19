@@ -2026,57 +2026,115 @@ export function initClassic() {
   const BG     = "#f5f5f5";
 
   // ── SfM: sparse points appearing + cameras orbiting ──
+  // ── SfM: three photo frames with matching feature lines ──
   const sfmDraw = (() => {
     const ctx = cSfm.getContext("2d");
-    const W = cSfm.width, H = cSfm.height, cx = W / 2, cy = H / 2;
-    const pts = Array.from({ length: 38 }, (_, i) => ({
-      x: (Math.random() - 0.5) * W * 0.58,
-      y: (Math.random() - 0.5) * H * 0.58,
-      delay: i * 5,
-    }));
-    let t = 0;
+    const W = cSfm.width, H = cSfm.height;
+
+    // 3 "photo" frames at different positions around the canvas
+    const frames = [
+      { cx: W*0.18, cy: H*0.22, angle: -0.18 },
+      { cx: W*0.82, cy: H*0.22, angle:  0.18 },
+      { cx: W*0.50, cy: H*0.82, angle:  0.00 },
+    ];
+    const FW = 44, FH = 32;
+
+    // 4 feature points visible in all frames (corners of a simple quad)
+    const sceneShape = [
+      { ox: -10, oy: -8 },
+      { ox:  10, oy: -8 },
+      { ox:  10, oy:  8 },
+      { ox: -10, oy:  8 },
+    ];
+
+    // Project scene points into each frame with a slight perspective skew per frame
+    const projected = frames.map((f) =>
+      sceneShape.map(p => {
+        const cosA = Math.cos(f.angle), sinA = Math.sin(f.angle);
+        return {
+          x: f.cx + p.ox * cosA - p.oy * sinA * 0.3,
+          y: f.cy + p.ox * sinA * 0.3 + p.oy,
+        };
+      })
+    );
+
+    let t = 0, activeMatch = 0;
     return () => {
       t++;
+      if (t % 60 === 0) activeMatch = (activeMatch + 1) % sceneShape.length;
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-      pts.forEach(p => {
-        const a = Math.min(1, (t - p.delay) / 14);
-        if (a <= 0) return;
-        ctx.beginPath(); ctx.arc(cx + p.x, cy + p.y, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(26,26,26,${a})`; ctx.fill();
-      });
-      for (let i = 0; i < 3; i++) {
-        const ang = t * 0.024 + (i / 3) * Math.PI * 2;
-        const bx = cx + Math.cos(ang) * W * 0.4, by = cy + Math.sin(ang) * H * 0.36;
-        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
-        ctx.strokeStyle = "rgba(255,90,54,0.18)"; ctx.lineWidth = 0.8; ctx.stroke();
-        ctx.fillStyle = ACCENT; ctx.fillRect(bx - 5, by - 3.5, 10, 7);
-        ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = INK; ctx.fill();
+
+      // Draw matching lines between all frames for the active point
+      for (let a = 0; a < frames.length; a++) {
+        for (let b = a + 1; b < frames.length; b++) {
+          const pa = projected[a][activeMatch];
+          const pb = projected[b][activeMatch];
+          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+          ctx.strokeStyle = "rgba(255,90,54,0.55)"; ctx.lineWidth = 1; ctx.stroke();
+        }
       }
+
+      // Draw frames + dots
+      frames.forEach((f, fi) => {
+        // frame border
+        ctx.strokeStyle = "rgba(0,0,0,0.18)"; ctx.lineWidth = 1.2;
+        ctx.strokeRect(f.cx - FW/2, f.cy - FH/2, FW, FH);
+
+        // all feature dots in frame
+        projected[fi].forEach((p, pi) => {
+          ctx.beginPath(); ctx.arc(p.x, p.y, pi === activeMatch ? 3.5 : 2, 0, Math.PI*2);
+          ctx.fillStyle = pi === activeMatch ? ACCENT : "rgba(0,0,0,0.35)";
+          ctx.fill();
+        });
+      });
     };
   })();
 
-  // ── MVS: dense coloured point cloud cycling in ──
+  // ── MVS: sparse → dense split with sweeping divider ──
   const mvsDraw = (() => {
     const ctx = cMvs.getContext("2d");
-    const W = cMvs.width, H = cMvs.height, cx = W / 2, cy = H / 2;
-    const pts = Array.from({ length: 220 }, (_, i) => ({
-      x: (Math.random() - 0.5) * W * 0.72,
-      y: (Math.random() - 0.5) * H * 0.72,
-      r: Math.random() * 1.6 + 0.5,
-      hue: Math.floor(Math.random() * 60 + 190),
-      delay: i,
-    }));
+    const W = cMvs.width, H = cMvs.height;
+    const cx = W * 0.5, cy = H * 0.5;
+    const R = 42;
+
+    // Generate dense grid inside a circle
+    const dense = [], sparse = [];
+    for (let dy = -R; dy <= R; dy += 4.5) {
+      for (let dx = -R; dx <= R; dx += 4.5) {
+        if (dx*dx + dy*dy > R*R) continue;
+        const dz = Math.sqrt(Math.max(0, 1 - (dx*dx + dy*dy) / (R*R)));
+        const p = { x: cx+dx, y: cy+dy, z: dz };
+        dense.push(p);
+        if (Math.abs(dx % 13) < 5 && Math.abs(dy % 13) < 5) sparse.push(p);
+      }
+    }
+
     let t = 0;
     return () => {
-      t = (t + 1) % 440;
+      t++;
+      // divX oscillates across the full width
+      const divX = cx + Math.sin(t * 0.016) * (W * 0.44);
+
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-      pts.forEach(p => {
-        const a = Math.min(0.88, (t - p.delay) / 12);
-        if (a <= 0) return;
-        ctx.beginPath(); ctx.arc(cx + p.x, cy + p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${p.hue},55%,45%,${a})`; ctx.fill();
+
+      // Left of divX: sparse gray dots
+      sparse.forEach(p => {
+        if (p.x > divX) return;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.fill();
       });
+
+      // Right of divX: dense depth-colored dots
+      dense.forEach(p => {
+        if (p.x <= divX) return;
+        const d = p.z;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+        ctx.fillStyle = `rgb(${Math.round(15+d*45)},${Math.round(70+d*110)},${Math.round(190-d*60)})`; ctx.fill();
+      });
+
+      // Sweeping divider line
+      ctx.beginPath(); ctx.moveTo(divX, cy - R - 4); ctx.lineTo(divX, cy + R + 4);
+      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5; ctx.stroke();
     };
   })();
 
