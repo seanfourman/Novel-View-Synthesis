@@ -2961,7 +2961,12 @@ export function initStaticToSpatial() {
   // White scene background matches the renders' white background → seamless
   const impostorTex = new THREE.Texture();
   impostorTex.colorSpace = THREE.SRGBColorSpace;
-  const impostorMat = new THREE.SpriteMaterial({ map: impostorTex, depthTest: false });
+  const impostorMat = new THREE.SpriteMaterial({
+    map: impostorTex,
+    blending: THREE.MultiplyBlending,
+    depthTest: false,
+    depthWrite: false,
+  });
   const impostorSpr = new THREE.Sprite(impostorMat);
   impostorSpr.scale.set(3.6, 3.6, 1);
   impostorSpr.position.set(0, -0.4, 0);
@@ -3032,7 +3037,7 @@ export function initStaticToSpatial() {
 
   let theta2 = 0;
   const updateCam2 = () => {
-    cam2.position.set(Math.sin(theta2) * 9.5, 3.2, Math.cos(theta2) * 9.5);
+    cam2.position.set(Math.sin(theta2) * 7.1, 2.5, Math.cos(theta2) * 7.1);
     cam2.lookAt(0, 0, 0);
   };
   updateCam2();
