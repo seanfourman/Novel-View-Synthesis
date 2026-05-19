@@ -2146,7 +2146,7 @@ export function initClassic() {
       sparse.forEach(p => {
         if (p.x > divX) return;
         ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(10,80,200,0.55)"; ctx.fill();
+        ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.fill();
       });
 
       // Right of divX: dense depth-colored dots
@@ -2154,7 +2154,7 @@ export function initClassic() {
         if (p.x <= divX) return;
         const d = p.z;
         ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
-        ctx.fillStyle = `rgb(${Math.round(15+d*45)},${Math.round(70+d*110)},${Math.round(190-d*60)})`; ctx.fill();
+        ctx.fillStyle = "rgba(10,80,200,0.85)"; ctx.fill();
       });
 
       // Sweeping divider line
