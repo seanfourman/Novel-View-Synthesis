@@ -3443,3 +3443,81 @@ export function initStaticToSpatial() {
     enter() {},
   };
 }
+
+/* ============================================================
+   SLIDE 7 — SfM vs LiDAR interactive split
+   ============================================================ */
+export function initSfMLiDAR() {
+  const split = document.getElementById("compare-split");
+  if (!split) return { tick() {}, enter() {} };
+
+  const panels = Array.from(split.querySelectorAll(".cp-panel"));
+  const fills  = {};
+  panels.forEach(p => { fills[p.dataset.side] = p.querySelector(".cp-charge-fill"); });
+
+  const charges  = { sfm: 0, lidar: 0 };
+  const pressing = { sfm: false, lidar: false };
+  let   active   = null;
+
+  const CHARGE_RATE = 1 / 100; // ~1.7 s hold to select
+  const DRAIN_RATE  = 1 / 25;  // drains faster than it charges
+
+  function select(side) {
+    active = side;
+    split.dataset.active = side;
+    panels.forEach(p => { p.style.setProperty("--charge", 0); });
+    fills[side] && (fills[side].style.width = "0%");
+  }
+
+  function reset() {
+    active = null;
+    split.dataset.active = "";
+    charges.sfm = charges.lidar = 0;
+    pressing.sfm = pressing.lidar = false;
+    panels.forEach(p => {
+      p.style.setProperty("--charge", 0);
+      const f = p.querySelector(".cp-charge-fill");
+      if (f) f.style.width = "0%";
+    });
+  }
+
+  // Long-press listeners
+  panels.forEach(p => {
+    const side = p.dataset.side;
+    const start = () => { if (!active) pressing[side] = true; };
+    const stop  = () => { pressing[side] = false; };
+    p.addEventListener("mousedown",   start);
+    p.addEventListener("touchstart",  start, { passive: true });
+    p.addEventListener("mouseup",     stop);
+    p.addEventListener("mouseleave",  stop);
+    p.addEventListener("touchend",    stop);
+    p.addEventListener("touchcancel", stop);
+  });
+
+  // Back buttons
+  split.querySelectorAll(".cp-back-btn").forEach(btn => {
+    btn.addEventListener("mousedown", e => e.stopPropagation());
+    btn.addEventListener("click",     e => { e.stopPropagation(); reset(); });
+  });
+
+  // Prevent text selection while holding
+  split.addEventListener("mousedown", e => e.preventDefault());
+
+  return {
+    tick(visible) {
+      if (!visible || active) return;
+      ["sfm", "lidar"].forEach(side => {
+        if (pressing[side]) {
+          charges[side] = Math.min(1, charges[side] + CHARGE_RATE);
+          if (charges[side] >= 1) { select(side); return; }
+        } else {
+          charges[side] = Math.max(0, charges[side] - DRAIN_RATE);
+        }
+        const panel = panels.find(p => p.dataset.side === side);
+        if (panel) panel.style.setProperty("--charge", charges[side].toFixed(3));
+        if (fills[side]) fills[side].style.width = (charges[side] * 100).toFixed(1) + "%";
+      });
+    },
+    enter() { reset(); },
+  };
+}

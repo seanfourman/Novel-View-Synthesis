@@ -486,8 +486,96 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 7: MODEL PROCESS ============ -->
+      <!-- ============ SLIDE 7: SFM vs LIDAR COMPARISON ============ -->
       <section class="slide" data-id="7">
+        <div class="compare-split" id="compare-split">
+          <!-- SfM Panel (right side in RTL = visually left) -->
+          <div class="cp-panel cp-sfm" data-side="sfm">
+            <div class="cp-content">
+              <div class="cp-tag">01</div>
+              <h2 class="cp-title">Structure from Motion</h2>
+              <p class="cp-desc">
+                SfM היא שיטה לשחזור מבנה תלת־ממדי מתוך מספר תמונות דו־ממדיות של אותה סצנה.
+                המערכת מזהה נקודות עניין משותפות בין תמונות שונות, עוקבת אחריהן מזוויות צילום שונות,
+                ומשתמשת בהן כדי לחשב את מיקום המצלמות ואת המבנה הגיאומטרי של הסביבה.
+              </p>
+              <div class="cp-results">
+                <p class="cp-results-label">בסיום מתקבלים בדרך כלל:</p>
+                <ul>
+                  <li>Sparse Point Cloud</li>
+                  <li>מיקומי מצלמות במרחב</li>
+                </ul>
+              </div>
+              <div class="cp-cols">
+                <div class="cp-col cp-pros">
+                  <div class="cp-col-title">יתרונות</div>
+                  <ul>
+                    <li>עובד עם תמונות רגילות בלבד</li>
+                    <li>לא דורש חיישני עומק מיוחדים</li>
+                    <li>מאפשר שחזור של סביבות אמיתיות בצורה יחסית פשוטה</li>
+                  </ul>
+                </div>
+                <div class="cp-col cp-cons">
+                  <div class="cp-col-title">חסרונות</div>
+                  <ul>
+                    <li>רגיש לטשטוש ולשינויי תאורה</li>
+                    <li>מתקשה באזורים ללא טקסטורה</li>
+                    <li>בעיות עם זכוכית, השתקפויות ומשטחים מבריקים</li>
+                    <li>יוצר ייצוג גיאומטרי דליל יחסית</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="cp-charge-bar"><div class="cp-charge-fill"></div></div>
+            <div class="cp-collapsed-label">SfM</div>
+            <button class="cp-back-btn" aria-label="חזור">&#8592;</button>
+          </div>
+
+          <!-- LiDAR Panel -->
+          <div class="cp-panel cp-lidar" data-side="lidar">
+            <div class="cp-content">
+              <div class="cp-tag">02</div>
+              <h2 class="cp-title">LiDAR / 3D Scanning</h2>
+              <p class="cp-desc">
+                LiDAR היא גישה המבוססת על חיישנים אקטיביים ששולחים קרני לייזר ומודדים את זמן החזרה
+                שלהן כדי לחשב עומק ומרחקים במרחב.
+              </p>
+              <div class="cp-results">
+                <p class="cp-results-label">באמצעות המדידות האלו ניתן ליצור:</p>
+                <ul>
+                  <li>Point Cloud צפוף</li>
+                  <li>מידע עומק מדויק</li>
+                  <li>שחזור גיאומטרי של הסביבה</li>
+                </ul>
+              </div>
+              <div class="cp-cols">
+                <div class="cp-col cp-pros">
+                  <div class="cp-col-title">יתרונות</div>
+                  <ul>
+                    <li>דיוק גבוה מאוד בעומק ובמבנה גיאומטרי</li>
+                    <li>מתאים לסביבות גדולות ומורכבות</li>
+                    <li>נפוץ במיפוי תלת־ממדי וברכבים אוטונומיים</li>
+                  </ul>
+                </div>
+                <div class="cp-col cp-cons">
+                  <div class="cp-col-title">חסרונות</div>
+                  <ul>
+                    <li>דורש ציוד וחומרה ייעודיים</li>
+                    <li>יקר יחסית לשיטות מבוססות תמונות</li>
+                    <li>מתקשה עם זכוכית, מים והשתקפויות</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="cp-charge-bar"><div class="cp-charge-fill"></div></div>
+            <div class="cp-collapsed-label">LiDAR</div>
+            <button class="cp-back-btn" aria-label="חזור">&#8592;</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 8: MODEL PROCESS ============ -->
+      <section class="slide" data-id="8">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -519,7 +607,7 @@
       </section>
 
       <!-- ============ SLIDE 8: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="8">
+      <section class="slide" data-id="9">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -595,7 +683,7 @@
       </section>
 
       <!-- ============ SLIDE 9: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="9">
+      <section class="slide" data-id="10">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -668,7 +756,7 @@
       </section>
 
       <!-- ============ SLIDE 10: NERF INTRO ============ -->
-      <section class="slide" data-id="10">
+      <section class="slide" data-id="11">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -684,7 +772,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="11">
+      <section class="slide" data-id="12">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -712,7 +800,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="12">
+      <section class="slide" data-id="13">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -759,7 +847,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="13">
+      <section class="slide" data-id="14">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -785,7 +873,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="14">
+      <section class="slide" data-id="15">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -831,7 +919,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="15">
+      <section class="slide" data-id="16">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -859,7 +947,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -895,7 +983,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -924,7 +1012,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -955,7 +1043,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="19">
+      <section class="slide" data-id="20">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

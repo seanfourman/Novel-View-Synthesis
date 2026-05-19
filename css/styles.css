@@ -2246,3 +2246,221 @@ code {
     height: 80px;
   }
 }
+
+/* ============================================================
+   SLIDE 7: SfM vs LiDAR Split Comparison
+   ============================================================ */
+.compare-split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  direction: rtl;
+  overflow: hidden;
+}
+
+.cp-panel {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 4vw, 5rem) clamp(1.5rem, 3vw, 4rem);
+  overflow: hidden;
+  transition: flex 0.65s cubic-bezier(0.77, 0, 0.18, 1);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.cp-sfm  { background: #f8f7f4; border-left: 1px solid rgba(0,0,0,0.07); }
+.cp-lidar { background: #f2f1ee; }
+
+/* Glow overlay driven by --charge (0–1) */
+.cp-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center,
+    rgba(255,90,54,0.55) 0%,
+    rgba(255,90,54,0.18) 50%,
+    transparent 80%
+  );
+  opacity: var(--charge, 0);
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(255,90,54,0.3);
+}
+
+/* Border glow */
+.cp-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(255,90,54,0);
+  border-color: rgba(255,90,54, calc(var(--charge, 0) * 0.9));
+  box-shadow: 0 0 calc(var(--charge, 0) * 40px) rgba(255,90,54, calc(var(--charge, 0) * 0.4));
+  pointer-events: none;
+}
+
+/* ── Content ── */
+.cp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-width: 560px;
+  position: relative;
+  z-index: 1;
+}
+
+.cp-tag {
+  font-size: clamp(3rem, 5vw, 6rem);
+  font-weight: 900;
+  color: rgba(255,90,54,0.15);
+  line-height: 1;
+  margin-bottom: -0.5rem;
+}
+
+.cp-title {
+  font-size: clamp(1.6rem, 2.4vw, 2.6rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.15;
+  direction: ltr;
+}
+
+.cp-desc {
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.cp-results { margin: 0; }
+.cp-results-label {
+  font-size: clamp(0.8rem, 0.9vw, 0.92rem);
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0 0 0.4rem;
+}
+.cp-results ul {
+  margin: 0;
+  padding-right: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.cp-results li {
+  font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+  color: var(--ink);
+}
+
+.cp-cols {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.4rem;
+}
+.cp-col { flex: 1; }
+.cp-col-title {
+  font-size: clamp(0.8rem, 0.9vw, 0.9rem);
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+.cp-pros .cp-col-title { color: #2a7a4b; }
+.cp-cons .cp-col-title { color: #c0392b; }
+.cp-col ul {
+  margin: 0;
+  padding-right: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cp-col li {
+  font-size: clamp(0.78rem, 0.88vw, 0.9rem);
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+/* ── Charge bar ── */
+.cp-charge-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0,0,0,0.06);
+}
+.cp-charge-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.05s linear;
+}
+
+/* ── Collapsed state elements ── */
+.cp-collapsed-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  direction: ltr;
+}
+
+.cp-back-btn {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Selected state ── */
+.compare-split[data-active="sfm"]  .cp-sfm  { flex: 9; cursor: default; }
+.compare-split[data-active="sfm"]  .cp-lidar { flex: 1; cursor: default; }
+.compare-split[data-active="lidar"] .cp-lidar { flex: 9; cursor: default; }
+.compare-split[data-active="lidar"] .cp-sfm  { flex: 1; cursor: default; }
+
+/* Collapsed panel: hide content, show label + back btn */
+.compare-split[data-active="sfm"] .cp-lidar .cp-content,
+.compare-split[data-active="sfm"] .cp-lidar .cp-charge-bar,
+.compare-split[data-active="lidar"] .cp-sfm .cp-content,
+.compare-split[data-active="lidar"] .cp-sfm .cp-charge-bar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.compare-split[data-active="sfm"] .cp-lidar .cp-collapsed-label,
+.compare-split[data-active="sfm"] .cp-lidar .cp-back-btn,
+.compare-split[data-active="lidar"] .cp-sfm .cp-collapsed-label,
+.compare-split[data-active="lidar"] .cp-sfm .cp-back-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Divider line between panels */
+.cp-sfm { border-left: 1.5px solid rgba(0,0,0,0.1); }
+
+.slide[data-id="7"] {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
