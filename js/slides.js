@@ -3037,7 +3037,7 @@ export function initStaticToSpatial() {
 
   let theta2 = 0;
   const updateCam2 = () => {
-    cam2.position.set(Math.sin(theta2) * 7.1, 2.5, Math.cos(theta2) * 7.1);
+    cam2.position.set(Math.sin(theta2) * 7.45, 2.6, Math.cos(theta2) * 7.45);
     cam2.lookAt(0, 0, 0);
   };
   updateCam2();
