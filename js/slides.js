@@ -2961,10 +2961,16 @@ export function initStaticToSpatial() {
   const sl2 = new THREE.DirectionalLight(0xffffff, 0.9);
   sl2.position.set(3, 5, 3); s2.add(sl2);
 
-  // Centre: drum kit billboard sprite, transparent background
-  const drumTex    = new THREE.TextureLoader().load("assets/test/r_0_alpha.png");
-  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: drumTex, transparent: true }));
-  drumSprite.scale.set(1.8, 1.8, 1);
+  // Centre: drum kit — renders first, frustum lines draw on top
+  const drumTex    = new THREE.TextureLoader().load("assets/test/drum_sprite.png");
+  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: drumTex,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  }));
+  drumSprite.scale.set(2.8, 2.8, 1);
+  drumSprite.renderOrder = -1;
   s2.add(drumSprite);
 
   // Camera frustums on Fibonacci sphere
