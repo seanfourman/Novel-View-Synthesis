@@ -2146,11 +2146,12 @@ export function initClassic() {
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       });
 
-      // paint blue over walls where laser hit (only during sweep, clears on reset)
-      if (sweeping) {
+      // paint blue over walls — fade out during pause phase
+      const fadeAlpha = sweeping ? 0.85 : 0.85 * (1 - (phase - SWEEP_F) / PAUSE_F);
+      if (fadeAlpha > 0) {
         pts.forEach(p => {
           ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(10,80,200,0.85)"; ctx.fill();
+          ctx.fillStyle = `rgba(10,80,200,${fadeAlpha})`; ctx.fill();
         });
       }
 
@@ -2158,6 +2159,13 @@ export function initClassic() {
       ctx.fillStyle = ACCENT; ctx.fill();
 
       if (!sweeping) return;
+
+      const FADE_IN = 20, FADE_OUT = 35;
+      const laserAlpha = phase < FADE_IN
+        ? phase / FADE_IN
+        : phase > SWEEP_F - FADE_OUT
+          ? (SWEEP_F - phase) / FADE_OUT
+          : 1;
 
       const sweep = (phase / SWEEP_F) * Math.PI - Math.PI * 0.5;
       const ang = -Math.PI / 2 + sweep;
@@ -2171,15 +2179,15 @@ export function initClassic() {
       if (hit) pts.push({ x:hit[0], y:hit[1] });
       // glow halo under beam
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = "rgba(255,90,54,0.15)"; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,90,54,${0.15 * laserAlpha})`; ctx.lineWidth = 2.5; ctx.stroke();
       // main beam
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = "rgba(255,90,54,0.92)"; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,90,54,${0.92 * laserAlpha})`; ctx.lineWidth = 0.8; ctx.stroke();
       // wall impact flash
       if (hit) {
         const ig = ctx.createRadialGradient(hit[0], hit[1], 0, hit[0], hit[1], 6);
-        ig.addColorStop(0, "rgba(255,200,140,1)");
-        ig.addColorStop(0.4, "rgba(255,90,54,0.7)");
+        ig.addColorStop(0, `rgba(255,200,140,${laserAlpha})`);
+        ig.addColorStop(0.4, `rgba(255,90,54,${0.7 * laserAlpha})`);
         ig.addColorStop(1, "rgba(255,90,54,0)");
         ctx.beginPath(); ctx.arc(hit[0], hit[1], 6, 0, Math.PI * 2);
         ctx.fillStyle = ig; ctx.fill();
