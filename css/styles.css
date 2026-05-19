@@ -2398,6 +2398,10 @@ code {
   height: 3px;
   background: rgba(0,0,0,0.06);
 }
+/* SfM = left panel visually: bar grows from right (center) → left */
+.cp-sfm .cp-charge-bar {
+  transform: scaleX(-1);
+}
 .cp-charge-fill {
   height: 100%;
   width: 0%;
