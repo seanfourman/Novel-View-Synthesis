@@ -2040,15 +2040,13 @@ export function initClassic() {
       {x:W*0.58,y:H*0.63},{x:W*0.28,y:H*0.68},{x:W*0.70,y:H*0.60},
     ].map(p => ({ ...p, found: false }));
 
-    // Camera travels along a flat arc at the top
     const camPath = Array.from({length: 7}, (_, i) => ({
       x: W*0.12 + (i/6) * W*0.76,
       y: arcY + Math.sin((i/6) * Math.PI) * (-18),
-      visited: false,
     }));
 
-    let t = 0, camT = 0;
-    const CYCLE = 300;
+    const SWEEP = 200, HOLD = 40, CYCLE = (SWEEP + HOLD) * 2;
+    let t = 0;
 
     const drawCamIcon = (x, y, angle) => {
       ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
@@ -2061,42 +2059,50 @@ export function initClassic() {
     return () => {
       t++;
       const phase = t % CYCLE;
-      if (phase === 0) {
-        scenePts.forEach(p => p.found = false);
-        camPath.forEach(p => p.visited = false);
-      }
 
-      // Camera position along path
-      const camProgress = Math.min(1, phase / (CYCLE * 0.65));
-      const camX = W*0.12 + camProgress * W*0.76;
-      const camY = arcY + Math.sin(camProgress * Math.PI) * (-18);
+      // ping-pong: right → hold → left → hold
+      let prog;
+      if      (phase < SWEEP)            prog = phase / SWEEP;
+      else if (phase < SWEEP + HOLD)     prog = 1;
+      else if (phase < SWEEP*2 + HOLD)   prog = 1 - (phase - SWEEP - HOLD) / SWEEP;
+      else                               prog = 0;
 
-      // Mark visited stops and find nearby scene points
-      camPath.forEach(stop => {
-        if (Math.abs(stop.x - camX) < W*0.08) stop.visited = true;
-      });
+      const goingRight = phase < SWEEP + HOLD;
+      const camX = W*0.12 + prog * W*0.76;
+      const camY = arcY + Math.sin(prog * Math.PI) * (-18);
+
       scenePts.forEach(p => {
-        if (!p.found && Math.abs(p.x - camX) < W*0.22) p.found = true;
+        if (goingRight  && !p.found && Math.abs(p.x - camX) < W*0.22) p.found = true;
+        if (!goingRight &&  p.found && Math.abs(p.x - camX) < W*0.22) p.found = false;
       });
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
 
-      // Dotted camera trail
-      ctx.setLineDash([3, 4]);
-      ctx.beginPath(); ctx.moveTo(W*0.12, arcY);
-      ctx.lineTo(camX, camY);
-      ctx.strokeStyle = "rgba(255,90,54,0.35)"; ctx.lineWidth = 1; ctx.stroke();
+      // Faint full path
+      ctx.setLineDash([3, 5]);
+      ctx.beginPath(); ctx.moveTo(W*0.12, arcY); ctx.lineTo(W*0.88, arcY);
+      ctx.strokeStyle = "rgba(255,90,54,0.1)"; ctx.lineWidth = 1; ctx.stroke();
       ctx.setLineDash([]);
 
-      // Visited camera markers (small)
+      // Solid trail behind camera — only when going right
+      if (goingRight) {
+        ctx.beginPath();
+        ctx.moveTo(W*0.12, arcY);
+        ctx.lineTo(camX, camY);
+        ctx.strokeStyle = "rgba(255,90,54,0.38)"; ctx.lineWidth = 1; ctx.stroke();
+      }
+
+      // Camera stop markers — only show when going right
       camPath.forEach(stop => {
-        if (!stop.visited) return;
+        if (!goingRight) return;
+        const behind = stop.x <= camX + 4;
+        if (!behind) return;
         ctx.save(); ctx.translate(stop.x, stop.y);
         ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4,-2.5,8,5);
         ctx.restore();
       });
 
-      // Lines from active camera to found points
+      // Lines from camera to found points
       scenePts.forEach(p => {
         if (!p.found) return;
         ctx.beginPath(); ctx.moveTo(camX, camY); ctx.lineTo(p.x, p.y);
@@ -2109,8 +2115,8 @@ export function initClassic() {
         ctx.fillStyle = p.found ? INK : "rgba(0,0,0,0.15)"; ctx.fill();
       });
 
-      // Active camera
-      const angle = Math.PI * 0.5 + (camProgress - 0.5) * 0.4;
+      // Active camera icon
+      const angle = Math.PI * 0.5 + (prog - 0.5) * 0.4;
       drawCamIcon(camX, camY, angle);
     };
   })();
