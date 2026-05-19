@@ -2030,10 +2030,10 @@ export function initClassic() {
   const sfmDraw = (() => {
     const ctx = cSfm.getContext("2d");
     const W = cSfm.width, H = cSfm.height;
+    const S = W / 200;
     const cx = W * 0.5, cy = H * 0.62;
     const arcR = W * 0.38, arcY = H * 0.18;
 
-    // Sparse scene points scattered in lower half
     const scenePts = [
       {x:W*0.22,y:H*0.52},{x:W*0.35,y:H*0.44},{x:W*0.50,y:H*0.55},
       {x:W*0.62,y:H*0.42},{x:W*0.76,y:H*0.50},{x:W*0.42,y:H*0.64},
@@ -2042,7 +2042,7 @@ export function initClassic() {
 
     const camPath = Array.from({length: 7}, (_, i) => ({
       x: W*0.12 + (i/6) * W*0.76,
-      y: arcY + Math.sin((i/6) * Math.PI) * (-18),
+      y: arcY + Math.sin((i/6) * Math.PI) * (-18 * S),
     }));
 
     const SWEEP = 200, HOLD = 40, CYCLE = (SWEEP + HOLD) * 2;
@@ -2050,8 +2050,8 @@ export function initClassic() {
 
     const drawCamIcon = (x, y, angle) => {
       ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-      ctx.fillStyle = ACCENT; ctx.fillRect(-6, -4, 12, 8);
-      ctx.beginPath(); ctx.arc(7, 0, 3, 0, Math.PI*2);
+      ctx.fillStyle = ACCENT; ctx.fillRect(-6*S, -4*S, 12*S, 8*S);
+      ctx.beginPath(); ctx.arc(7*S, 0, 3*S, 0, Math.PI*2);
       ctx.fillStyle = "#fff"; ctx.fill();
       ctx.restore();
     };
@@ -2060,7 +2060,6 @@ export function initClassic() {
       t++;
       const phase = t % CYCLE;
 
-      // ping-pong: right → hold → left → hold
       let prog;
       if      (phase < SWEEP)            prog = phase / SWEEP;
       else if (phase < SWEEP + HOLD)     prog = 1;
@@ -2069,7 +2068,7 @@ export function initClassic() {
 
       const goingRight = phase < SWEEP + HOLD;
       const camX = W*0.12 + prog * W*0.76;
-      const camY = arcY + Math.sin(prog * Math.PI) * (-18);
+      const camY = arcY + Math.sin(prog * Math.PI) * (-18 * S);
 
       scenePts.forEach(p => {
         if ( goingRight && !p.found && camX >= p.x) p.found = true;
@@ -2078,46 +2077,40 @@ export function initClassic() {
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
 
-      // Faint full path
-      ctx.setLineDash([3, 5]);
+      ctx.setLineDash([3*S, 5*S]);
       ctx.beginPath(); ctx.moveTo(W*0.12, arcY); ctx.lineTo(W*0.88, arcY);
-      ctx.strokeStyle = "rgba(255,90,54,0.1)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = "rgba(255,90,54,0.1)"; ctx.lineWidth = S; ctx.stroke();
       ctx.setLineDash([]);
 
-      // Solid trail behind camera — only when going right
       if (goingRight) {
         ctx.beginPath();
         ctx.moveTo(W*0.12, arcY);
         ctx.lineTo(camX, camY);
-        ctx.strokeStyle = "rgba(255,90,54,0.38)"; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = "rgba(255,90,54,0.38)"; ctx.lineWidth = S; ctx.stroke();
       }
 
-      // Camera stop markers — appear as camera passes going right, disappear as camera collects going left
       camPath.forEach(stop => {
         if (goingRight) {
-          if (stop.x > camX + 4) return; // not yet reached going right
+          if (stop.x > camX + 4*S) return;
         } else {
-          if (stop.x > camX) return; // already collected going left
+          if (stop.x > camX) return;
         }
         ctx.save(); ctx.translate(stop.x, stop.y);
-        ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4,-2.5,8,5);
+        ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4*S,-2.5*S,8*S,5*S);
         ctx.restore();
       });
 
-      // Lines from camera to found points — only on forward sweep
       if (goingRight) scenePts.forEach(p => {
         if (!p.found) return;
         ctx.beginPath(); ctx.moveTo(camX, camY); ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = "rgba(255,90,54,0.12)"; ctx.lineWidth = 0.7; ctx.stroke();
+        ctx.strokeStyle = "rgba(255,90,54,0.12)"; ctx.lineWidth = 0.7*S; ctx.stroke();
       });
 
-      // Scene points
       scenePts.forEach(p => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.found ? 2.8 : 1.5, 0, Math.PI*2);
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.found ? 2.8*S : 1.5*S, 0, Math.PI*2);
         ctx.fillStyle = p.found ? INK : "rgba(0,0,0,0.15)"; ctx.fill();
       });
 
-      // Active camera icon
       const angle = Math.PI * 0.5 + (prog - 0.5) * 0.4;
       drawCamIcon(camX, camY, angle);
     };
@@ -2127,47 +2120,43 @@ export function initClassic() {
   const mvsDraw = (() => {
     const ctx = cMvs.getContext("2d");
     const W = cMvs.width, H = cMvs.height;
+    const S = W / 200;
     const cx = W * 0.5, cy = H * 0.5;
-    const R = 42;
+    const R = Math.round(42 * S);
+    const STEP = 4.5 * S, SPARSE = 13 * S;
 
-    // Generate dense grid inside a circle
     const dense = [], sparse = [];
-    for (let dy = -R; dy <= R; dy += 4.5) {
-      for (let dx = -R; dx <= R; dx += 4.5) {
+    for (let dy = -R; dy <= R; dy += STEP) {
+      for (let dx = -R; dx <= R; dx += STEP) {
         if (dx*dx + dy*dy > R*R) continue;
         const dz = Math.sqrt(Math.max(0, 1 - (dx*dx + dy*dy) / (R*R)));
         const p = { x: cx+dx, y: cy+dy, z: dz };
         dense.push(p);
-        if (Math.abs(dx % 13) < 5 && Math.abs(dy % 13) < 5) sparse.push(p);
+        if (Math.abs(dx % SPARSE) < 5*S && Math.abs(dy % SPARSE) < 5*S) sparse.push(p);
       }
     }
 
     let t = 0;
     return () => {
       t++;
-      // divX oscillates across the full width
       const divX = cx + Math.sin(t * 0.016) * (W * 0.44);
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
 
-      // Left of divX: sparse gray dots
       sparse.forEach(p => {
         if (p.x > divX) return;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2*S, 0, Math.PI*2);
         ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.fill();
       });
 
-      // Right of divX: dense depth-colored dots
       dense.forEach(p => {
         if (p.x <= divX) return;
-        const d = p.z;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2*S, 0, Math.PI*2);
         ctx.fillStyle = "rgba(10,80,200,0.85)"; ctx.fill();
       });
 
-      // Sweeping divider line
-      ctx.beginPath(); ctx.moveTo(divX, cy - R - 4); ctx.lineTo(divX, cy + R + 4);
-      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(divX, cy - R - 4*S); ctx.lineTo(divX, cy + R + 4*S);
+      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5*S; ctx.stroke();
     };
   })();
 
@@ -2175,7 +2164,8 @@ export function initClassic() {
   const photoDraw = (() => {
     const ctx = cPhoto.getContext("2d");
     const W = cPhoto.width, H = cPhoto.height, cx = W / 2, cy = H / 2;
-    const S = 20;
+    const pxS = W / 200;
+    const S = 20 * pxS;
     const STEPS = 10; // rotational segments
     // Vase profile: {y, r} pairs from bottom to top
     const profile = [
@@ -2216,7 +2206,7 @@ export function initClassic() {
         const x3 = x*cY + z2*sY;
         return [cx + x3*S, cy - y2*S];
       });
-      ctx.strokeStyle = "rgba(26,26,26,0.7)"; ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(26,26,26,0.7)"; ctx.lineWidth = pxS;
       edges.forEach(([a, b]) => {
         ctx.beginPath(); ctx.moveTo(...proj[a]); ctx.lineTo(...proj[b]); ctx.stroke();
       });
@@ -2224,8 +2214,8 @@ export function initClassic() {
       const ca = t * 0.032;
       const bx = cx + Math.cos(ca)*W*0.41, by = cy + Math.sin(ca)*H*0.37;
       ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
-      ctx.strokeStyle = "rgba(255,90,54,0.22)"; ctx.lineWidth = 0.9; ctx.stroke();
-      ctx.fillStyle = ACCENT; ctx.fillRect(bx-5, by-3.5, 10, 7);
+      ctx.strokeStyle = "rgba(255,90,54,0.22)"; ctx.lineWidth = 0.9*pxS; ctx.stroke();
+      ctx.fillStyle = ACCENT; ctx.fillRect(bx-5*pxS, by-3.5*pxS, 10*pxS, 7*pxS);
     };
   })();
 
@@ -2233,6 +2223,7 @@ export function initClassic() {
   const lidarDraw = (() => {
     const ctx = cLidar.getContext("2d");
     const W = cLidar.width, H = cLidar.height;
+    const S = W / 200;
     const sx = W * 0.5, sy = H * 0.88;
     const walls = [
       [W*0.18,H*0.28,W*0.50,H*0.28],[W*0.50,H*0.28,W*0.50,H*0.68],
@@ -2258,7 +2249,7 @@ export function initClassic() {
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
 
       // draw walls gray
-      ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1.2;
+      ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1.2*S;
       walls.forEach(([x1,y1,x2,y2]) => {
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       });
@@ -2267,12 +2258,12 @@ export function initClassic() {
       const fadeAlpha = sweeping ? 0.85 : 0.85 * (1 - (phase - SWEEP_F) / PAUSE_F);
       if (fadeAlpha > 0) {
         pts.forEach(p => {
-          ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.2*S, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(10,80,200,${fadeAlpha})`; ctx.fill();
         });
       }
 
-      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(sx, sy, 4*S, 0, Math.PI * 2);
       ctx.fillStyle = ACCENT; ctx.fill();
 
       if (!sweeping) return;
@@ -2296,17 +2287,17 @@ export function initClassic() {
       if (hit) pts.push({ x:hit[0], y:hit[1] });
       // glow halo under beam
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = `rgba(255,90,54,${0.15 * laserAlpha})`; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,90,54,${0.15 * laserAlpha})`; ctx.lineWidth = 2.5*S; ctx.stroke();
       // main beam
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = `rgba(255,90,54,${0.92 * laserAlpha})`; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,90,54,${0.92 * laserAlpha})`; ctx.lineWidth = 0.8*S; ctx.stroke();
       // wall impact flash
       if (hit) {
-        const ig = ctx.createRadialGradient(hit[0], hit[1], 0, hit[0], hit[1], 6);
+        const ig = ctx.createRadialGradient(hit[0], hit[1], 0, hit[0], hit[1], 6*S);
         ig.addColorStop(0, `rgba(255,200,140,${laserAlpha})`);
         ig.addColorStop(0.4, `rgba(255,90,54,${0.7 * laserAlpha})`);
         ig.addColorStop(1, "rgba(255,90,54,0)");
-        ctx.beginPath(); ctx.arc(hit[0], hit[1], 6, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(hit[0], hit[1], 6*S, 0, Math.PI * 2);
         ctx.fillStyle = ig; ctx.fill();
       }
     };
@@ -2316,6 +2307,7 @@ export function initClassic() {
   const lfDraw = (() => {
     const ctx = cLf.getContext("2d");
     const W = cLf.width, H = cLf.height, cx = W / 2, cy = H * 0.62;
+    const S = W / 200;
     const grid = [];
     for (let r = 0; r < 3; r++)
       for (let c = 0; c < 5; c++)
@@ -2327,14 +2319,14 @@ export function initClassic() {
       grid.forEach(cam => {
         const pulse = 0.5 + 0.5 * Math.sin(t * 0.028 + cam.ph);
         ctx.beginPath(); ctx.moveTo(cam.x, cam.y); ctx.lineTo(cx, cy);
-        ctx.strokeStyle = `rgba(255,90,54,${0.04 + pulse * 0.82})`; ctx.lineWidth = 0.5; ctx.stroke();
-        ctx.beginPath(); ctx.arc(cam.x, cam.y, 1 + pulse * 1.2, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,90,54,${0.04 + pulse * 0.82})`; ctx.lineWidth = 0.5*S; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cam.x, cam.y, (1 + pulse * 1.2) * S, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(26,26,26,${0.15 + pulse * 0.85})`; ctx.fill();
       });
-      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(cx, cy, 7*S, 0, Math.PI * 2);
       ctx.fillStyle = ACCENT; ctx.fill();
-      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 7*S, 0, Math.PI * 2);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5*S; ctx.stroke();
     };
   })();
 
