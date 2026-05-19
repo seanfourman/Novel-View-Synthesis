@@ -2026,67 +2026,92 @@ export function initClassic() {
   const BG     = "#f5f5f5";
 
   // ── SfM: sparse points appearing + cameras orbiting ──
-  // ── SfM: three photo frames with matching feature lines ──
+  // ── SfM: camera moves along arc, sparse points accumulate ──
   const sfmDraw = (() => {
     const ctx = cSfm.getContext("2d");
     const W = cSfm.width, H = cSfm.height;
+    const cx = W * 0.5, cy = H * 0.62;
+    const arcR = W * 0.38, arcY = H * 0.18;
 
-    // 3 "photo" frames at different positions around the canvas
-    const frames = [
-      { cx: W*0.18, cy: H*0.22, angle: -0.18 },
-      { cx: W*0.82, cy: H*0.22, angle:  0.18 },
-      { cx: W*0.50, cy: H*0.82, angle:  0.00 },
-    ];
-    const FW = 44, FH = 32;
+    // Sparse scene points scattered in lower half
+    const scenePts = [
+      {x:W*0.22,y:H*0.52},{x:W*0.35,y:H*0.44},{x:W*0.50,y:H*0.55},
+      {x:W*0.62,y:H*0.42},{x:W*0.76,y:H*0.50},{x:W*0.42,y:H*0.64},
+      {x:W*0.58,y:H*0.63},{x:W*0.28,y:H*0.68},{x:W*0.70,y:H*0.60},
+    ].map(p => ({ ...p, found: false }));
 
-    // 4 feature points visible in all frames (corners of a simple quad)
-    const sceneShape = [
-      { ox: -10, oy: -8 },
-      { ox:  10, oy: -8 },
-      { ox:  10, oy:  8 },
-      { ox: -10, oy:  8 },
-    ];
+    // Camera travels along a flat arc at the top
+    const camPath = Array.from({length: 7}, (_, i) => ({
+      x: W*0.12 + (i/6) * W*0.76,
+      y: arcY + Math.sin((i/6) * Math.PI) * (-18),
+      visited: false,
+    }));
 
-    // Project scene points into each frame with a slight perspective skew per frame
-    const projected = frames.map((f) =>
-      sceneShape.map(p => {
-        const cosA = Math.cos(f.angle), sinA = Math.sin(f.angle);
-        return {
-          x: f.cx + p.ox * cosA - p.oy * sinA * 0.3,
-          y: f.cy + p.ox * sinA * 0.3 + p.oy,
-        };
-      })
-    );
+    let t = 0, camT = 0;
+    const CYCLE = 300;
 
-    let t = 0, activeMatch = 0;
+    const drawCamIcon = (x, y, angle) => {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+      ctx.fillStyle = ACCENT; ctx.fillRect(-6, -4, 12, 8);
+      ctx.beginPath(); ctx.arc(7, 0, 3, 0, Math.PI*2);
+      ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.restore();
+    };
+
     return () => {
       t++;
-      if (t % 60 === 0) activeMatch = (activeMatch + 1) % sceneShape.length;
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-
-      // Draw matching lines between all frames for the active point
-      for (let a = 0; a < frames.length; a++) {
-        for (let b = a + 1; b < frames.length; b++) {
-          const pa = projected[a][activeMatch];
-          const pb = projected[b][activeMatch];
-          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
-          ctx.strokeStyle = "rgba(255,90,54,0.55)"; ctx.lineWidth = 1; ctx.stroke();
-        }
+      const phase = t % CYCLE;
+      if (phase === 0) {
+        scenePts.forEach(p => p.found = false);
+        camPath.forEach(p => p.visited = false);
       }
 
-      // Draw frames + dots
-      frames.forEach((f, fi) => {
-        // frame border
-        ctx.strokeStyle = "rgba(0,0,0,0.18)"; ctx.lineWidth = 1.2;
-        ctx.strokeRect(f.cx - FW/2, f.cy - FH/2, FW, FH);
+      // Camera position along path
+      const camProgress = Math.min(1, phase / (CYCLE * 0.65));
+      const camX = W*0.12 + camProgress * W*0.76;
+      const camY = arcY + Math.sin(camProgress * Math.PI) * (-18);
 
-        // all feature dots in frame
-        projected[fi].forEach((p, pi) => {
-          ctx.beginPath(); ctx.arc(p.x, p.y, pi === activeMatch ? 3.5 : 2, 0, Math.PI*2);
-          ctx.fillStyle = pi === activeMatch ? ACCENT : "rgba(0,0,0,0.35)";
-          ctx.fill();
-        });
+      // Mark visited stops and find nearby scene points
+      camPath.forEach(stop => {
+        if (Math.abs(stop.x - camX) < W*0.08) stop.visited = true;
       });
+      scenePts.forEach(p => {
+        if (!p.found && Math.abs(p.x - camX) < W*0.22) p.found = true;
+      });
+
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+
+      // Dotted camera trail
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(W*0.12, arcY);
+      ctx.lineTo(camX, camY);
+      ctx.strokeStyle = "rgba(255,90,54,0.35)"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Visited camera markers (small)
+      camPath.forEach(stop => {
+        if (!stop.visited) return;
+        ctx.save(); ctx.translate(stop.x, stop.y);
+        ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4,-2.5,8,5);
+        ctx.restore();
+      });
+
+      // Lines from active camera to found points
+      scenePts.forEach(p => {
+        if (!p.found) return;
+        ctx.beginPath(); ctx.moveTo(camX, camY); ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = "rgba(255,90,54,0.12)"; ctx.lineWidth = 0.7; ctx.stroke();
+      });
+
+      // Scene points
+      scenePts.forEach(p => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.found ? 2.8 : 1.5, 0, Math.PI*2);
+        ctx.fillStyle = p.found ? INK : "rgba(0,0,0,0.15)"; ctx.fill();
+      });
+
+      // Active camera
+      const angle = Math.PI * 0.5 + (camProgress - 0.5) * 0.4;
+      drawCamIcon(camX, camY, angle);
     };
   })();
 
@@ -2121,7 +2146,7 @@ export function initClassic() {
       sparse.forEach(p => {
         if (p.x > divX) return;
         ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.fill();
+        ctx.fillStyle = "rgba(10,80,200,0.55)"; ctx.fill();
       });
 
       // Right of divX: dense depth-colored dots
