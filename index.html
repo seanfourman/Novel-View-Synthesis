@@ -574,51 +574,51 @@
 
       <!-- ============ SLIDE 6: CLASSIC METHODS (visual) ============ -->
       <section class="slide" data-id="9">
-        <div class="centered wide">
-          <div class="kicker">לפני NeRF</div>
-          <h2>איך זה נעשה <em>בעבר</em></h2>
-          <div class="old-vis-grid">
-            <div class="old-card-v" data-old="mesh">
-              <video
-                class="asset-video"
-                src="assets/videos/depth_reflower.mp4"
-                muted
-                loop
-                playsinline
-                preload="auto"
-              ></video>
-              <div class="old-info">
-                <div class="old-title">רשת מצולעים + טקסטורה</div>
-                <div class="old-pros">+ חופש תנועה מלא · ניתן למדידה</div>
-                <div class="old-cons">
-                  − קצוות "קרועים" · לא תופס ברק והשתקפויות
-                </div>
-                <div class="old-explain">
-                  בונים מודל גיאומטרי (mesh) מהתמונה ומותחים עליו את הצבעים
-                  כטקסטורה.
-                </div>
+        <div class="classic-layout">
+          <div class="classic-header">
+            <h2 class="classic-title">הגישות הקלאסיות ליצירת עולם <span class="accent">תלת-ממדי</span></h2>
+            <p class="classic-sub">לפני השימוש במודלים לומדים, רוב הפתרונות התבססו על גיאומטריה קלאסית ושחזור מפורש של הסצנה.</p>
+          </div>
+          <div class="classic-goals">
+            <p class="classic-section-label">המטרה הייתה:</p>
+            <div class="classic-goals-row">
+              <div class="classic-goal">
+                <span class="classic-num">1</span>
+                <p>לבנות מודל תלת־ממדי של הסביבה</p>
+              </div>
+              <div class="classic-goal">
+                <span class="classic-num">2</span>
+                <p>להשתמש בו כדי לייצר זוויות צפייה חדשות</p>
               </div>
             </div>
-            <div class="old-card-v" data-old="phototour">
-              <video
-                class="asset-video"
-                src="assets/videos/synth_grid_3.mp4"
-                poster="assets/images/synth_grid_website.jpg"
-                muted
-                loop
-                playsinline
-                preload="auto"
-              ></video>
-              <div class="old-info">
-                <div class="old-title">סיור תמונות (Photo Tour)</div>
-                <div class="old-pros">+ פוטו-ריאליסטי בנקודות שצולמו</div>
-                <div class="old-cons">
-                  − מגבילים אותך לנתיב מוגדר · קפיצות בין מבטים
-                </div>
-                <div class="old-explain">
-                  אוסף תמונות עם מעבר חלק ביניהן. עובד טוב - בכל עוד אתם בנקודות
-                  שכבר צולמו.
-                </div>
+          </div>
+          <div class="classic-approaches">
+            <p class="classic-section-label">הגישות המרכזיות היו:</p>
+            <div class="classic-cards">
+              <div class="classic-card">
+                <canvas class="classic-canvas" id="c-sfm" width="160" height="120"></canvas>
+                <div class="classic-card-name">Structure from Motion</div>
+                <div class="classic-card-desc">שחזור מיקום מצלמות ומבנה בסיסי מתמונות</div>
+              </div>
+              <div class="classic-card">
+                <canvas class="classic-canvas" id="c-mvs" width="160" height="120"></canvas>
+                <div class="classic-card-name">Multi-View Stereo</div>
+                <div class="classic-card-desc">שחזור צפוף ומפורט של הסצנה</div>
+              </div>
+              <div class="classic-card">
+                <canvas class="classic-canvas" id="c-photo" width="160" height="120"></canvas>
+                <div class="classic-card-name">Photogrammetry</div>
+                <div class="classic-card-desc">בניית מודל 3D מאוסף תמונות</div>
+              </div>
+              <div class="classic-card">
+                <canvas class="classic-canvas" id="c-lidar" width="160" height="120"></canvas>
+                <div class="classic-card-name">LiDAR / 3D Scanning</div>
+                <div class="classic-card-desc">מדידת עומק באמצעות לייזרים וחיישנים</div>
+              </div>
+              <div class="classic-card">
+                <canvas class="classic-canvas" id="c-lf" width="160" height="120"></canvas>
+                <div class="classic-card-name">Light Fields</div>
+                <div class="classic-card-desc">שמירת קרני אור ממספר גדול של זוויות</div>
               </div>
             </div>
           </div>

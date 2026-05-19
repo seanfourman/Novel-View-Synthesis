@@ -2014,7 +2014,189 @@ export function initWhyHard() {
 }
 
 export function initClassic() {
-  return controlVideos(document.querySelectorAll('.slide[data-id="6"] video'));
+  const cSfm   = document.getElementById("c-sfm");
+  const cMvs   = document.getElementById("c-mvs");
+  const cPhoto = document.getElementById("c-photo");
+  const cLidar = document.getElementById("c-lidar");
+  const cLf    = document.getElementById("c-lf");
+  if (!cSfm) return { tick() {} };
+
+  const ACCENT = "#ff5a36";
+  const INK    = "#1a1a1a";
+  const BG     = "#f5f5f5";
+
+  // ── SfM: sparse points appearing + cameras orbiting ──
+  const sfmDraw = (() => {
+    const ctx = cSfm.getContext("2d");
+    const W = cSfm.width, H = cSfm.height, cx = W / 2, cy = H / 2;
+    const pts = Array.from({ length: 38 }, (_, i) => ({
+      x: (Math.random() - 0.5) * W * 0.58,
+      y: (Math.random() - 0.5) * H * 0.58,
+      delay: i * 5,
+    }));
+    let t = 0;
+    return () => {
+      t++;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      pts.forEach(p => {
+        const a = Math.min(1, (t - p.delay) / 14);
+        if (a <= 0) return;
+        ctx.beginPath(); ctx.arc(cx + p.x, cy + p.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(26,26,26,${a})`; ctx.fill();
+      });
+      for (let i = 0; i < 3; i++) {
+        const ang = t * 0.024 + (i / 3) * Math.PI * 2;
+        const bx = cx + Math.cos(ang) * W * 0.4, by = cy + Math.sin(ang) * H * 0.36;
+        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
+        ctx.strokeStyle = "rgba(255,90,54,0.18)"; ctx.lineWidth = 0.8; ctx.stroke();
+        ctx.fillStyle = ACCENT; ctx.fillRect(bx - 5, by - 3.5, 10, 7);
+        ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = INK; ctx.fill();
+      }
+    };
+  })();
+
+  // ── MVS: dense coloured point cloud cycling in ──
+  const mvsDraw = (() => {
+    const ctx = cMvs.getContext("2d");
+    const W = cMvs.width, H = cMvs.height, cx = W / 2, cy = H / 2;
+    const pts = Array.from({ length: 220 }, (_, i) => ({
+      x: (Math.random() - 0.5) * W * 0.72,
+      y: (Math.random() - 0.5) * H * 0.72,
+      r: Math.random() * 1.6 + 0.5,
+      hue: Math.floor(Math.random() * 60 + 190),
+      delay: i,
+    }));
+    let t = 0;
+    return () => {
+      t = (t + 1) % 440;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      pts.forEach(p => {
+        const a = Math.min(0.88, (t - p.delay) / 12);
+        if (a <= 0) return;
+        ctx.beginPath(); ctx.arc(cx + p.x, cy + p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue},55%,45%,${a})`; ctx.fill();
+      });
+    };
+  })();
+
+  // ── Photogrammetry: spinning cube + orbiting camera ──
+  const photoDraw = (() => {
+    const ctx = cPhoto.getContext("2d");
+    const W = cPhoto.width, H = cPhoto.height, cx = W / 2, cy = H / 2;
+    const S = 26;
+    const edges = [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    const v3 = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    let t = 0;
+    return () => {
+      t++;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      const rx = t * 0.013, ry = t * 0.019;
+      const cX = Math.cos(rx), sX = Math.sin(rx), cY = Math.cos(ry), sY = Math.sin(ry);
+      const proj = v3.map(([x, y, z]) => {
+        const y2 = y * cX - z * sX, z2 = y * sX + z * cX;
+        const x3 = x * cY + z2 * sY;
+        return [cx + x3 * S, cy + y2 * S];
+      });
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.4;
+      edges.forEach(([a, b]) => {
+        ctx.beginPath(); ctx.moveTo(...proj[a]); ctx.lineTo(...proj[b]); ctx.stroke();
+      });
+      const ca = t * 0.032;
+      const bx = cx + Math.cos(ca) * W * 0.41, by = cy + Math.sin(ca) * H * 0.37;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
+      ctx.strokeStyle = "rgba(255,90,54,0.22)"; ctx.lineWidth = 0.9; ctx.stroke();
+      ctx.fillStyle = ACCENT; ctx.fillRect(bx - 5, by - 3.5, 10, 7);
+      ctx.beginPath(); ctx.arc(bx, by, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = INK; ctx.fill();
+    };
+  })();
+
+  // ── LiDAR: sweeping beam accumulating hit points ──
+  const lidarDraw = (() => {
+    const ctx = cLidar.getContext("2d");
+    const W = cLidar.width, H = cLidar.height;
+    const sx = W * 0.5, sy = H * 0.88;
+    const walls = [
+      [W*0.18,H*0.28,W*0.50,H*0.28],[W*0.50,H*0.28,W*0.50,H*0.68],
+      [W*0.18,H*0.28,W*0.18,H*0.68],[W*0.62,H*0.38,W*0.82,H*0.38],
+      [W*0.82,H*0.38,W*0.82,H*0.68],
+    ];
+    const intersect = (ax,ay,bx,by,cx,cy,dx,dy) => {
+      const rx=bx-ax,ry=by-ay,sx2=dx-cx,sy2=dy-cy,cross=rx*sy2-ry*sx2;
+      if (Math.abs(cross)<1e-9) return null;
+      const t=(cx-ax)*sy2-(cy-ay)*sx2,u=(cx-ax)*ry-(cy-ay)*rx;
+      return (t/cross>=0 && u/cross>=0 && u/cross<=1)
+        ? [ax+(t/cross)*rx, ay+(t/cross)*ry] : null;
+    };
+    const pts = [];
+    let t = 0;
+    return () => {
+      t++;
+      ctx.fillStyle = "#0d0d18"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1.2;
+      walls.forEach(([x1,y1,x2,y2]) => {
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      });
+      const sweep = (t * 0.028 % Math.PI) - Math.PI * 0.5;
+      const ang = -Math.PI / 2 + sweep;
+      const edx = Math.cos(ang) * H * 1.6, edy = Math.sin(ang) * H * 1.6;
+      let hit = null, minD = Infinity;
+      walls.forEach(([x1,y1,x2,y2]) => {
+        const h = intersect(sx,sy,sx+edx,sy+edy,x1,y1,x2,y2);
+        if (h) { const d=Math.hypot(h[0]-sx,h[1]-sy); if(d<minD){minD=d;hit=h;} }
+      });
+      ctx.beginPath(); ctx.moveTo(sx, sy);
+      if (hit) { ctx.lineTo(hit[0], hit[1]); pts.push({ x:hit[0], y:hit[1], age:0 }); }
+      else ctx.lineTo(sx + edx * 0.25, sy + edy * 0.25);
+      ctx.strokeStyle = "rgba(255,90,54,0.55)"; ctx.lineWidth = 1; ctx.stroke();
+      pts.forEach(p => {
+        p.age++;
+        const a = Math.max(0, 1 - p.age / 280);
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(80,210,255,${a})`; ctx.fill();
+      });
+      if (pts.length > 240) pts.splice(0, pts.length - 240);
+      ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+      ctx.fillStyle = ACCENT; ctx.fill();
+    };
+  })();
+
+  // ── Light Fields: grid of cameras pulsing rays to centre ──
+  const lfDraw = (() => {
+    const ctx = cLf.getContext("2d");
+    const W = cLf.width, H = cLf.height, cx = W / 2, cy = H * 0.62;
+    const grid = [];
+    for (let r = 0; r < 3; r++)
+      for (let c = 0; c < 5; c++)
+        grid.push({ x: W*0.1 + c*(W*0.8/4), y: H*0.1 + r*(H*0.32/2), ph: (r*5+c)*0.42 });
+    let t = 0;
+    return () => {
+      t++;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      grid.forEach(cam => {
+        const pulse = 0.5 + 0.5 * Math.sin(t * 0.055 + cam.ph);
+        ctx.beginPath(); ctx.moveTo(cam.x, cam.y); ctx.lineTo(cx, cy);
+        ctx.strokeStyle = `rgba(255,90,54,${0.1 + pulse * 0.28})`; ctx.lineWidth = 0.9; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cam.x, cam.y, 2.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(26,26,26,${0.45 + pulse * 0.55})`; ctx.fill();
+      });
+      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+      ctx.fillStyle = ACCENT; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+    };
+  })();
+
+  const draws = [sfmDraw, mvsDraw, photoDraw, lidarDraw, lfDraw];
+
+  return {
+    tick(visible) {
+      if (!visible) return;
+      draws.forEach(fn => fn());
+    },
+    enter() {},
+  };
 }
 
 /* =========================================================
