@@ -2133,12 +2133,12 @@ export function initClassic() {
     let t = 0;
     return () => {
       t++;
-      ctx.fillStyle = "#0d0d18"; ctx.fillRect(0, 0, W, H);
-      ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1.2;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1.2;
       walls.forEach(([x1,y1,x2,y2]) => {
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       });
-      const sweep = (t * 0.028 % Math.PI) - Math.PI * 0.5;
+      const sweep = (t * 0.014 % Math.PI) - Math.PI * 0.5;
       const ang = -Math.PI / 2 + sweep;
       const edx = Math.cos(ang) * H * 1.6, edy = Math.sin(ang) * H * 1.6;
       let hit = null, minD = Infinity;
@@ -2146,15 +2146,28 @@ export function initClassic() {
         const h = intersect(sx,sy,sx+edx,sy+edy,x1,y1,x2,y2);
         if (h) { const d=Math.hypot(h[0]-sx,h[1]-sy); if(d<minD){minD=d;hit=h;} }
       });
-      ctx.beginPath(); ctx.moveTo(sx, sy);
-      if (hit) { ctx.lineTo(hit[0], hit[1]); pts.push({ x:hit[0], y:hit[1], age:0 }); }
-      else ctx.lineTo(sx + edx * 0.25, sy + edy * 0.25);
-      ctx.strokeStyle = "rgba(255,90,54,0.55)"; ctx.lineWidth = 1; ctx.stroke();
+      const beamEnd = hit ? [hit[0], hit[1]] : [sx + edx * 0.25, sy + edy * 0.25];
+      if (hit) pts.push({ x:hit[0], y:hit[1], age:0 });
+      // glow halo under beam
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
+      ctx.strokeStyle = "rgba(255,90,54,0.15)"; ctx.lineWidth = 2.5; ctx.stroke();
+      // main beam
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
+      ctx.strokeStyle = "rgba(255,90,54,0.92)"; ctx.lineWidth = 0.8; ctx.stroke();
+      // wall impact flash
+      if (hit) {
+        const ig = ctx.createRadialGradient(hit[0], hit[1], 0, hit[0], hit[1], 6);
+        ig.addColorStop(0, "rgba(255,200,140,1)");
+        ig.addColorStop(0.4, "rgba(255,90,54,0.7)");
+        ig.addColorStop(1, "rgba(255,90,54,0)");
+        ctx.beginPath(); ctx.arc(hit[0], hit[1], 6, 0, Math.PI * 2);
+        ctx.fillStyle = ig; ctx.fill();
+      }
       pts.forEach(p => {
         p.age++;
         const a = Math.max(0, 1 - p.age / 280);
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(80,210,255,${a})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(10,80,200,${Math.min(1, a * 1.6)})`; ctx.fill();
       });
       if (pts.length > 240) pts.splice(0, pts.length - 240);
       ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI * 2);
