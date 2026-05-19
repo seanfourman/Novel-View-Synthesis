@@ -2072,8 +2072,8 @@ export function initClassic() {
       const camY = arcY + Math.sin(prog * Math.PI) * (-18);
 
       scenePts.forEach(p => {
-        if (goingRight  && !p.found && Math.abs(p.x - camX) < W*0.22) p.found = true;
-        if (!goingRight &&  p.found && Math.abs(p.x - camX) < W*0.22) p.found = false;
+        if ( goingRight && !p.found && camX >= p.x) p.found = true;
+        if (!goingRight &&  p.found && camX <= p.x) p.found = false;
       });
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
@@ -2092,18 +2092,20 @@ export function initClassic() {
         ctx.strokeStyle = "rgba(255,90,54,0.38)"; ctx.lineWidth = 1; ctx.stroke();
       }
 
-      // Camera stop markers — only show when going right
+      // Camera stop markers — appear as camera passes going right, disappear as camera collects going left
       camPath.forEach(stop => {
-        if (!goingRight) return;
-        const behind = stop.x <= camX + 4;
-        if (!behind) return;
+        if (goingRight) {
+          if (stop.x > camX + 4) return; // not yet reached going right
+        } else {
+          if (stop.x > camX) return; // already collected going left
+        }
         ctx.save(); ctx.translate(stop.x, stop.y);
         ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4,-2.5,8,5);
         ctx.restore();
       });
 
-      // Lines from camera to found points
-      scenePts.forEach(p => {
+      // Lines from camera to found points — only on forward sweep
+      if (goingRight) scenePts.forEach(p => {
         if (!p.found) return;
         ctx.beginPath(); ctx.moveTo(camX, camY); ctx.lineTo(p.x, p.y);
         ctx.strokeStyle = "rgba(255,90,54,0.12)"; ctx.lineWidth = 0.7; ctx.stroke();
