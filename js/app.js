@@ -135,11 +135,11 @@ const sceneRegistry = {
   // slide 2 (spatial domains) — no canvas
   2:  initProblemVis,       // slide 3
   3:  initStaticToSpatial,  // slide 4
-  // slide 5 (live room tour) — iframes only
-  5:  initDepthBasedNVS,    // slide 6
-  6:  initApplications,     // slide 7
-  7:  initWhyHard,          // slide 8
-  8:  initClassic,          // slide 9
+  4:  initClassic,          // slide 5
+  // slide 6 (live room tour) — iframes only
+  6:  initDepthBasedNVS,    // slide 7
+  7:  initApplications,     // slide 8
+  8:  initWhyHard,          // slide 9
   // slide 10 (NeRF intro) — no canvas
   10: initRotatable,        // slide 11
   12: initRayDemo,          // slide 13
