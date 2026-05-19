@@ -2950,77 +2950,92 @@ export function initStaticToSpatial() {
   let p1Idx = 0, p1Tick = 0;
   img1.src = p1Urls[0];
 
-  // ── Phase 2: Camera-sphere visualization ───────────────
+  // ── Phase 2: Three.js camera-sphere (NeRF paper style) ─
+  const r2   = new THREE.WebGLRenderer({ canvas: c2, antialias: true, alpha: false });
+  r2.setClearColor(0xffffff, 1);
+  r2.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   const s2   = new THREE.Scene();
-  s2.background = new THREE.Color(0xf0f0f0);
-  const cam2 = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
-  const r2   = new THREE.WebGLRenderer({ canvas: c2, antialias: true });
-  r2.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const cam2 = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
 
-  s2.add(new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.7));
-  const sl2 = new THREE.DirectionalLight(0xffffff, 0.9);
-  sl2.position.set(3, 5, 3); s2.add(sl2);
+  // Impostor drum: actual render swapped per camera angle (looks pixel-perfect)
+  // White scene background matches the renders' white background → seamless
+  const impostorTex = new THREE.Texture();
+  impostorTex.colorSpace = THREE.SRGBColorSpace;
+  const impostorMat = new THREE.SpriteMaterial({ map: impostorTex, depthTest: false });
+  const impostorSpr = new THREE.Sprite(impostorMat);
+  impostorSpr.scale.set(3.6, 3.6, 1);
+  impostorSpr.position.set(0, -0.4, 0);
+  s2.add(impostorSpr);
 
-  // Centre: drum kit — renders first, frustum lines draw on top
-  const drumTex    = new THREE.TextureLoader().load("assets/test/drum_sprite.png");
-  const drumSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: drumTex,
-    transparent: true,
-    depthTest: false,
-    depthWrite: false,
-  }));
-  drumSprite.scale.set(2.8, 2.8, 1);
-  drumSprite.renderOrder = -1;
-  s2.add(drumSprite);
+  // Preload all 200 drum renders
+  const iImgs = Array.from({ length: 200 }, (_, i) => {
+    const img = new Image();
+    img.src = `assets/test/r_${i}.png`;
+    return img;
+  });
+  // Show first frame immediately once loaded
+  iImgs[0].onload = () => { impostorTex.image = iImgs[0]; impostorTex.needsUpdate = true; };
+  let lastIIdx = -1;
 
-  // Camera frustums on Fibonacci sphere
-  const N_CAM  = 24;
-  const CAM_R  = 2.6;
-  const fMat2  = new THREE.LineBasicMaterial({ color: 0x222222 });
-  const lMat2  = new THREE.LineBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.28 });
+  // Camera frustums on dome (hemisphere, ring-based)
+  const CAM_R  = 2.8;
+  const FDEPTH = 0.30;
+  const FHW    = 0.13;
+  const FHH    = 0.09;
 
-  function makeFrustumGeo() {
-    const w = 0.10, h = 0.072, d = 0.22;
-    return new THREE.BufferGeometry().setFromPoints([
-      // Rect (sensor plane at z = –d, opening toward centre)
-      new THREE.Vector3(-w, -h, -d), new THREE.Vector3( w, -h, -d),
-      new THREE.Vector3( w, -h, -d), new THREE.Vector3( w,  h, -d),
-      new THREE.Vector3( w,  h, -d), new THREE.Vector3(-w,  h, -d),
-      new THREE.Vector3(-w,  h, -d), new THREE.Vector3(-w, -h, -d),
-      // Lines to apex (at camera position z = 0)
-      new THREE.Vector3(-w, -h, -d), new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3( w, -h, -d), new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3( w,  h, -d), new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-w,  h, -d), new THREE.Vector3(0, 0, 0),
-    ]);
+  const makeFrustum = (pos) => {
+    const dir  = pos.clone().normalize().negate(); // inward toward drum
+    const tmp  = Math.abs(dir.y) < 0.9
+      ? new THREE.Vector3(0, 1, 0)
+      : new THREE.Vector3(1, 0, 0);
+    const rt   = new THREE.Vector3().crossVectors(dir, tmp).normalize();
+    const up3  = new THREE.Vector3().crossVectors(rt, dir).normalize();
+    const apex = pos.clone();
+    const bc   = pos.clone().addScaledVector(dir, FDEPTH);
+    const co   = [
+      bc.clone().addScaledVector(rt,  FHW).addScaledVector(up3,  FHH),
+      bc.clone().addScaledVector(rt, -FHW).addScaledVector(up3,  FHH),
+      bc.clone().addScaledVector(rt, -FHW).addScaledVector(up3, -FHH),
+      bc.clone().addScaledVector(rt,  FHW).addScaledVector(up3, -FHH),
+    ];
+    const pts = [
+      apex, co[0], apex, co[1], apex, co[2], apex, co[3],
+      co[0], co[1], co[1], co[2], co[2], co[3], co[3], co[0],
+    ];
+    return new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: 0x222222 })
+    );
+  };
+
+  // Concentric latitude rings — upper hemisphere only
+  const domeRings = [
+    { el: 10, count: 8, offset: 0 },
+    { el: 32, count: 7, offset: Math.PI / 7 },
+    { el: 54, count: 5, offset: Math.PI / 5 },
+    { el: 74, count: 3, offset: Math.PI / 6 },
+  ];
+  const toRad = d => d * Math.PI / 180;
+  for (const { el, count, offset } of domeRings) {
+    const phi = toRad(el);
+    const yp  = Math.sin(phi) * CAM_R;
+    const rp  = Math.cos(phi) * CAM_R;
+    for (let k = 0; k < count; k++) {
+      const az  = (k / count) * Math.PI * 2 + offset;
+      const pos = new THREE.Vector3(Math.cos(az) * rp, yp, Math.sin(az) * rp);
+      const rayEnd = pos.clone().multiplyScalar(0.85);
+      const rayGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), rayEnd]);
+      s2.add(new THREE.LineSegments(rayGeo, new THREE.LineBasicMaterial({ color: 0xcccccc })));
+      s2.add(makeFrustum(pos));
+    }
   }
 
-  const PHI_G = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < N_CAM; i++) {
-    const y  = 1 - (i / (N_CAM - 1)) * 2;
-    const rv = Math.sqrt(Math.max(0, 1 - y * y));
-    const t  = PHI_G * i;
-    const x  = CAM_R * rv * Math.cos(t);
-    const yy = CAM_R * y;
-    const z  = CAM_R * rv * Math.sin(t);
-
-    const f = new THREE.LineSegments(makeFrustumGeo(), fMat2);
-    f.position.set(x, yy, z);
-    f.lookAt(0, 0, 0);
-    s2.add(f);
-
-    s2.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, yy, z), new THREE.Vector3(0, 0, 0),
-      ]),
-      lMat2,
-    ));
-  }
   let theta2 = 0;
   const updateCam2 = () => {
-    cam2.position.set(4.5 * Math.sin(theta2), 3, 4.5 * Math.cos(theta2));
+    cam2.position.set(Math.sin(theta2) * 9.5, 3.2, Math.cos(theta2) * 9.5);
     cam2.lookAt(0, 0, 0);
   };
+  updateCam2();
 
   // ── Phase 3: NeRF orbit — all 200 frames cycling ────────
   const NERF_N   = 200;
@@ -3038,8 +3053,7 @@ export function initStaticToSpatial() {
   const resize = () => {
     const s = orb.clientWidth | 0;
     if (!s) return;
-    r2.setSize(s, s, false);
-    cam2.aspect = 1;
+    r2.setSize(s, s);
     cam2.updateProjectionMatrix();
   };
   resize();
@@ -3069,7 +3083,18 @@ export function initStaticToSpatial() {
           img1.src = p1Urls[p1Idx];
         }
       }
-      if (phase === 2) { theta2 += 0.006; updateCam2(); r2.render(s2, cam2); }
+      if (phase === 2) {
+        theta2 += 0.006;
+        updateCam2();
+        const norm = ((theta2 % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        const iIdx = Math.round((norm / (Math.PI * 2)) * 200) % 200;
+        if (iIdx !== lastIIdx && iImgs[iIdx].complete) {
+          impostorTex.image = iImgs[iIdx];
+          impostorTex.needsUpdate = true;
+          lastIIdx = iIdx;
+        }
+        r2.render(s2, cam2);
+      }
       if (phase === 3) {
         p3Tick++;
         if (p3Tick >= 2) {
