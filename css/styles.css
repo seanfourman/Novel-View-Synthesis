@@ -1411,10 +1411,11 @@ code {
   align-items: center;
 }
 .classic-goals-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: clamp(1.5rem, 3vw, 3rem);
-  justify-content: center;
   align-items: center;
+  width: 100%;
 }
 .classic-flow-arrow {
   flex-shrink: 0;
@@ -1432,6 +1433,8 @@ code {
   gap: 1rem;
   direction: rtl;
 }
+.classic-goals-row > .classic-goal:first-child { justify-self: end; }
+.classic-goals-row > .classic-goal:last-child  { justify-self: start; }
 .classic-num {
   font-size: clamp(4.5rem, 7.5vw, 8rem);
   font-weight: 900;
