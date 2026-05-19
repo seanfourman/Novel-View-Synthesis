@@ -1469,6 +1469,15 @@ code {
   text-align: center;
   direction: ltr;
 }
+.classic-card-name::after {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin: 0.4rem auto 0;
+}
 .classic-card-desc {
   font-size: clamp(0.95rem, 1.08vw, 1.15rem);
   color: var(--ink-soft);
