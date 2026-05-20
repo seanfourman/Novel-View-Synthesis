@@ -3981,30 +3981,6 @@ export function initLimits() {
       ctx.fill();
     });
 
-    // Mode label + click hint
-    ctx.font         = "500 13px 'Heebo', sans-serif";
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "bottom";
-
-    if (mode >= 0) {
-      const labels = [
-        "תנועה → גמגום", "אזורים חסרים", "השתקפויות → שגיאות צבע",
-        "עיכוב → קפיצות", "עומק → שטחי"
-      ];
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle   = "#ff5a36";
-      ctx.fillText(labels[mode], W / 2, H - 18);
-      ctx.globalAlpha = 1;
-    }
-
-    // "click to continue" hint (dimmed, bottom-right)
-    const hintLabel = mode < 4 ? "לחץ להמשך ←" : "לחץ לחזרה ↺";
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle   = "#c8a882";
-    ctx.font        = "400 11px 'Heebo', sans-serif";
-    ctx.textAlign   = "left";
-    ctx.fillText(hintLabel, 12, H - 10);
-    ctx.globalAlpha = 1;
 
     t++;
     modeT++;
