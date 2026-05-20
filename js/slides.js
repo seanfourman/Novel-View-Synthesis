@@ -3598,7 +3598,7 @@ export function initSfMLiDAR() {
     };
   })();
 
-  // ── Light Fields panel canvas: all 6 bunny pipeline steps as a 3×2 grid ──
+  // ── Light Fields panel canvas: all 6 pipeline stages live simultaneously ──
   const lfVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-lf");
     if (!cv) return () => {};
@@ -3606,122 +3606,123 @@ export function initSfMLiDAR() {
     const W = cv.width, H = cv.height;   // 400 × 340
 
     const BASE = "assets/generated/bunny_pipeline/";
-    const STEPS = [
-      { file: "01_input_rgb.png",              label: "קלט RGB" },
-      { file: "03_depth_colormap.png",          label: "מפת עומק" },
-      { file: "04_lifted_depth_proxy.png",      label: "פרוקסי 3D" },
-      { file: "07_left_view_holes_overlay.png", label: "הזזה + חורים" },
-      { file: "08_left_view_inpainted.png",     label: "מבט ימין" },
-      { file: "12_right_view_inpainted.png",    label: "מבט שמאל" },
+    const mk = s => { const i = new Image(); i.src = BASE + s; return i; };
+    const imgRGB   = mk("01_input_rgb.png");
+    const imgDepth = mk("03_depth_colormap.png");
+    const imgHoles = mk("07_left_view_holes_overlay.png");
+    const imgLeft  = mk("08_left_view_inpainted.png");
+    const imgRight = mk("12_right_view_inpainted.png");
+
+    // Grid: 2 columns × 3 rows
+    const COLS = 2, ROWS = 3, GAP = 4;
+    const CW = Math.floor((W - GAP * (COLS - 1)) / COLS);   // ~198
+    const CH = Math.floor((H - GAP * (ROWS - 1)) / ROWS);   // ~110
+
+    // Cell positions [cx, cy]
+    const cells = [
+      [0,        0          ],   // 0: RGB
+      [CW + GAP, 0          ],   // 1: Depth
+      [0,        CH + GAP   ],   // 2: Particles
+      [CW + GAP, CH + GAP   ],   // 3: Warp
+      [0,        2*(CH+GAP) ],   // 4: Left novel view
+      [CW + GAP, 2*(CH+GAP) ],   // 5: Right novel view
     ];
 
-    const imgs = STEPS.map(s => {
-      const img = new Image();
-      img.src = BASE + s.file;
-      return img;
-    });
+    // Pixel buffer for the particle cell (dirty-rect update)
+    const pixBuf = ctx.createImageData(W, H);
+    const pd = pixBuf.data;
+    // Pre-fill entire buffer with cell background colour
+    const BG = [245, 243, 240];
+    for (let i = 0; i < pd.length; i += 4) { pd[i]=BG[0]; pd[i+1]=BG[1]; pd[i+2]=BG[2]; pd[i+3]=255; }
 
-    // 2 columns × 3 rows grid layout
-    const COLS = 2, ROWS = 3, GAP = 4, LABEL_H = 17;
-    const cellW = (W - GAP * (COLS - 1)) / COLS;   // 198 px
-    const cellH = (H - GAP * (ROWS - 1)) / ROWS;   // ~110 px
-    const imgH  = cellH - LABEL_H;
+    let particles = null;
+    fetch(BASE + "particles.json").then(r => r.json()).then(d => { particles = d; });
 
-    const cells = [];
-    for (let r = 0; r < ROWS; r++)
-      for (let c = 0; c < COLS; c++)
-        cells.push({ x: c * (cellW + GAP), y: r * (cellH + GAP) });
+    // ── helpers ─────────────────────────────────────────────────────────────
 
-    // draw one pipeline image into a cell rect, scaled to contain it
-    const drawCell = (img, cx, cy, cw, ch) => {
+    // Draw an image contained + centred inside a cell, with optional clip
+    function drawCell(img, ci, alpha = 1, zoom = 1) {
       if (!img.complete || !img.naturalWidth) return;
+      const [cx, cy] = cells[ci];
+      ctx.save();
+      ctx.beginPath(); ctx.rect(cx, cy, CW, CH); ctx.clip();
+      ctx.globalAlpha = alpha;
       const iw = img.naturalWidth, ih = img.naturalHeight;
-      // contain: fit whole image, centred, no crop
-      const scale = Math.min(cw / iw, ch / ih);
-      const dw = iw * scale, dh = ih * scale;
-      ctx.drawImage(img, cx + (cw - dw) / 2, cy + (ch - dh) / 2, dw, dh);
-    };
+      const s  = Math.min(CW / iw, CH / ih) * zoom;
+      const dw = iw * s, dh = ih * s;
+      ctx.drawImage(img, cx + (CW - dw) / 2, cy + (CH - dh) / 2, dw, dh);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
-    const HOLD = 90;   // frames per step highlight (~1.5 s at 60 fps)
+    // Render particles into the pixel buffer for cell 2
+    function drawParticleCell(t) {
+      if (!particles) return;
+      const [cx, cy] = cells[2];
+      // Reset cell area to background
+      for (let y = cy; y < cy + CH; y++) {
+        for (let x = cx; x < cx + CW; x++) {
+          const i = (y * W + x) * 4;
+          pd[i]=BG[0]; pd[i+1]=BG[1]; pd[i+2]=BG[2]; pd[i+3]=255;
+        }
+      }
+      const tilt  = Math.min(t / 120, 1);           // fly-in over first 2 s
+      const CX = cx + CW / 2, CY = cy + CH / 2;
+      const SX = CW * 0.82,   SY = CH * 0.86;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const nx = p[0], ny = p[1], nz = p[2], r = p[3], g = p[4], b = p[5];
+        const phase = (i * 2.3999) % 6.2832;
+        const wz  = nz + tilt * Math.sin(t * 0.045 + phase) * 0.048;
+        const fx  = cx + (nx + 0.5) * CW;
+        const fy  = cy + (ny + 0.5) * CH;
+        const px3 = CX + (nx + 0.30 * wz) * SX;
+        const py3 = CY + (ny - 0.18 * wz) * SY;
+        const px  = Math.round(fx + tilt * (px3 - fx));
+        const py  = Math.round(fy + tilt * (py3 - fy));
+        if (px < cx || px >= cx+CW-1 || py < cy || py >= cy+CH-1) continue;
+        const idx = (py * W + px) * 4;
+        pd[idx]=r; pd[idx+1]=g; pd[idx+2]=b; pd[idx+3]=255;
+        pd[idx+4]=r; pd[idx+5]=g; pd[idx+6]=b; pd[idx+7]=255;      // x+1
+        const idx2 = ((py+1)*W+px)*4;
+        pd[idx2]=r; pd[idx2+1]=g; pd[idx2+2]=b; pd[idx2+3]=255;    // y+1
+      }
+      // Only repaint the cell region of the canvas
+      ctx.putImageData(pixBuf, 0, 0, cx, cy, CW, CH);
+    }
+
     let t = 0;
 
     return (dtScale = 1) => {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
 
-      const activeIdx = Math.floor(t / HOLD) % STEPS.length;
+      // Cell 0 — Input RGB (slow Ken Burns)
+      const zoom = 1 + 0.04 * Math.abs(Math.sin(t * 0.003));
+      drawCell(imgRGB, 0, 1, zoom);
 
-      cells.forEach(({ x, y }, i) => {
-        const isActive = i === activeIdx;
-        const imgAreaY = y;
+      // Cell 1 — Depth colormap (static)
+      drawCell(imgDepth, 1);
 
-        // dim non-active cells slightly
-        ctx.globalAlpha = isActive ? 1 : 0.55;
+      // Cell 2 — 3D particle proxy (fly-in + dance)
+      drawParticleCell(t);
 
-        // cell background
-        ctx.fillStyle = "#f0efec";
-        ctx.fillRect(x, y, cellW, cellH);
+      // Cell 3 — Camera shift: oscillate normal ↔ holes
+      const osc = (1 - Math.cos(t * 0.055)) / 2;   // ~2.8s per cycle
+      drawCell(imgRGB,   3, 1);
+      drawCell(imgHoles, 3, osc);
 
-        // image
-        drawCell(imgs[i], x, imgAreaY, cellW, imgH);
+      // Cell 4 — Left novel view
+      drawCell(imgLeft, 4);
 
-        // label bar
-        ctx.fillStyle = isActive ? "#af261c" : "#2a2a2a";
-        ctx.fillRect(x, y + imgH, cellW, LABEL_H);
+      // Cell 5 — Right novel view
+      drawCell(imgRight, 5);
 
-        ctx.globalAlpha = 1;
-
-        // step number badge
-        const badgeR = 8;
-        ctx.fillStyle = isActive ? "#af261c" : "rgba(0,0,0,0.55)";
-        ctx.beginPath();
-        ctx.arc(x + badgeR + 3, y + badgeR + 3, badgeR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.font = `bold 8px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(`0${i + 1}`, x + badgeR + 3, y + badgeR + 3 + 3);
-
-        // label text
-        ctx.fillStyle = "#fff";
-        ctx.font = `${isActive ? "600" : "400"} 9px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(STEPS[i].label, x + cellW / 2, y + imgH + LABEL_H - 4);
-
-        // active: red border
-        if (isActive) {
-          ctx.strokeStyle = "#af261c";
-          ctx.lineWidth = 2.5;
-          ctx.strokeRect(x + 1.25, y + 1.25, cellW - 2.5, cellH - 2.5);
-        }
-      });
-
-      // arrow connecting active → next step
-      const cur  = cells[activeIdx];
-      const next = cells[(activeIdx + 1) % STEPS.length];
-      const pulse = 0.4 + 0.6 * Math.abs(Math.sin(t * 0.06));
-      ctx.globalAlpha = pulse;
-      ctx.strokeStyle = "#af261c";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      const ax = cur.x  + cellW / 2, ay = cur.y  + cellH / 2;
-      const bx = next.x + cellW / 2, by = next.y + cellH / 2;
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // arrowhead
-      const angle = Math.atan2(by - ay, bx - ax);
-      const AL = 7;
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.lineTo(bx - AL * Math.cos(angle - 0.4), by - AL * Math.sin(angle - 0.4));
-      ctx.lineTo(bx - AL * Math.cos(angle + 0.4), by - AL * Math.sin(angle + 0.4));
-      ctx.closePath();
-      ctx.fillStyle = "#af261c";
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      // Gap lines between cells (subtle)
+      ctx.fillStyle = "#e8e6e2";
+      ctx.fillRect(CW, 0, GAP, H);                  // vertical
+      ctx.fillRect(0, CH, W, GAP);                   // horizontal row 1
+      ctx.fillRect(0, 2*CH + GAP, W, GAP);           // horizontal row 2
     };
   })();
 
