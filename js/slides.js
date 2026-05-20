@@ -3694,7 +3694,7 @@ export function initSfMLiDAR() {
     };
   })();
 
-  const CHARGE_RATE = 1 / 100; // ~1.7 s hold to select
+  const CHARGE_RATE = 1 / 30; // ~0.5 s hold to select
   const DRAIN_RATE  = 1 / 25;  // drains faster than it charges
 
   function select(side) {
@@ -3723,16 +3723,11 @@ export function initSfMLiDAR() {
     const side = p.dataset.side;
     const start = () => { if (!active) pressing[side] = true; };
     const stop  = () => { pressing[side] = false; };
-    const openOnRelease = () => {
-      const shouldOpen = pressing[side] && !active;
-      pressing[side] = false;
-      if (shouldOpen) select(side);
-    };
     p.addEventListener("mousedown",   start);
     p.addEventListener("touchstart",  start, { passive: true });
-    p.addEventListener("mouseup",     openOnRelease);
+    p.addEventListener("mouseup",     stop);
     p.addEventListener("mouseleave",  stop);
-    p.addEventListener("touchend",    openOnRelease);
+    p.addEventListener("touchend",    stop);
     p.addEventListener("touchcancel", stop);
   });
 
