@@ -3461,44 +3461,71 @@ export function initSfMLiDAR() {
   const VIS_ACCENT = "#ff5a36";
   const VIS_INK    = "#1a1a1a";
 
-  // ── SfM panel canvas: scattered photos → orbital camera rig (academic style) ──
+  // ── SfM panel canvas: real bunny polaroids → 3D bunny rotating in orbit ──
   const sfmVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-sfm");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;
-    const sc = W / 400;
+    const W = cv.width, H = cv.height;   // 400 × 340
+
+    const BASE = "assets/generated/bunny_renders/";
+    const SPRITE_FRAMES = 36, SPRITE_COLS = 6;
+    const SPRITE_FW = 300, SPRITE_FH = 300;
+
+    // Real bunny polaroid images (9 angles)
+    const polaroidImgs = Array.from({length: 9}, (_, i) => {
+      const img = new Image();
+      img.src = BASE + `polaroid_${String(i).padStart(2,"0")}.png`;
+      return img;
+    });
+
+    // Sprite sheet for rotating bunny
+    const spriteSheet = new Image();
+    spriteSheet.src = BASE + "sprite_sheet.png";
+
+    // Photo positions: (x, y, rotation_rad) — scattered 3×3 grid on left zone
     const photos = [
-      [50, 50, -0.30], [94, 34, 0.18], [142, 56, -0.12],
-      [30, 112, 0.14], [84, 108, -0.24], [138, 110, 0.22],
-      [52, 172, -0.08], [100, 162, 0.26], [148, 178, -0.18],
+      [50, 46, -0.28], [95, 30, 0.16], [143, 52, -0.10],
+      [28, 108, 0.13], [83, 105, -0.22], [137, 107, 0.19],
+      [50, 170, -0.07], [98, 160, 0.23], [147, 174, -0.16],
     ];
 
-    const drawPolaroid = (px, py, angle) => {
-      ctx.save(); ctx.translate(px*sc, py*sc); ctx.rotate(angle);
-      const pw = 42*sc, ph = 50*sc;
-      ctx.fillStyle = "rgba(0,0,0,0.11)"; ctx.fillRect(-pw/2+2*sc, -ph/2+2*sc, pw, ph);
-      ctx.fillStyle = "#edeae4"; ctx.fillRect(-pw/2, -ph/2, pw, ph);
-      ctx.fillStyle = "#bdb9b2"; ctx.fillRect(-pw/2+4*sc, -ph/2+4*sc, pw-8*sc, ph-14*sc);
-      ctx.fillStyle = "#8e8a84";
-      ctx.beginPath(); ctx.arc(0, -ph/2+14*sc, 6*sc, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(0, -ph/2+26*sc, 8*sc, 10*sc, 0, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    };
-
-    // Orbit centre in right zone
-    const ox = 306*sc, oy = H*0.50;
-    const rx = 74*sc, ry1 = 43*sc, ry2 = 22*sc;
+    const PW = 55, PH = 64;   // polaroid display size on canvas
+    const ox = 306, oy = H * 0.50;
+    const rx = 74, ry1 = 43, ry2 = 22;
     const N = 26;
     let t = 0;
+
+    const drawPolaroid = (px, py, angle, img) => {
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(angle);
+      // Drop shadow
+      ctx.shadowColor = "rgba(0,0,0,0.16)";
+      ctx.shadowBlur = 7; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+      ctx.fillStyle = "#f8f6f2";
+      ctx.fillRect(-PW/2, -PH/2, PW, PH);
+      ctx.shadowColor = "transparent";
+      // Bunny photo inside frame
+      const m = 4, bot = 11;
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, -PW/2+m, -PH/2+m, PW-m*2, PH-m-bot);
+      } else {
+        ctx.fillStyle = "#d8d4ce";
+        ctx.fillRect(-PW/2+m, -PH/2+m, PW-m*2, PH-m-bot);
+      }
+      ctx.restore();
+    };
 
     return (dtScale = 1) => {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
-      photos.forEach(([x, y, a]) => drawPolaroid(x, y, a));
+
+      // Polaroid photos
+      photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
       // Arrow
-      const ax = 178*sc, ay = H*0.5, aw = 26*sc, ah = 7*sc;
+      const ax = 177, ay = H*0.5, aw = 26, ah = 7;
       ctx.fillStyle = "#909090";
       ctx.beginPath();
       ctx.moveTo(ax, ay-ah/2); ctx.lineTo(ax+aw-ah, ay-ah/2);
@@ -3508,7 +3535,7 @@ export function initSfMLiDAR() {
 
       const rot = t * 0.007;
 
-      // Two orbit rings
+      // Orbit rings
       const outer = Array.from({length: N}, (_, i) => {
         const a = (i/N)*Math.PI*2 + rot;
         return { x: ox+Math.cos(a)*rx, y: oy+Math.sin(a)*ry1, z: Math.sin(a) };
@@ -3518,8 +3545,8 @@ export function initSfMLiDAR() {
         return { x: ox+Math.cos(a)*rx*0.72, y: oy+Math.sin(a)*ry2, z: Math.sin(a) };
       });
 
-      // Back-half triangular mesh
-      ctx.lineWidth = 0.8*sc;
+      // Back-half mesh + arcs
+      ctx.lineWidth = 0.8;
       for (let i = 0; i < N; i++) {
         const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
         if (o.z > 0 || inn.z > 0) continue;
@@ -3528,20 +3555,25 @@ export function initSfMLiDAR() {
         ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
       }
-
-      // Back-half orbit arcs
       ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,Math.PI,Math.PI*2);
-      ctx.strokeStyle = "rgba(175,38,28,0.38)"; ctx.lineWidth = 1.5*sc; ctx.stroke();
+      ctx.strokeStyle = "rgba(175,38,28,0.38)"; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,Math.PI,Math.PI*2);
-      ctx.strokeStyle = "rgba(175,38,28,0.30)"; ctx.lineWidth = 1.2*sc; ctx.stroke();
+      ctx.strokeStyle = "rgba(175,38,28,0.30)"; ctx.lineWidth = 1.2; ctx.stroke();
 
-      // Central figurine silhouette
-      ctx.fillStyle = "#a8a4a0";
-      ctx.beginPath(); ctx.arc(ox, oy-20*sc, 12*sc, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(ox, oy+5*sc, 15*sc, 20*sc, 0, 0, Math.PI*2); ctx.fill();
+      // Rotating 3D bunny (sprite sheet, synced to orbit speed)
+      const frame = Math.floor(rot * SPRITE_FRAMES / (2 * Math.PI)) % SPRITE_FRAMES;
+      const fc = frame % SPRITE_COLS, fr = Math.floor(frame / SPRITE_COLS);
+      const bSize = 92;
+      if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+        ctx.drawImage(
+          spriteSheet,
+          fc * SPRITE_FW, fr * SPRITE_FH, SPRITE_FW, SPRITE_FH,
+          ox - bSize/2, oy - bSize/2 - 5, bSize, bSize
+        );
+      }
 
-      // Front-half mesh
-      ctx.lineWidth = 0.8*sc;
+      // Front-half mesh + arcs (drawn over bunny)
+      ctx.lineWidth = 0.8;
       for (let i = 0; i < N; i++) {
         const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
         if (o.z <= 0 || inn.z <= 0) continue;
@@ -3550,17 +3582,15 @@ export function initSfMLiDAR() {
         ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
       }
-
-      // Front-half orbit arcs
       ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,0,Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.80)"; ctx.lineWidth = 2*sc; ctx.stroke();
+      ctx.strokeStyle = "rgba(175,38,28,0.80)"; ctx.lineWidth = 2; ctx.stroke();
       ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,0,Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.68)"; ctx.lineWidth = 1.6*sc; ctx.stroke();
+      ctx.strokeStyle = "rgba(175,38,28,0.68)"; ctx.lineWidth = 1.6; ctx.stroke();
 
-      // Camera dots along outer orbit
+      // Camera dots
       for (let i = 0; i < N; i++) {
         const o = outer[i];
-        ctx.beginPath(); ctx.arc(o.x, o.y, 2.8*sc, 0, Math.PI*2);
+        ctx.beginPath(); ctx.arc(o.x, o.y, 2.8, 0, Math.PI*2);
         ctx.fillStyle = o.z > 0 ? "rgba(175,38,28,0.88)" : "rgba(175,38,28,0.32)";
         ctx.fill();
       }
