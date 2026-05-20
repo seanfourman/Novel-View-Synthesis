@@ -3920,10 +3920,9 @@ export function initLimits() {
           ry += (Math.cos(t * 0.37 + phase) * 0.025);
         }
       } else if (mode === 1) {
-        // Missing areas: hide sectors
-        const ang = Math.atan2(rz, rx);
-        if (ang > -0.3 && ang < 1.3) alpha = 0;
-        if (ry > 0.25 && ry < 0.75) alpha *= 0.08;
+        // Missing areas: entire bottom half invisible (never captured by cameras below)
+        if (ry > 0) alpha = 0;
+        else if (ry > -0.08) alpha *= 0.15;  // soft edge right at the equator
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
         wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
@@ -3943,10 +3942,9 @@ export function initLimits() {
           ry += (rng - 0.5) * 0.2;
         }
       } else if (mode === 4) {
-        // Depth flatten: z collapses to 0
-        const flat = Math.min(progress * 1.2, 1.0);
-        rz *= (1 - flat * 0.92);
-        ry *= (1 - flat * 0.15);
+        // Zoom in/out: shift all points along depth axis → perspective compression
+        // changes continuously, showing how depth affects what you see
+        rz += Math.sin(modeT * 0.022) * 0.5;
       }
 
       // Perspective project: viewer at z = -3.5, focal = 2.0
