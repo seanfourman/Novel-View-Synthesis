@@ -2499,14 +2499,20 @@ code {
   overflow: hidden;
   font-size: clamp(0.95rem, 1.04vw, 1.08rem);
   line-height: 1.55;
+  min-block-size: calc(3em * 1.55);
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results {
   padding-block: 0.1rem;
+  min-block-size: 6.9rem;
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results-label {
   margin-bottom: 0.25rem;
+}
+
+:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-cols {
+  min-block-size: 9rem;
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results li {
