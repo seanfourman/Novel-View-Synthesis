@@ -3681,6 +3681,8 @@ export function initSfMLiDAR() {
   function select(side) {
     active = side;
     split.dataset.active = side;
+    charges.sfm = charges.lidar = 0;
+    pressing.sfm = pressing.lidar = false;
     panels.forEach(p => { p.style.setProperty("--charge", 0); });
     fills[side] && (fills[side].style.width = "0%");
   }
@@ -3702,11 +3704,16 @@ export function initSfMLiDAR() {
     const side = p.dataset.side;
     const start = () => { if (!active) pressing[side] = true; };
     const stop  = () => { pressing[side] = false; };
+    const openOnRelease = () => {
+      const shouldOpen = pressing[side] && !active;
+      pressing[side] = false;
+      if (shouldOpen) select(side);
+    };
     p.addEventListener("mousedown",   start);
     p.addEventListener("touchstart",  start, { passive: true });
-    p.addEventListener("mouseup",     stop);
+    p.addEventListener("mouseup",     openOnRelease);
     p.addEventListener("mouseleave",  stop);
-    p.addEventListener("touchend",    stop);
+    p.addEventListener("touchend",    openOnRelease);
     p.addEventListener("touchcancel", stop);
   });
 
