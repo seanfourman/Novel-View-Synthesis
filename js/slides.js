@@ -3836,13 +3836,14 @@ export function initLimits() {
   // JS convention: oy=up axis (rotates around y), so swap z↔y and negate new oy for upright display
   let pts = makeSphere(520);
 
-  fetch("assets/generated/teapot_particles.json")
+  // Saturn model is z-up: map px→ox, -pz→oy (flip so top is up), py→oz (depth)
+  fetch("assets/generated/limits_model.json")
     .then(r => r.json())
     .then(data => {
       pts = data.map(([px, py, pz]) => ({
-        ox:    px,          // left/right → keep as ox (x-axis)
-        oy:   -pz,          // Python z (up) → JS oy, negated so lid is up on screen
-        oz:    py,          // Python y (depth) → JS oz
+        ox:    px,
+        oy:   -pz,   // negate: positive z (top) renders above screen centre
+        oz:    py,
         phase: Math.random() * Math.PI * 2,
         rng:   Math.random(),
       }));
@@ -3893,7 +3894,7 @@ export function initLimits() {
     for (let gy = 0; gy < H; gy += gstep) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
     const CX = W * 0.5, CY = H * 0.5;
-    const SCALE = Math.min(W, H) * 0.58;
+    const SCALE = Math.min(W, H) * 0.68;
 
     // Build projected points
     const projected = pts.map((p) => {

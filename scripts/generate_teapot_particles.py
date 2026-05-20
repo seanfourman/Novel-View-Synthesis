@@ -41,18 +41,19 @@ LID_PROFILE = [
 
 # ── Handle control points (Bézier tube, on +x side) ─────────────────────────
 HANDLE_CTRL = np.array([
-    [ 1.00, 0.0, 1.38],
-    [ 2.30, 0.0, 0.95],
-    [ 2.30, 0.0, 2.18],
-    [ 1.00, 0.0, 2.42],
+    [ 0.91, 0.0, 1.38],   # bottom: matches body surface at z=1.38  (r≈0.91)
+    [ 1.68, 0.0, 1.20],   # outer bottom control
+    [ 1.52, 0.0, 2.15],   # outer top control
+    [ 0.54, 0.0, 2.42],   # top: matches neck at z=2.42            (r≈0.54)
 ], dtype=float)
 
 # ── Spout control points (Bézier tube, on −x side) ───────────────────────────
+# S-curve: sweeps out+down first, then reverses up — like a gooseneck spout
 SPOUT_CTRL = np.array([
-    [-0.88, 0.0, 0.88],
-    [-1.62, 0.0, 0.78],
-    [-2.05, 0.0, 1.82],
-    [-1.82, 0.0, 2.52],
+    [-0.90, 0.0, 0.88],   # body attachment (lower belly)
+    [-2.20, 0.0, 0.15],   # out and DOWN → lower belly of S
+    [-0.60, 0.0, 2.00],   # reversal: in and UP → middle of S
+    [-1.65, 0.0, 2.55],   # tip: out and up → pour point
 ], dtype=float)
 
 
