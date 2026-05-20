@@ -3631,12 +3631,9 @@ export function initSfMLiDAR() {
       [CW + GAP, 2*(CH+GAP) ],   // 5: Right novel view
     ];
 
-    // Pixel buffer for the particle cell (dirty-rect update)
+    // Pixel buffer for the particle cell (dirty-rect update, transparent background)
     const pixBuf = ctx.createImageData(W, H);
     const pd = pixBuf.data;
-    // Pre-fill entire buffer with cell background colour
-    const BG = [245, 243, 240];
-    for (let i = 0; i < pd.length; i += 4) { pd[i]=BG[0]; pd[i+1]=BG[1]; pd[i+2]=BG[2]; pd[i+3]=255; }
 
     let particles = null;
     fetch(BASE + "particles.json").then(r => r.json()).then(d => { particles = d; });
@@ -3661,8 +3658,8 @@ export function initSfMLiDAR() {
     // Draw label text below the image area (no background bar)
     function drawLabel(ci) {
       const [cx, cy] = cells[ci];
-      ctx.fillStyle = "#5a5a5a";
-      ctx.font = "500 9px sans-serif";
+      ctx.fillStyle = "#6b6560";
+      ctx.font = "500 10px 'Heebo', 'Inter', sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(LABELS[ci], cx + CW / 2, cy + IMG_H + LABEL_H / 2);
@@ -3674,11 +3671,11 @@ export function initSfMLiDAR() {
       if (!particles) return;
       const [cx, cy] = cells[2];
       const IH = IMG_H;
-      // Reset image area to background
+      // Clear image area to transparent so panel background shows through
       for (let y = cy; y < cy + IH; y++) {
         for (let x = cx; x < cx + CW; x++) {
           const i = (y * W + x) * 4;
-          pd[i]=BG[0]; pd[i+1]=BG[1]; pd[i+2]=BG[2]; pd[i+3]=255;
+          pd[i]=0; pd[i+1]=0; pd[i+2]=0; pd[i+3]=0;
         }
       }
       const tilt = Math.min(t / 120, 1);
