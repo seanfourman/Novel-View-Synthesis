@@ -2598,30 +2598,37 @@ code {
 
 .cp-back-btn {
   position: absolute;
-  bottom: 2rem;
+  bottom: 3.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--accent);
-  color: #fff;
+  background: none;
+  color: rgba(255,90,54,0.55);
   border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 1.1rem;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  font-size: 1.6rem;
+  line-height: 1;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0.25rem 0.5rem;
+  filter: drop-shadow(0 0 6px rgba(255,90,54,0.5));
+}
+.cp-back-btn:hover {
+  color: var(--accent);
+  filter: drop-shadow(0 0 10px rgba(255,90,54,0.8));
 }
 
 /* ── Selected state ── */
 .compare-split[data-active="sfm"]  .cp-sfm  { flex: 9; cursor: default; }
-.compare-split[data-active="sfm"]  .cp-lidar { flex: 1; cursor: default; }
+.compare-split[data-active="sfm"]  .cp-lidar { flex: 1; cursor: pointer; }
 .compare-split[data-active="lidar"] .cp-lidar { flex: 9; cursor: default; }
-.compare-split[data-active="lidar"] .cp-sfm  { flex: 1; cursor: default; }
+.compare-split[data-active="lidar"] .cp-sfm  { flex: 1; cursor: pointer; }
 
 /* Collapsed panel: hide content, show label + back btn */
 .compare-split[data-active="sfm"] .cp-lidar .cp-content,
@@ -2639,6 +2646,13 @@ code {
 .compare-split[data-active="lidar"] .cp-sfm .cp-back-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Orange glow at bottom of collapsed panel (behind the back arrow) */
+.compare-split[data-active="sfm"] .cp-lidar::before,
+.compare-split[data-active="lidar"] .cp-sfm::before {
+  opacity: 1;
+  background: radial-gradient(ellipse 200% 55% at 50% 118%, rgba(255,90,54,0.3) 0%, transparent 55%);
 }
 
 /* Divider line between panels */

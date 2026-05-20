@@ -3718,7 +3718,7 @@ export function initSfMLiDAR() {
     });
   }
 
-  // Long-press listeners
+  // Long-press listeners (inactive panels) + single-click on collapsed panel to go back
   panels.forEach(p => {
     const side = p.dataset.side;
     const start = () => { if (!active) pressing[side] = true; };
@@ -3729,9 +3729,11 @@ export function initSfMLiDAR() {
     p.addEventListener("mouseleave",  stop);
     p.addEventListener("touchend",    stop);
     p.addEventListener("touchcancel", stop);
+    // clicking the collapsed (thin) panel resets back to neutral
+    p.addEventListener("click", () => { if (active && active !== side) reset(); });
   });
 
-  // Back buttons
+  // Back buttons also reset (and stop propagation so panel click doesn't double-fire)
   split.querySelectorAll(".cp-back-btn").forEach(btn => {
     btn.addEventListener("mousedown", e => e.stopPropagation());
     btn.addEventListener("click",     e => { e.stopPropagation(); reset(); });
