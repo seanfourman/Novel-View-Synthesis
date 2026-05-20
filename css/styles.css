@@ -2344,7 +2344,7 @@ code {
 
 .cp-tag {
   position: absolute;
-  top: clamp(1rem, 4vh, 3rem);
+  top: clamp(-6.25rem, -8vh, -4.5rem);
   inset-inline-start: clamp(1rem, 3vw, 3rem);
   font-size: clamp(3.5rem, 6vw, 7rem);
   font-weight: 900;
@@ -2370,23 +2370,51 @@ code {
   margin: 0;
 }
 
-.cp-results { margin: 0; }
+.cp-results {
+  margin: 0.1rem 0 0;
+}
 .cp-results-label {
   font-size: clamp(0.95rem, 1.05vw, 1.08rem);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--muted);
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.35rem;
 }
 .cp-results ul {
   margin: 0;
-  padding-right: 1.2rem;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: clamp(0.42rem, 0.75vh, 0.62rem);
 }
 .cp-results li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   font-size: clamp(0.95rem, 1.08vw, 1.08rem);
+  font-weight: 600;
   color: var(--ink);
+  line-height: 1.35;
+}
+.cp-results li::before {
+  width: 1.15rem;
+  min-width: 1.15rem;
+  color: var(--muted);
+  font-family: "Inter", "Heebo", sans-serif;
+  font-size: 0.86em;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+.cp-results li:nth-child(1)::before {
+  content: "◇";
+}
+.cp-results li:nth-child(2)::before {
+  content: "⌖";
+}
+.cp-results li:nth-child(3)::before {
+  content: "↔";
 }
 
 .cp-cols {
