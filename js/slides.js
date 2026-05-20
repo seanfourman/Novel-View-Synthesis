@@ -3580,8 +3580,8 @@ export function initSfMLiDAR() {
       { file: "03_depth_colormap.png",          label: "מפת עומק" },
       { file: "04_lifted_depth_proxy.png",      label: "פרוקסי 3D" },
       { file: "07_left_view_holes_overlay.png", label: "הזזה + חורים" },
-      { file: "08_left_view_inpainted.png",     label: "מבט שמאל" },
-      { file: "12_right_view_inpainted.png",    label: "מבט ימין" },
+      { file: "08_left_view_inpainted.png",     label: "מבט ימין" },
+      { file: "12_right_view_inpainted.png",    label: "מבט שמאל" },
     ];
 
     const imgs = STEPS.map(s => {

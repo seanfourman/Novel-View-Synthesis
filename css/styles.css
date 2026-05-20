@@ -2664,6 +2664,29 @@ code {
 .compare-split[data-active="sfm"]   .cp-vis-sfm,
 .compare-split[data-active="lidar"] .cp-vis-lf  { opacity: 1; }
 
+/* Light Fields active: canvas + content side-by-side, no overlap */
+.compare-split[data-active="lidar"] .cp-lidar {
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+}
+.compare-split[data-active="lidar"] .cp-vis-lf {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  flex-shrink: 0;
+  width: clamp(220px, 30vw, 440px);
+  height: auto;
+  opacity: 1;
+}
+.compare-split[data-active="lidar"] .cp-lidar .cp-content {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+}
+
 .slide[data-id="7"] {
   padding: 0;
   align-items: stretch;
