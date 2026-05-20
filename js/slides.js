@@ -3851,8 +3851,8 @@ export function initLimits() {
 
   // Mode cycle: 0-4 match the 5 limit-item elements
   // Each mode: MODE_DUR ticks active, IDLE_DUR ticks idle/stable between
-  const MODE_DUR  = 150;  // ~2.5 s at 60 fps
-  const IDLE_DUR  = 60;   // ~1 s rest between modes
+  const MODE_DUR  = 300;  // ~5 s at 60 fps
+  const IDLE_DUR  = 75;   // ~1.25 s rest between modes
   const CYCLE     = (MODE_DUR + IDLE_DUR) * 5;
 
   let t        = 0;
@@ -3893,7 +3893,7 @@ export function initLimits() {
     for (let gy = 0; gy < H; gy += gstep) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
     const CX = W * 0.5, CY = H * 0.5;
-    const SCALE = Math.min(W, H) * 0.44;
+    const SCALE = Math.min(W, H) * 0.58;
 
     // Build projected points
     const projected = pts.map((p) => {
