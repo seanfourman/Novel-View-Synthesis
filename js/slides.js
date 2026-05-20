@@ -3486,13 +3486,13 @@ export function initSfMLiDAR() {
     // Photo positions: (x, y, rotation_rad) — scattered 3×3 grid on left zone
     // Canvas is now 520×340: photos on left ~x:15-155, orbit on right ~x:310-500
     const photos = [
-      [46, 50, -0.28], [94, 28, 0.16], [142, 52, -0.10],
-      [22, 128, 0.13], [76, 125, -0.22], [134, 127, 0.19],
-      [46, 204, -0.07], [96, 194, 0.23], [142, 208, -0.16],
+      [46, 78, -0.28], [94, 58, 0.16], [142, 80, -0.10],
+      [22, 158, 0.13], [76, 155, -0.22], [134, 157, 0.19],
+      [46, 236, -0.07], [96, 226, 0.23], [142, 238, -0.16],
     ];
 
     const PW = 72, PH = 84;   // polaroid display size on canvas
-    const ox = 390, oy = H * 0.50;   // orbit centre shifted right for spacing
+    const ox = 390, oy = H * 0.57;   // orbit centre shifted right + down
     const rx = 90, ry1 = 54, ry2 = 28;
     const N = 26;
     let t = 0;
