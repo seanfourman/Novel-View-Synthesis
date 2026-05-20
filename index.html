@@ -586,8 +586,46 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 8: MODEL PROCESS ============ -->
+      <!-- ============ SLIDE 8: WHY CLASSICAL METHODS FAILED ============ -->
       <section class="slide" data-id="8">
+        <div class="limits-slide">
+          <div class="limits-content">
+            <div class="kicker">נקודת המפנה</div>
+            <h2 class="limits-title">למה הגישות הקלאסיות<br /><span class="accent">כבר לא הספיקו?</span></h2>
+            <p class="limits-body">השיטות הקלאסיות הצליחו לשחזר את המבנה התלת־ממדי של הסביבה בצורה מרשימה יחסית. באמצעות תמונות, חיישנים או סריקות לייזר היה אפשר לבנות מודל תלת־ממדי בסיסי של העולם.</p>
+            <p class="limits-body">אבל כאשר ניסו להפוך את המודלים האלה לחוויה מרחבית אמיתית, התחילו להופיע המגבלות. המערכת הייתה צריכה להתמודד לא רק עם הצורה של הסצנה, אלא גם עם:</p>
+            <ul class="limits-list">
+              <li class="limit-item" data-mode="0">
+                <span class="limit-dot"></span>
+                <span class="limit-text">תנועה רציפה בין זוויות</span>
+              </li>
+              <li class="limit-item" data-mode="1">
+                <span class="limit-dot"></span>
+                <span class="limit-text">אזורים שלא צולמו ישירות</span>
+              </li>
+              <li class="limit-item" data-mode="2">
+                <span class="limit-dot"></span>
+                <span class="limit-text">זכוכית, תאורה והשתקפויות</span>
+              </li>
+              <li class="limit-item" data-mode="3">
+                <span class="limit-dot"></span>
+                <span class="limit-text">שינוי נקודת מבט בזמן אמת</span>
+              </li>
+              <li class="limit-item" data-mode="4">
+                <span class="limit-dot"></span>
+                <span class="limit-text">תחושת עומק ומראה טבעי</span>
+              </li>
+            </ul>
+            <p class="limits-conclusion">בשלב הזה התברר שבניית מודל תלת־ממדי בלבד אינה מספיקה כדי ליצור חוויה ויזואלית אמינה.</p>
+          </div>
+          <div class="limits-vis">
+            <canvas id="c-limits" width="460" height="520"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 9 (was 8): MODEL PROCESS ============ -->
+      <section class="slide" data-id="9">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -619,7 +657,7 @@
       </section>
 
       <!-- ============ SLIDE 8: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="9">
+      <section class="slide" data-id="10">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -695,7 +733,7 @@
       </section>
 
       <!-- ============ SLIDE 9: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="10">
+      <section class="slide" data-id="11">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -768,7 +806,7 @@
       </section>
 
       <!-- ============ SLIDE 10: NERF INTRO ============ -->
-      <section class="slide" data-id="11">
+      <section class="slide" data-id="12">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -784,7 +822,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="12">
+      <section class="slide" data-id="13">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -812,7 +850,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="13">
+      <section class="slide" data-id="14">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -859,7 +897,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="14">
+      <section class="slide" data-id="15">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -885,7 +923,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="15">
+      <section class="slide" data-id="16">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -931,7 +969,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -959,7 +997,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -995,7 +1033,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -1024,7 +1062,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="19">
+      <section class="slide" data-id="20">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -1055,7 +1093,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="20">
+      <section class="slide" data-id="21">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

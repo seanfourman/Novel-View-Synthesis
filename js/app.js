@@ -16,6 +16,7 @@ import {
   initOrbitScrubber,
   initEndBg,
   initSfMLiDAR,
+  initLimits,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -139,16 +140,17 @@ const sceneRegistry = {
   // slide 5 (live room tour) — iframes only
   5:  initClassic,          // slide 6
   6:  initSfMLiDAR,         // slide 7
-  7:  initDepthBasedNVS,    // slide 8
-  8:  initApplications,     // slide 9
-  9:  initWhyHard,          // slide 10
-  // slide 11 (NeRF intro) — no canvas
-  11: initRotatable,        // slide 12
-  13: initRayDemo,          // slide 14
-  14: initTraining,         // slide 15
-  15: initClickableViews,   // slide 16
-  16: initOrbitScrubber,    // slide 17
-  19: initEndBg,            // slide 20
+  7:  initLimits,           // slide 8 (new: why classical methods failed)
+  8:  initDepthBasedNVS,    // slide 9
+  9:  initApplications,     // slide 10
+  10: initWhyHard,          // slide 11
+  // slide 12 (NeRF intro) — no canvas
+  12: initRotatable,        // slide 13
+  14: initRayDemo,          // slide 15
+  15: initTraining,         // slide 16
+  16: initClickableViews,   // slide 17
+  17: initOrbitScrubber,    // slide 18
+  20: initEndBg,            // slide 21
 };
 
 const sceneInstances = {};

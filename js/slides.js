@@ -3806,3 +3806,195 @@ export function initSfMLiDAR() {
   };
 }
 
+/* ============================================================
+   SLIDE 8 — Why classical methods failed (glitching point cloud)
+   ============================================================ */
+export function initLimits() {
+  const canvas = document.getElementById("c-limits");
+  if (!canvas) return { tick() {}, enter() {} };
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+
+  // --- Generate ~500 points in a hollow sphere (sparse reconstruction) ---
+  const N = 520;
+  const pts = Array.from({ length: N }, () => {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 0.55 + Math.random() * 0.45;
+    return {
+      ox: Math.sin(phi) * Math.cos(theta) * r,
+      oy: Math.sin(phi) * Math.sin(theta) * r * 0.75,
+      oz: Math.cos(phi) * r,
+      phase: Math.random() * Math.PI * 2,
+      rng:   Math.random(),
+    };
+  });
+
+  // Mode cycle: 0-4 match the 5 limit-item elements
+  // Each mode: MODE_DUR ticks active, IDLE_DUR ticks idle/stable between
+  const MODE_DUR  = 150;  // ~2.5 s at 60 fps
+  const IDLE_DUR  = 60;   // ~1 s rest between modes
+  const CYCLE     = (MODE_DUR + IDLE_DUR) * 5;
+
+  let t        = 0;
+  let raf      = null;
+  let lastMode = -2;
+
+  const items = Array.from(document.querySelectorAll(".limit-item"));
+
+  function getMode(tick) {
+    const pos = tick % CYCLE;
+    const slot = Math.floor(pos / (MODE_DUR + IDLE_DUR));
+    const within = pos % (MODE_DUR + IDLE_DUR);
+    if (within < MODE_DUR) return slot;
+    return -1;
+  }
+
+  function draw() {
+    const mode    = getMode(t);
+    const progress = (t % (MODE_DUR + IDLE_DUR)) / MODE_DUR; // 0→1 within active mode
+    const baseRot  = t * 0.006;
+
+    // Update highlighted item
+    if (mode !== lastMode) {
+      lastMode = mode;
+      items.forEach((el, i) => el.classList.toggle("lim-active", i === mode));
+    }
+
+    // Background
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#1c1812";
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grid lines (reference frame)
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.lineWidth   = 1;
+    const gstep = 60;
+    for (let gx = 0; gx < W; gx += gstep) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+    for (let gy = 0; gy < H; gy += gstep) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+    const CX = W * 0.5, CY = H * 0.5;
+    const SCALE = Math.min(W, H) * 0.36;
+
+    // Build projected points
+    const projected = pts.map((p) => {
+      let { ox, oy, oz, phase, rng } = p;
+      let alpha = 1.0;
+      let glitch = false;
+      let wrongColor = false;
+
+      const cosY = Math.cos(baseRot), sinY = Math.sin(baseRot);
+      let rx = ox * cosY - oz * sinY;
+      let ry = oy;
+      let rz = ox * sinY + oz * cosY;
+
+      // ── Mode effects ──────────────────────────────────────────
+      if (mode === 0) {
+        // Motion stutter: freeze rotation in bands, then snap
+        const stutterPhase = t % 22;
+        if (stutterPhase < 16) {
+          const frozenRot = Math.floor(t / 22) * 22 * 0.006;
+          const cf = Math.cos(frozenRot), sf = Math.sin(frozenRot);
+          rx = ox * cf - oz * sf;
+          rz = ox * sf + oz * cf;
+        }
+        // Extra jitter on right hemisphere
+        if (rz > 0.1) {
+          rx += (Math.sin(t * 0.41 + phase) * 0.03);
+          ry += (Math.cos(t * 0.37 + phase) * 0.025);
+        }
+      } else if (mode === 1) {
+        // Missing areas: hide sectors
+        const ang = Math.atan2(rz, rx);
+        if (ang > -0.3 && ang < 1.3) alpha = 0;
+        if (ry > 0.25 && ry < 0.75) alpha *= 0.08;
+      } else if (mode === 2) {
+        // Wrong colors: random glitch hits
+        wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
+        if (wrongColor) {
+          rx += Math.sin(t * 0.09 + phase) * 0.05;
+          ry += Math.cos(t * 0.11 + phase) * 0.04;
+        }
+      } else if (mode === 3) {
+        // Real-time lag: ultra-slow rotation then time-warp jump
+        const lagRot = (Math.floor(t / 8) * 8) * 0.0008;
+        const cl = Math.cos(lagRot), sl = Math.sin(lagRot);
+        rx = ox * cl - oz * sl;
+        rz = ox * sl + oz * cl;
+        // Every 50 ticks: "frame skip" jitter
+        if ((t % 50) > 46) {
+          rx += (rng - 0.5) * 0.25;
+          ry += (rng - 0.5) * 0.2;
+        }
+      } else if (mode === 4) {
+        // Depth flatten: z collapses to 0
+        const flat = Math.min(progress * 1.2, 1.0);
+        rz *= (1 - flat * 0.92);
+        ry *= (1 - flat * 0.15);
+      }
+
+      // Perspective project: viewer at z = -3.5, focal = 2.0
+      // Near (rz ≈ -1) → larger proj; far (rz ≈ +1) → smaller proj
+      const proj  = 2.0 / (rz + 3.5);
+      const sx    = CX + rx * SCALE * proj;
+      const sy    = CY + ry * SCALE * proj;
+      const depth = (1 - rz) / 2;  // 0=far(rz=1), 1=near(rz=-1)
+
+      return { sx, sy, depth, alpha, wrongColor, proj, rng };
+    });
+
+    // Sort far→near (depth 0 first, depth 1 on top)
+    projected.sort((a, b) => a.depth - b.depth);
+
+    projected.forEach(({ sx, sy, depth, alpha, wrongColor, proj, rng }) => {
+      if (alpha < 0.05) return;
+      const size = (1.4 + depth * 1.8) * proj;
+
+      let color;
+      if (wrongColor) {
+        const hues = ["255,80,30", "80,200,255", "200,255,80"];
+        const h = hues[Math.floor(rng * hues.length)];
+        color = `rgba(${h},${(alpha * 0.92).toFixed(2)})`;
+      } else {
+        const v = Math.round(80 + depth * 120);
+        const r = Math.min(255, v + 40), g = Math.round(v * 0.72), b = Math.round(v * 0.52);
+        color = `rgba(${r},${g},${b},${(alpha * 0.88).toFixed(2)})`;
+      }
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.max(0.5, size), 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Mode overlay label at bottom of canvas
+    if (mode >= 0) {
+      const labels = [
+        "תנועה → גמגום", "אזורים חסרים", "השתקפויות → שגיאות צבע",
+        "עיכוב → קפיצות", "עומק → שטחי"
+      ];
+      const fade = Math.min(progress * 4, 1) * (1 - Math.max((progress - 0.85) * 6.6, 0));
+      ctx.globalAlpha = fade * 0.75;
+      ctx.fillStyle   = "#ff5a36";
+      ctx.font        = "500 13px 'Heebo', sans-serif";
+      ctx.textAlign   = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(labels[mode], W / 2, H - 18);
+      ctx.globalAlpha = 1;
+    }
+
+    t++;
+  }
+
+  return {
+    tick(visible) {
+      if (!visible) return;
+      draw();
+    },
+    enter() {
+      t = 0;
+      lastMode = -2;
+      items.forEach(el => el.classList.remove("lim-active"));
+    },
+  };
+}

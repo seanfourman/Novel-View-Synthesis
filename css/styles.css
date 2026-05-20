@@ -2800,3 +2800,114 @@ code {
 .bp-cell.bp-dim {
   opacity: 0.45;
 }
+
+/* ============================================================
+   SLIDE 8 — Why classical methods failed
+   ============================================================ */
+.limits-slide {
+  display: flex;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 6rem);
+  width: 100%;
+  height: 100%;
+  padding: clamp(2rem, 4vw, 5rem) clamp(2rem, 5vw, 7rem);
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.limits-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 1.5vh, 1.4rem);
+}
+
+.limits-title {
+  font-size: clamp(1.9rem, 3vw, 3.4rem);
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.limits-body {
+  font-size: clamp(0.92rem, 1.05vw, 1.08rem);
+  color: var(--ink-soft);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.limits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.limit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: background 0.25s ease, transform 0.25s ease;
+  cursor: default;
+  opacity: 0.45;
+}
+
+.limit-item.lim-active {
+  background: rgba(255, 90, 54, 0.08);
+  opacity: 1;
+  transform: translateX(-4px);
+}
+
+.limit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.limit-item.lim-active .limit-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.22);
+  transform: scale(1.4);
+}
+
+.limit-text {
+  font-size: clamp(0.95rem, 1.1vw, 1.12rem);
+  font-weight: 600;
+  color: var(--ink);
+  font-family: "Heebo", sans-serif;
+}
+
+.limits-conclusion {
+  font-size: clamp(0.9rem, 1.02vw, 1.05rem);
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+  font-style: italic;
+  padding-top: 0.2rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  max-width: 52ch;
+}
+
+.limits-vis {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#c-limits {
+  border-radius: 16px;
+  display: block;
+  width: clamp(280px, 32vw, 480px);
+  height: auto;
+}
