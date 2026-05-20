@@ -14,6 +14,10 @@
   --accent-3: #00b894;
   --good: #2ecc71;
   --bad: #e74c3c;
+  --slide-pad-y: clamp(2rem, 4vh, 3.5rem);
+  --slide-pad-x: clamp(2.25rem, 6vw, 5.5rem);
+  --section-gap: clamp(1rem, 2vh, 1.35rem);
+  --section-gap-compact: clamp(0.45rem, 0.9vh, 0.8rem);
   --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.18);
   --shadow-sm: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
 }
@@ -71,16 +75,14 @@ code,
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 4vh 6vw;
+  padding: var(--slide-pad-y) var(--slide-pad-x);
   overflow: hidden;
 }
 
-.slide[data-id="2"] {
-  padding: clamp(1rem, 2.5vh, 1.8rem) clamp(1rem, 3vw, 3rem);
-}
-
-.slide[data-id="3"] {
-  padding-block: clamp(0.8rem, 2vh, 1.8rem);
+.slide > :where(.centered, .split, .spatial-slide, .sts-layout, .live-tour-slide, .classic-layout, .nvs-process-slide) {
+  align-self: center;
+  margin-block: 0;
+  margin-inline: auto;
 }
 
 /* ---------- common layout ---------- */
@@ -91,7 +93,7 @@ code,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.2rem;
+  gap: var(--section-gap);
 }
 .centered.wide {
   max-width: 1400px;
@@ -102,7 +104,7 @@ code,
   max-width: 1500px;
   display: grid;
   grid-template-columns: 1fr 1.2fr;
-  gap: 4rem;
+  gap: clamp(2.5rem, 5vw, 4rem);
   align-items: center;
 }
 .split-left {
@@ -320,9 +322,11 @@ code {
 /* ========== SLIDE 2: LIVE ROOM TOUR COMPARISON ========== */
 .live-tour-slide {
   width: min(100%, 1500px);
-  height: min(90vh, 920px);
+  height: auto;
+  max-height: calc(100vh - (var(--slide-pad-y) * 2));
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: clamp(0.55rem, 1vh, 0.85rem);
 }
 .live-tour-head {
@@ -417,10 +421,8 @@ code {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: clamp(0.4rem, 0.6vh, 0.6rem);
+  gap: var(--section-gap-compact);
   width: min(100%, 1200px);
-  align-self: flex-start;
-  margin-top: 4vh;
 }
 .spatial-slide h2 {
   font-size: clamp(2rem, 3.4vw, 3rem);
@@ -620,9 +622,7 @@ code {
 
 /* ========== SLIDE 3: THE PROBLEM ========== */
 .problem-slide {
-  gap: clamp(0.5rem, 1vh, 0.8rem);
-  align-self: flex-start;
-  margin-top: 4vh;
+  gap: var(--section-gap-compact);
 }
 .problem-slide h2 {
   font-size: clamp(2rem, 3.4vw, 3rem);
@@ -1382,9 +1382,7 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1.4rem, 3vh, 2.6rem);
-  align-self: flex-start;
-  padding-top: clamp(2.5rem, 4vh, 4rem);
+  gap: clamp(1.1rem, 2.3vh, 2rem);
 }
 .classic-title {
   font-size: clamp(2rem, 3.5vw, 3.2rem);
@@ -2180,7 +2178,7 @@ code {
     grid-template-columns: 1fr;
   }
   .live-tour-slide {
-    height: 88vh;
+    height: auto;
   }
   .live-tour-head {
     align-items: flex-start;
