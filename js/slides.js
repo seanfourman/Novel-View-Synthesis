@@ -2056,8 +2056,8 @@ export function initClassic() {
       ctx.restore();
     };
 
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       const phase = t % CYCLE;
 
       let prog;
@@ -2137,8 +2137,8 @@ export function initClassic() {
     }
 
     let t = 0;
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       const divX = cx + Math.sin(t * 0.016) * (W * 0.44);
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
@@ -2196,8 +2196,8 @@ export function initClassic() {
       }
     }
     let t = 0;
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
       const rx = t * 0.008, ry = t * 0.018;
       const cX = Math.cos(rx), sX = Math.sin(rx), cY = Math.cos(ry), sY = Math.sin(ry);
@@ -2240,10 +2240,15 @@ export function initClassic() {
     const pts = [];
     const SWEEP_F = 220, PAUSE_F = 70, CYCLE = SWEEP_F + PAUSE_F;
     let t = 0;
-    return () => {
-      t++;
+    let prevCycle = 0;
+    return (dtScale = 1) => {
+      t += dtScale;
       const phase = t % CYCLE;
-      if (phase === 0) pts.length = 0;
+      const cycleIdx = Math.floor(t / CYCLE);
+      if (cycleIdx !== prevCycle) {
+        pts.length = 0;
+        prevCycle = cycleIdx;
+      }
       const sweeping = phase < SWEEP_F;
 
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
@@ -2313,8 +2318,8 @@ export function initClassic() {
       for (let c = 0; c < 5; c++)
         grid.push({ x: W*0.1 + c*(W*0.8/4), y: H*0.1 + r*(H*0.32/2), ph: (r*5+c)*0.42 });
     let t = 0;
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
       grid.forEach(cam => {
         const pulse = 0.5 + 0.5 * Math.sin(t * 0.028 + cam.ph);
@@ -2333,9 +2338,9 @@ export function initClassic() {
   const draws = [sfmDraw, mvsDraw, photoDraw, lidarDraw, lfDraw];
 
   return {
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) return;
-      draws.forEach(fn => fn());
+      draws.forEach(fn => fn(dtScale));
     },
     enter() {},
   };
@@ -2683,10 +2688,10 @@ export function initRayDemo() {
       hoveredPixel = pixels[autoIdx];
       fireRay(hoveredPixel);
     },
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) return;
       if (!hoveredPixel || hoveredPixel === pixels[autoIdx]) {
-        autoTimer++;
+        autoTimer += dtScale;
         if (autoTimer > 90) {
           autoTimer = 0;
           autoIdx = Math.floor(Math.random() * pixels.length);
@@ -2991,10 +2996,10 @@ export function initEndBg() {
   new ResizeObserver(resize).observe(slide);
 
   return {
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) return;
       for (const d of dots) {
-        d.userData.t += d.userData.spd;
+        d.userData.t += d.userData.spd * dtScale;
         d.position.x = Math.cos(d.userData.t) * d.userData.r;
         d.position.z = Math.sin(d.userData.t) * d.userData.r;
       }
@@ -3244,9 +3249,9 @@ export function initProblemVis() {
   // ── Tick ───────────────────────────────────────────────
   let t = 0;
   return {
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) closeStamp();
-      t += 0.012;
+      t += 0.012 * dtScale;
       torus.rotation.z = t;
       r.render(scene, camera);
     },
@@ -3403,10 +3408,10 @@ export function initStaticToSpatial() {
   orb.addEventListener("click", () => setPhase(phase === 3 ? 1 : phase + 1));
 
   return {
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) return;
       if (phase === 1) {
-        p1Tick++;
+        p1Tick += dtScale;
         if (p1Tick >= P1_SLOW) {
           p1Tick = 0;
           p1Idx = (p1Idx + 1) % p1Urls.length;
@@ -3414,7 +3419,7 @@ export function initStaticToSpatial() {
         }
       }
       if (phase === 2) {
-        theta2 += 0.006;
+        theta2 += 0.006 * dtScale;
         updateCam2();
         const norm = ((theta2 % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
         const iIdx = Math.round((norm / (Math.PI * 2)) * 200) % 200;
@@ -3426,7 +3431,7 @@ export function initStaticToSpatial() {
         r2.render(s2, cam2);
       }
       if (phase === 3) {
-        p3Tick++;
+        p3Tick += dtScale;
         if (p3Tick >= 2) {
           p3Tick = 0;
           p3Idx = (p3Idx + 1) % NERF_N;
@@ -3487,8 +3492,8 @@ export function initSfMLiDAR() {
     const N = 26;
     let t = 0;
 
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       ctx.clearRect(0, 0, W, H);
       photos.forEach(([x, y, a]) => drawPolaroid(x, y, a));
 
@@ -3613,8 +3618,8 @@ export function initSfMLiDAR() {
     const HOLD = 90;   // frames per step highlight (~1.5 s at 60 fps)
     let t = 0;
 
-    return () => {
-      t++;
+    return (dtScale = 1) => {
+      t += dtScale;
       ctx.clearRect(0, 0, W, H);
 
       const activeIdx = Math.floor(t / HOLD) % STEPS.length;
@@ -3745,16 +3750,16 @@ export function initSfMLiDAR() {
   split.addEventListener("mousedown", e => e.preventDefault());
 
   return {
-    tick(visible) {
+    tick(visible, dtScale = 1) {
       if (!visible) return;
-      if (active === "sfm")   { sfmVisDraw(); return; }
-      if (active === "lidar") { lfVisDraw();  return; }
+      if (active === "sfm")   { sfmVisDraw(dtScale); return; }
+      if (active === "lidar") { lfVisDraw(dtScale);  return; }
       ["sfm", "lidar"].forEach(side => {
         if (pressing[side]) {
-          charges[side] = Math.min(1, charges[side] + CHARGE_RATE);
+          charges[side] = Math.min(1, charges[side] + CHARGE_RATE * dtScale);
           if (charges[side] >= 1) { select(side); return; }
         } else {
-          charges[side] = Math.max(0, charges[side] - DRAIN_RATE);
+          charges[side] = Math.max(0, charges[side] - DRAIN_RATE * dtScale);
         }
         const panel = panels.find(p => p.dataset.side === side);
         if (panel) panel.style.setProperty("--charge", charges[side].toFixed(3));

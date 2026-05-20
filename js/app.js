@@ -173,14 +173,24 @@ ensureSlideInit(2);
 ensureSlideInit(3);
 
 /* ===================== Render loop ===================== */
+// dtScale normalizes frame-based animations across devices: 1.0 at 60Hz,
+// 0.5 at 120Hz, 2.0 at 30Hz. Per-tick increments multiply by it so animation
+// speed matches wall-clock time regardless of refresh rate.
+// Clamped to absorb tab-switch / first-frame stalls.
+let lastFrameTime = performance.now();
 function loop() {
+  const now = performance.now();
+  const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+  lastFrameTime = now;
+  const dtScale = dt * 60;
+
   for (const key of Object.keys(sceneInstances)) {
     const inst = sceneInstances[key];
     if (!inst) continue;
     const idx = parseInt(key, 10);
     const visible = Math.abs(idx - currentIdx) <= 1;
     try {
-      inst.tick(visible);
+      inst.tick(visible, dtScale);
     } catch (err) {
       console.error("tick error slide", idx + 1, err);
     }
