@@ -3658,17 +3658,14 @@ export function initSfMLiDAR() {
       ctx.restore();
     }
 
-    // Draw label bar at the bottom of a cell
+    // Draw label text below the image area (no background bar)
     function drawLabel(ci) {
       const [cx, cy] = cells[ci];
-      const ly = cy + IMG_H;
-      ctx.fillStyle = "#2a2727";
-      ctx.fillRect(cx, ly, CW, LABEL_H);
-      ctx.fillStyle = "#fff";
-      ctx.font = "600 9px sans-serif";
+      ctx.fillStyle = "#5a5a5a";
+      ctx.font = "500 9px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(LABELS[ci], cx + CW / 2, ly + LABEL_H / 2);
+      ctx.fillText(LABELS[ci], cx + CW / 2, cy + IMG_H + LABEL_H / 2);
       ctx.textBaseline = "alphabetic";
     }
 
