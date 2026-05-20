@@ -36,8 +36,9 @@ mesh = pyrender.Mesh.from_trimesh(raw, smooth=True)
 
 
 # ── Build a reusable scene ───────────────────────────────────────────────────
-def make_scene(mesh):
-    scene = pyrender.Scene(bg_color=[0.96, 0.95, 0.94, 1.0], ambient_light=[0.35, 0.35, 0.35])
+def make_scene(mesh, transparent=False):
+    bg = [0.0, 0.0, 0.0, 0.0] if transparent else [0.96, 0.95, 0.94, 1.0]
+    scene = pyrender.Scene(bg_color=bg, ambient_light=[0.35, 0.35, 0.35])
     scene.add(mesh)
 
     # Key light (warm, from upper-left)
@@ -107,18 +108,16 @@ def render_frame(renderer, scene, cam_node, az, el=18.0, dist=3.2):
 
 # ── Renderer ─────────────────────────────────────────────────────────────────
 renderer = pyrender.OffscreenRenderer(RENDER_W, RENDER_H)
-scene    = make_scene(mesh)
 camera   = pyrender.PerspectiveCamera(yfov=0.65, aspectRatio=1.0)
-cam_node = scene.add(camera, pose=camera_pose(0))
 
+# ── 1. Nine polaroid thumbnails — opaque background, closer crop ─────────────
+scene_pol = make_scene(mesh, transparent=False)
+cam_pol   = scene_pol.add(camera, pose=camera_pose(0))
 
-# ── 1. Nine polaroid thumbnails (spread evenly around 360°) ──────────────────
 POLAROID_ANGLES = [i * 40 for i in range(9)]   # 0, 40, 80 … 320
-
 for i, az in enumerate(POLAROID_ANGLES):
-    img = render_frame(renderer, scene, cam_node, az, el=15.0)
+    img = render_frame(renderer, scene_pol, cam_pol, az, el=15.0, dist=2.6)
     img = img.resize((220, 220), Image.LANCZOS)
-
     # White polaroid frame
     frame = Image.new("RGBA", (260, 290), (255, 255, 255, 255))
     frame.paste(img, (20, 18), img)
@@ -126,23 +125,24 @@ for i, az in enumerate(POLAROID_ANGLES):
     print(f"  polaroid {i:02d}  az={az}°")
 
 
-# ── 2. 36-frame sprite sheet (full 360° rotation) ────────────────────────────
+# ── 2. 36-frame sprite sheet — transparent background ────────────────────────
+scene_spr = make_scene(mesh, transparent=True)
+cam_spr   = scene_spr.add(camera, pose=camera_pose(0))
+
 N_FRAMES     = 36
 frame_images = []
-
 for i in range(N_FRAMES):
     az = i * (360 / N_FRAMES)
-    img = render_frame(renderer, scene, cam_node, az, el=18.0)
+    img = render_frame(renderer, scene_spr, cam_spr, az, el=18.0, dist=2.6)
     frame_images.append(img)
     print(f"  rotation frame {i:02d}  az={az:.0f}°")
 
-# Pack into sprite sheet
-cols   = SPRITE_COLS
-rows   = math.ceil(N_FRAMES / cols)
-sheet  = Image.new("RGBA", (cols * RENDER_W, rows * RENDER_H), (0, 0, 0, 0))
+cols  = SPRITE_COLS
+rows  = math.ceil(N_FRAMES / cols)
+sheet = Image.new("RGBA", (cols * RENDER_W, rows * RENDER_H), (0, 0, 0, 0))
 for i, fr in enumerate(frame_images):
     c, r = i % cols, i // cols
-    sheet.paste(fr, (c * RENDER_W, r * RENDER_H))
+    sheet.paste(fr, (c * RENDER_W, r * RENDER_H), fr)   # use alpha mask
 sheet.save(OUT / "sprite_sheet.png")
 print(f"Sprite sheet saved: {cols}×{rows} grid, {RENDER_W}×{RENDER_H}px per frame")
 

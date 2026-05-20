@@ -3485,14 +3485,14 @@ export function initSfMLiDAR() {
 
     // Photo positions: (x, y, rotation_rad) — scattered 3×3 grid on left zone
     const photos = [
-      [50, 46, -0.28], [95, 30, 0.16], [143, 52, -0.10],
-      [28, 108, 0.13], [83, 105, -0.22], [137, 107, 0.19],
-      [50, 170, -0.07], [98, 160, 0.23], [147, 174, -0.16],
+      [46, 52, -0.28], [90, 30, 0.16], [138, 54, -0.10],
+      [22, 130, 0.13], [78, 127, -0.22], [132, 129, 0.19],
+      [46, 206, -0.07], [94, 196, 0.23], [138, 210, -0.16],
     ];
 
-    const PW = 55, PH = 64;   // polaroid display size on canvas
-    const ox = 306, oy = H * 0.50;
-    const rx = 74, ry1 = 43, ry2 = 22;
+    const PW = 68, PH = 80;   // polaroid display size on canvas
+    const ox = 307, oy = H * 0.50;
+    const rx = 88, ry1 = 52, ry2 = 27;
     const N = 26;
     let t = 0;
 
@@ -3563,12 +3563,12 @@ export function initSfMLiDAR() {
       // Rotating 3D bunny (sprite sheet, synced to orbit speed)
       const frame = Math.floor(rot * SPRITE_FRAMES / (2 * Math.PI)) % SPRITE_FRAMES;
       const fc = frame % SPRITE_COLS, fr = Math.floor(frame / SPRITE_COLS);
-      const bSize = 92;
+      const bSize = 118;
       if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
         ctx.drawImage(
           spriteSheet,
           fc * SPRITE_FW, fr * SPRITE_FH, SPRITE_FW, SPRITE_FH,
-          ox - bSize/2, oy - bSize/2 - 5, bSize, bSize
+          ox - bSize/2, oy - bSize/2 - 6, bSize, bSize
         );
       }
 
