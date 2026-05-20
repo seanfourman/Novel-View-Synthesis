@@ -2806,13 +2806,21 @@ code {
    ============================================================ */
 .limits-slide {
   display: flex;
-  align-items: center;
-  gap: clamp(2rem, 5vw, 6rem);
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: clamp(2rem, 4vw, 5rem) clamp(2rem, 5vw, 7rem);
+  padding: clamp(2rem, 4vw, 5rem) clamp(2rem, 5vw, 7rem) clamp(1.5rem, 3vw, 3rem);
   box-sizing: border-box;
   direction: rtl;
+  gap: clamp(1rem, 2vh, 2rem);
+}
+
+.limits-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 6rem);
+  flex: 1;
+  min-height: 0;
 }
 
 .limits-content {
@@ -2888,14 +2896,12 @@ code {
 }
 
 .limits-conclusion {
-  font-size: clamp(0.9rem, 1.02vw, 1.05rem);
-  color: var(--muted);
+  font-size: clamp(1rem, 1.2vw, 1.2rem);
+  color: var(--ink);
   line-height: 1.6;
   margin: 0;
-  font-style: italic;
-  padding-top: 0.2rem;
-  border-top: 1px solid rgba(0,0,0,0.08);
-  max-width: 52ch;
+  text-align: center;
+  list-style: none;
 }
 
 .limits-vis {
