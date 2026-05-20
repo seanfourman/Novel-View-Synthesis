@@ -133,7 +133,7 @@ N_FRAMES     = 36
 frame_images = []
 for i in range(N_FRAMES):
     az = i * (360 / N_FRAMES)
-    img = render_frame(renderer, scene_spr, cam_spr, az, el=18.0, dist=2.6)
+    img = render_frame(renderer, scene_spr, cam_spr, az, el=18.0, dist=3.2)
     frame_images.append(img)
     print(f"  rotation frame {i:02d}  az={az:.0f}°")
 

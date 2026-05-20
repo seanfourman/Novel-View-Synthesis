@@ -3484,15 +3484,16 @@ export function initSfMLiDAR() {
     spriteSheet.src = BASE + "sprite_sheet.png";
 
     // Photo positions: (x, y, rotation_rad) — scattered 3×3 grid on left zone
+    // Canvas is now 520×340: photos on left ~x:15-155, orbit on right ~x:310-500
     const photos = [
-      [46, 52, -0.28], [90, 30, 0.16], [138, 54, -0.10],
-      [22, 130, 0.13], [78, 127, -0.22], [132, 129, 0.19],
-      [46, 206, -0.07], [94, 196, 0.23], [138, 210, -0.16],
+      [46, 50, -0.28], [94, 28, 0.16], [142, 52, -0.10],
+      [22, 128, 0.13], [76, 125, -0.22], [134, 127, 0.19],
+      [46, 204, -0.07], [96, 194, 0.23], [142, 208, -0.16],
     ];
 
-    const PW = 68, PH = 80;   // polaroid display size on canvas
-    const ox = 307, oy = H * 0.50;
-    const rx = 88, ry1 = 52, ry2 = 27;
+    const PW = 72, PH = 84;   // polaroid display size on canvas
+    const ox = 390, oy = H * 0.50;   // orbit centre shifted right for spacing
+    const rx = 90, ry1 = 54, ry2 = 28;
     const N = 26;
     let t = 0;
 
@@ -3524,8 +3525,8 @@ export function initSfMLiDAR() {
       // Polaroid photos
       photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
-      // Arrow
-      const ax = 177, ay = H*0.5, aw = 26, ah = 7;
+      // Arrow (centred in the gap between photos and orbit)
+      const ax = 210, ay = H*0.5, aw = 32, ah = 8;
       ctx.fillStyle = "#909090";
       ctx.beginPath();
       ctx.moveTo(ax, ay-ah/2); ctx.lineTo(ax+aw-ah, ay-ah/2);
@@ -3563,12 +3564,12 @@ export function initSfMLiDAR() {
       // Rotating 3D bunny (sprite sheet, synced to orbit speed)
       const frame = Math.floor(rot * SPRITE_FRAMES / (2 * Math.PI)) % SPRITE_FRAMES;
       const fc = frame % SPRITE_COLS, fr = Math.floor(frame / SPRITE_COLS);
-      const bSize = 118;
+      const bSize = 130;
       if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
         ctx.drawImage(
           spriteSheet,
           fc * SPRITE_FW, fr * SPRITE_FH, SPRITE_FW, SPRITE_FH,
-          ox - bSize/2, oy - bSize/2 - 6, bSize, bSize
+          ox - bSize/2, oy - bSize/2 - 8, bSize, bSize
         );
       }
 

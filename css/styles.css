@@ -2678,6 +2678,12 @@ code {
 .compare-split[data-active="sfm"]   .cp-vis-sfm,
 .compare-split[data-active="lidar"] .cp-vis-lf  { opacity: 1; }
 
+/* SfM canvas: wider aspect to give more breathing room for the layout */
+.compare-split[data-active="sfm"] .cp-vis-sfm {
+  width: clamp(280px, 40vw, 580px);
+  aspect-ratio: 520 / 340;
+}
+
 /* Light Fields active: canvas + content side-by-side, no overlap */
 .compare-split[data-active="lidar"] .cp-lidar {
   flex-direction: row-reverse;
