@@ -1,0 +1,20 @@
+{
+  "input": "assets/images/bunny.jpeg",
+  "model": "depth-anything/Depth-Anything-V2-Small-hf",
+  "note": "Single-image NVS: depth and hidden regions are estimated, not recovered from evidence.",
+  "artifacts": [
+    "01_input_rgb.png",
+    "02_depth_gray.png",
+    "03_depth_colormap.png",
+    "04_lifted_depth_proxy.png",
+    "05_left_view_warp_with_holes.png",
+    "06_left_view_hole_mask.png",
+    "07_left_view_holes_overlay.png",
+    "08_left_view_inpainted.png",
+    "09_right_view_warp_with_holes.png",
+    "10_right_view_hole_mask.png",
+    "11_right_view_holes_overlay.png",
+    "12_right_view_inpainted.png",
+    "13_pipeline_contact_sheet.png"
+  ]
+}

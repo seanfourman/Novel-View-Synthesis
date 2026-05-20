@@ -3562,116 +3562,134 @@ export function initSfMLiDAR() {
     };
   })();
 
-  // ── Light Fields panel canvas: camera plane array → scene → image plane ──
+  // ── Light Fields panel canvas: all 6 bunny pipeline steps as a 3×2 grid ──
   const lfVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-lf");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;
-    const sc = W / 400;
+    const W = cv.width, H = cv.height;   // 400 × 340
 
-    // 3×4 camera grid on the left
-    const ROWS = 4, COLS = 3;
-    const cams = [];
+    const BASE = "assets/generated/bunny_pipeline/";
+    const STEPS = [
+      { file: "01_input_rgb.png",              label: "קלט RGB" },
+      { file: "03_depth_colormap.png",          label: "מפת עומק" },
+      { file: "04_lifted_depth_proxy.png",      label: "פרוקסי 3D" },
+      { file: "07_left_view_holes_overlay.png", label: "הזזה + חורים" },
+      { file: "08_left_view_inpainted.png",     label: "מבט שמאל" },
+      { file: "12_right_view_inpainted.png",    label: "מבט ימין" },
+    ];
+
+    const imgs = STEPS.map(s => {
+      const img = new Image();
+      img.src = BASE + s.file;
+      return img;
+    });
+
+    // 3 columns × 2 rows grid layout
+    const COLS = 3, ROWS = 2, GAP = 4, LABEL_H = 17;
+    const cellW = (W - GAP * (COLS - 1)) / COLS;   // ~130.7 px
+    const cellH = (H - GAP * (ROWS - 1)) / ROWS;   // 168 px
+    const imgH  = cellH - LABEL_H;
+
+    const cells = [];
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++)
-        cams.push({
-          x: (52 + c*38)*sc,
-          y: H*0.18 + r*(H*0.64/( ROWS-1)),
-          ph: (r*COLS+c)*0.6,
-        });
+        cells.push({ x: c * (cellW + GAP), y: r * (cellH + GAP) });
 
-    // Scene centre
-    const sx = 248*sc, sy = H*0.5;
-    // Image plane x
-    const ipx = 358*sc;
-
-    const drawCamIcon = (x, y) => {
-      ctx.fillStyle = "#888";
-      ctx.fillRect(x-9*sc, y-5*sc, 18*sc, 10*sc);
-      ctx.beginPath(); ctx.arc(x+10*sc, y, 4*sc, 0, Math.PI*2);
-      ctx.fillStyle = "#444"; ctx.fill();
-      ctx.beginPath(); ctx.arc(x+10*sc, y, 2*sc, 0, Math.PI*2);
-      ctx.fillStyle = "#111"; ctx.fill();
+    // draw one pipeline image into a cell rect, scaled to cover it
+    const drawCell = (img, cx, cy, cw, ch) => {
+      if (!img.complete || !img.naturalWidth) return;
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      // cover: fill cell without distortion
+      const scale = Math.max(cw / iw, ch / ih);
+      const dw = iw * scale, dh = ih * scale;
+      ctx.save();
+      ctx.rect(cx, cy, cw, ch);
+      ctx.clip();
+      ctx.drawImage(img, cx + (cw - dw) / 2, cy + (ch - dh) / 2, dw, dh);
+      ctx.restore();
     };
 
+    const HOLD = 90;   // frames per step highlight (~1.5 s at 60 fps)
     let t = 0;
+
     return () => {
       t++;
       ctx.clearRect(0, 0, W, H);
 
-      // Rays from cameras → scene
-      cams.forEach(cam => {
-        const pulse = 0.5 + 0.5*Math.sin(t*0.024 + cam.ph);
+      const activeIdx = Math.floor(t / HOLD) % STEPS.length;
+
+      cells.forEach(({ x, y }, i) => {
+        const isActive = i === activeIdx;
+        const imgAreaY = y;
+
+        // dim non-active cells slightly
+        ctx.globalAlpha = isActive ? 1 : 0.55;
+
+        // cell background
+        ctx.fillStyle = "#f0efec";
+        ctx.fillRect(x, y, cellW, cellH);
+
+        // image
+        drawCell(imgs[i], x, imgAreaY, cellW, imgH);
+
+        // label bar
+        ctx.fillStyle = isActive ? "#af261c" : "#2a2a2a";
+        ctx.fillRect(x, y + imgH, cellW, LABEL_H);
+
+        ctx.globalAlpha = 1;
+
+        // step number badge
+        const badgeR = 8;
+        ctx.fillStyle = isActive ? "#af261c" : "rgba(0,0,0,0.55)";
         ctx.beginPath();
-        ctx.moveTo(cam.x+10*sc, cam.y);
-        ctx.lineTo(sx, sy);
-        ctx.strokeStyle = `rgba(175,38,28,${0.05 + pulse*0.28})`;
-        ctx.lineWidth = 0.9*sc;
-        ctx.stroke();
+        ctx.arc(x + badgeR + 3, y + badgeR + 3, badgeR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold 8px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(`0${i + 1}`, x + badgeR + 3, y + badgeR + 3 + 3);
+
+        // label text
+        ctx.fillStyle = "#fff";
+        ctx.font = `${isActive ? "600" : "400"} 9px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(STEPS[i].label, x + cellW / 2, y + imgH + LABEL_H - 4);
+
+        // active: red border
+        if (isActive) {
+          ctx.strokeStyle = "#af261c";
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(x + 1.25, y + 1.25, cellW - 2.5, cellH - 2.5);
+        }
       });
 
-      // Rays continuing scene → image plane (diverging)
-      cams.forEach(cam => {
-        const pulse = 0.5 + 0.5*Math.sin(t*0.024 + cam.ph + 0.8);
-        const slope = (cam.y - sy) / (cam.x - sx);
-        const iy = sy + slope*(ipx - sx);
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(ipx, iy);
-        ctx.strokeStyle = `rgba(175,38,28,${0.04 + pulse*0.16})`;
-        ctx.lineWidth = 0.7*sc;
-        ctx.stroke();
-      });
-
-      // Grid connector lines on camera plane
-      ctx.strokeStyle = "rgba(0,0,0,0.10)"; ctx.lineWidth = sc;
-      for (let r = 0; r < ROWS; r++) {
-        ctx.beginPath();
-        for (let c = 0; c < COLS; c++) {
-          const cam = cams[r*COLS+c];
-          c === 0 ? ctx.moveTo(cam.x, cam.y) : ctx.lineTo(cam.x, cam.y);
-        }
-        ctx.stroke();
-      }
-      for (let c = 0; c < COLS; c++) {
-        ctx.beginPath();
-        for (let r = 0; r < ROWS; r++) {
-          const cam = cams[r*COLS+c];
-          r === 0 ? ctx.moveTo(cam.x, cam.y) : ctx.lineTo(cam.x, cam.y);
-        }
-        ctx.stroke();
-      }
-
-      // Camera icons
-      cams.forEach(cam => drawCamIcon(cam.x, cam.y));
-
-      // Scene: 3D sphere
-      const sg = ctx.createRadialGradient(sx-6*sc, sy-8*sc, 2*sc, sx, sy, 24*sc);
-      sg.addColorStop(0, "#d8d4cf");
-      sg.addColorStop(1, "#8a8680");
-      ctx.beginPath(); ctx.arc(sx, sy, 24*sc, 0, Math.PI*2);
-      ctx.fillStyle = sg; ctx.fill();
-      ctx.beginPath(); ctx.arc(sx, sy, 24*sc, 0, Math.PI*2);
-      ctx.strokeStyle = "rgba(0,0,0,0.14)"; ctx.lineWidth = sc; ctx.stroke();
-
-      // Image plane (vertical bar)
-      ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 2.5*sc;
-      ctx.beginPath(); ctx.moveTo(ipx, H*0.12); ctx.lineTo(ipx, H*0.88); ctx.stroke();
-      // Tick marks on plane
-      ctx.lineWidth = sc;
-      for (let i = 0; i <= 8; i++) {
-        const ty = H*0.12 + i*(H*0.76/8);
-        ctx.beginPath(); ctx.moveTo(ipx-4*sc, ty); ctx.lineTo(ipx+4*sc, ty); ctx.stroke();
-      }
-
-      // Labels
-      ctx.fillStyle = "rgba(0,0,0,0.38)";
-      ctx.font = `bold ${9*sc}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText("Camera Array", (52+38)*sc, H*0.93);
-      ctx.fillText("Scene", sx, H*0.93);
-      ctx.fillText("Image", ipx, H*0.93);
+      // arrow connecting active → next step
+      const cur  = cells[activeIdx];
+      const next = cells[(activeIdx + 1) % STEPS.length];
+      const pulse = 0.4 + 0.6 * Math.abs(Math.sin(t * 0.06));
+      ctx.globalAlpha = pulse;
+      ctx.strokeStyle = "#af261c";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      const ax = cur.x  + cellW / 2, ay = cur.y  + cellH / 2;
+      const bx = next.x + cellW / 2, by = next.y + cellH / 2;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // arrowhead
+      const angle = Math.atan2(by - ay, bx - ax);
+      const AL = 7;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(bx - AL * Math.cos(angle - 0.4), by - AL * Math.sin(angle - 0.4));
+      ctx.lineTo(bx - AL * Math.cos(angle + 0.4), by - AL * Math.sin(angle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = "#af261c";
+      ctx.fill();
+      ctx.globalAlpha = 1;
     };
   })();
 
@@ -3746,3 +3764,4 @@ export function initSfMLiDAR() {
     enter() { reset(); },
   };
 }
+

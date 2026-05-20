@@ -98,7 +98,7 @@ def render_depth_proxy(rgb: np.ndarray, depth01: np.ndarray) -> np.ndarray:
     yy, xx = np.mgrid[0:h:4, 0:w:4]
     d = depth01[yy, xx]
     x = ((xx / w) - 0.5) * 1.6
-    y = ((yy / h) - 0.5) * -1.2
+    y = ((yy / h) - 0.5) * 1.2
     z = d * 0.85
 
     # Simple oblique projection for a point-cloud/proxy visualization.
