@@ -2420,7 +2420,7 @@ code {
 .cp-pros::before {
   width: var(--cp-mark-size);
   height: var(--cp-mark-size);
-  background: var(--accent);
+  background: #2a7a4b;
   mask:
     linear-gradient(#000 0 0) center / 100% var(--cp-mark-thick) no-repeat,
     linear-gradient(#000 0 0) center / var(--cp-mark-thick) 100% no-repeat;
@@ -2431,17 +2431,15 @@ code {
 .cp-cons::before {
   width: clamp(2.2rem, 3vw, 3.6rem);
   height: var(--cp-mark-thick);
-  background: var(--accent);
+  background: #c0392b;
 }
 .cp-col-title {
   font-size: clamp(0.95rem, 1.05vw, 1.08rem);
   font-weight: 700;
   margin-bottom: 0.45rem;
 }
-.cp-pros .cp-col-title,
-.cp-cons .cp-col-title {
-  color: var(--accent);
-}
+.cp-pros .cp-col-title { color: #2a7a4b; }
+.cp-cons .cp-col-title { color: #c0392b; }
 .cp-col ul {
   margin: 0;
   padding-right: 1.1rem;
