@@ -3858,12 +3858,14 @@ export function initLimits() {
 
   const items = Array.from(document.querySelectorAll(".limit-item"));
 
-  // Advance mode on click
-  canvas.style.cursor = "pointer";
-  canvas.addEventListener("click", () => {
+  // Advance mode on click anywhere on the slide
+  const slide = canvas.closest(".slide");
+  const clickTarget = slide || canvas;
+  clickTarget.style.cursor = "pointer";
+  clickTarget.addEventListener("click", () => {
     currentMode = (currentMode + 1) % 5;
     modeT = 0;
-    lastMode = -2;  // force highlight refresh
+    lastMode = -2;
   });
 
   function draw() {

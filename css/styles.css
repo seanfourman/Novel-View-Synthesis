@@ -49,6 +49,8 @@ body {
     sans-serif;
   font-feature-settings: "ss01", "cv11";
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 code,
