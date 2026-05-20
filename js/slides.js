@@ -3614,9 +3614,12 @@ export function initSfMLiDAR() {
     const imgRight = mk("12_right_view_inpainted.png");
 
     // Grid: 2 columns × 3 rows
-    const COLS = 2, ROWS = 3, GAP = 4;
+    const COLS = 2, ROWS = 3, GAP = 4, LABEL_H = 16;
     const CW = Math.floor((W - GAP * (COLS - 1)) / COLS);   // ~198
     const CH = Math.floor((H - GAP * (ROWS - 1)) / ROWS);   // ~110
+    const IMG_H = CH - LABEL_H;                              // image area height
+
+    const LABELS = ["קלט RGB", "מפת עומק", "פרוקסי 3D", "הזזה + חורים", "מבט ימין", "מבט שמאל"];
 
     // Cell positions [cx, cy]
     const cells = [
@@ -3640,55 +3643,69 @@ export function initSfMLiDAR() {
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
-    // Draw an image contained + centred inside a cell, with optional clip
+    // Draw an image contained + centred inside a cell's image area (above label)
     function drawCell(img, ci, alpha = 1, zoom = 1) {
       if (!img.complete || !img.naturalWidth) return;
       const [cx, cy] = cells[ci];
       ctx.save();
-      ctx.beginPath(); ctx.rect(cx, cy, CW, CH); ctx.clip();
+      ctx.beginPath(); ctx.rect(cx, cy, CW, IMG_H); ctx.clip();
       ctx.globalAlpha = alpha;
       const iw = img.naturalWidth, ih = img.naturalHeight;
-      const s  = Math.min(CW / iw, CH / ih) * zoom;
+      const s  = Math.min(CW / iw, IMG_H / ih) * zoom;
       const dw = iw * s, dh = ih * s;
-      ctx.drawImage(img, cx + (CW - dw) / 2, cy + (CH - dh) / 2, dw, dh);
+      ctx.drawImage(img, cx + (CW - dw) / 2, cy + (IMG_H - dh) / 2, dw, dh);
       ctx.globalAlpha = 1;
       ctx.restore();
     }
 
-    // Render particles into the pixel buffer for cell 2
+    // Draw label bar at the bottom of a cell
+    function drawLabel(ci) {
+      const [cx, cy] = cells[ci];
+      const ly = cy + IMG_H;
+      ctx.fillStyle = "#2a2727";
+      ctx.fillRect(cx, ly, CW, LABEL_H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "600 9px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(LABELS[ci], cx + CW / 2, ly + LABEL_H / 2);
+      ctx.textBaseline = "alphabetic";
+    }
+
+    // Render particles into the pixel buffer for cell 2 (image area only)
     function drawParticleCell(t) {
       if (!particles) return;
       const [cx, cy] = cells[2];
-      // Reset cell area to background
-      for (let y = cy; y < cy + CH; y++) {
+      const IH = IMG_H;
+      // Reset image area to background
+      for (let y = cy; y < cy + IH; y++) {
         for (let x = cx; x < cx + CW; x++) {
           const i = (y * W + x) * 4;
           pd[i]=BG[0]; pd[i+1]=BG[1]; pd[i+2]=BG[2]; pd[i+3]=255;
         }
       }
-      const tilt  = Math.min(t / 120, 1);           // fly-in over first 2 s
-      const CX = cx + CW / 2, CY = cy + CH / 2;
-      const SX = CW * 0.82,   SY = CH * 0.86;
+      const tilt = Math.min(t / 120, 1);
+      const CX = cx + CW / 2, CY = cy + IH / 2;
+      const SX = CW * 0.82,   SY = IH * 0.86;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         const nx = p[0], ny = p[1], nz = p[2], r = p[3], g = p[4], b = p[5];
         const phase = (i * 2.3999) % 6.2832;
         const wz  = nz + tilt * Math.sin(t * 0.045 + phase) * 0.048;
         const fx  = cx + (nx + 0.5) * CW;
-        const fy  = cy + (ny + 0.5) * CH;
+        const fy  = cy + (ny + 0.5) * IH;
         const px3 = CX + (nx + 0.30 * wz) * SX;
         const py3 = CY + (ny - 0.18 * wz) * SY;
         const px  = Math.round(fx + tilt * (px3 - fx));
         const py  = Math.round(fy + tilt * (py3 - fy));
-        if (px < cx || px >= cx+CW-1 || py < cy || py >= cy+CH-1) continue;
+        if (px < cx || px >= cx+CW-1 || py < cy || py >= cy+IH-1) continue;
         const idx = (py * W + px) * 4;
         pd[idx]=r; pd[idx+1]=g; pd[idx+2]=b; pd[idx+3]=255;
-        pd[idx+4]=r; pd[idx+5]=g; pd[idx+6]=b; pd[idx+7]=255;      // x+1
+        pd[idx+4]=r; pd[idx+5]=g; pd[idx+6]=b; pd[idx+7]=255;
         const idx2 = ((py+1)*W+px)*4;
-        pd[idx2]=r; pd[idx2+1]=g; pd[idx2+2]=b; pd[idx2+3]=255;    // y+1
+        pd[idx2]=r; pd[idx2+1]=g; pd[idx2+2]=b; pd[idx2+3]=255;
       }
-      // Only repaint the cell region of the canvas
-      ctx.putImageData(pixBuf, 0, 0, cx, cy, CW, CH);
+      ctx.putImageData(pixBuf, 0, 0, cx, cy, CW, IH);
     }
 
     let t = 0;
@@ -3700,29 +3717,29 @@ export function initSfMLiDAR() {
       // Cell 0 — Input RGB (slow Ken Burns)
       const zoom = 1 + 0.04 * Math.abs(Math.sin(t * 0.003));
       drawCell(imgRGB, 0, 1, zoom);
+      drawLabel(0);
 
-      // Cell 1 — Depth colormap (static)
+      // Cell 1 — Depth colormap
       drawCell(imgDepth, 1);
+      drawLabel(1);
 
       // Cell 2 — 3D particle proxy (fly-in + dance)
       drawParticleCell(t);
+      drawLabel(2);
 
       // Cell 3 — Camera shift: oscillate normal ↔ holes
-      const osc = (1 - Math.cos(t * 0.055)) / 2;   // ~2.8s per cycle
+      const osc = (1 - Math.cos(t * 0.055)) / 2;
       drawCell(imgRGB,   3, 1);
       drawCell(imgHoles, 3, osc);
+      drawLabel(3);
 
       // Cell 4 — Left novel view
       drawCell(imgLeft, 4);
+      drawLabel(4);
 
       // Cell 5 — Right novel view
       drawCell(imgRight, 5);
-
-      // Gap lines between cells (subtle)
-      ctx.fillStyle = "#e8e6e2";
-      ctx.fillRect(CW, 0, GAP, H);                  // vertical
-      ctx.fillRect(0, CH, W, GAP);                   // horizontal row 1
-      ctx.fillRect(0, 2*CH + GAP, W, GAP);           // horizontal row 2
+      drawLabel(5);
     };
   })();
 
