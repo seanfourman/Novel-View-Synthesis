@@ -3807,7 +3807,7 @@ export function initSfMLiDAR() {
 }
 
 /* ============================================================
-   SLIDE 8 — Why classical methods failed (glitching point cloud)
+   SLIDE 8 — Why classical methods failed (Utah Teapot point cloud)
    ============================================================ */
 export function initLimits() {
   const canvas = document.getElementById("c-limits");
@@ -3815,20 +3815,39 @@ export function initLimits() {
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
 
-  // --- Generate ~500 points in a hollow sphere (sparse reconstruction) ---
-  const N = 520;
-  const pts = Array.from({ length: N }, () => {
-    const theta = Math.random() * Math.PI * 2;
-    const phi   = Math.acos(2 * Math.random() - 1);
-    const r     = 0.55 + Math.random() * 0.45;
-    return {
-      ox: Math.sin(phi) * Math.cos(theta) * r,
-      oy: Math.sin(phi) * Math.sin(theta) * r * 0.75,
-      oz: Math.cos(phi) * r,
-      phase: Math.random() * Math.PI * 2,
-      rng:   Math.random(),
-    };
-  });
+  // Build fallback sphere (used until teapot JSON loads)
+  function makeSphere(n) {
+    return Array.from({ length: n }, () => {
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      const r     = 0.55 + Math.random() * 0.45;
+      return {
+        ox: Math.sin(phi) * Math.cos(theta) * r,
+        oy: Math.sin(phi) * Math.sin(theta) * r * 0.75,
+        oz: Math.cos(phi) * r,
+        phase: Math.random() * Math.PI * 2,
+        rng:   Math.random(),
+      };
+    });
+  }
+
+  // pts starts as a sphere; replaced by teapot once JSON loads
+  // Python coord convention: x=left/right, y=front/back, z=up
+  // JS convention: oy=up axis (rotates around y), so swap z↔y and negate new oy for upright display
+  let pts = makeSphere(520);
+
+  fetch("assets/generated/teapot_particles.json")
+    .then(r => r.json())
+    .then(data => {
+      pts = data.map(([px, py, pz]) => ({
+        ox:    px,          // left/right → keep as ox (x-axis)
+        oy:   -pz,          // Python z (up) → JS oy, negated so lid is up on screen
+        oz:    py,          // Python y (depth) → JS oz
+        phase: Math.random() * Math.PI * 2,
+        rng:   Math.random(),
+      }));
+    })
+    .catch(() => { /* keep sphere fallback */ });
 
   // Mode cycle: 0-4 match the 5 limit-item elements
   // Each mode: MODE_DUR ticks active, IDLE_DUR ticks idle/stable between
@@ -3874,7 +3893,7 @@ export function initLimits() {
     for (let gy = 0; gy < H; gy += gstep) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
 
     const CX = W * 0.5, CY = H * 0.5;
-    const SCALE = Math.min(W, H) * 0.36;
+    const SCALE = Math.min(W, H) * 0.44;
 
     // Build projected points
     const projected = pts.map((p) => {
