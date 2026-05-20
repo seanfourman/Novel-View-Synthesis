@@ -3850,29 +3850,25 @@ export function initLimits() {
     })
     .catch(() => { /* keep sphere fallback */ });
 
-  // Mode cycle: 0-4 match the 5 limit-item elements
-  // Each mode: MODE_DUR ticks active, IDLE_DUR ticks idle/stable between
-  const MODE_DUR  = 300;  // ~5 s at 60 fps
-  const IDLE_DUR  = 75;   // ~1.25 s rest between modes
-  const CYCLE     = (MODE_DUR + IDLE_DUR) * 5;
-
-  let t        = 0;
-  let raf      = null;
-  let lastMode = -2;
+  // Click-driven mode: each click advances to the next failure mode (0-4)
+  let currentMode = -1;   // -1 = clean/idle, 0-4 = active failure mode
+  let modeT       = 0;    // ticks since current mode became active
+  let t           = 0;
+  let lastMode    = -2;
 
   const items = Array.from(document.querySelectorAll(".limit-item"));
 
-  function getMode(tick) {
-    const pos = tick % CYCLE;
-    const slot = Math.floor(pos / (MODE_DUR + IDLE_DUR));
-    const within = pos % (MODE_DUR + IDLE_DUR);
-    if (within < MODE_DUR) return slot;
-    return -1;
-  }
+  // Advance mode on click
+  canvas.style.cursor = "pointer";
+  canvas.addEventListener("click", () => {
+    currentMode = (currentMode + 1) % 5;
+    modeT = 0;
+    lastMode = -2;  // force highlight refresh
+  });
 
   function draw() {
-    const mode    = getMode(t);
-    const progress = (t % (MODE_DUR + IDLE_DUR)) / MODE_DUR; // 0→1 within active mode
+    const mode     = currentMode;
+    const progress = Math.min(modeT / 200, 1.0);  // 0→1 over ~3.3 s
     const baseRot  = t * 0.006;
 
     // Update highlighted item
@@ -3987,23 +3983,33 @@ export function initLimits() {
       ctx.fill();
     });
 
-    // Mode overlay label at bottom of canvas
+    // Mode label + click hint
+    ctx.font         = "500 13px 'Heebo', sans-serif";
+    ctx.textAlign    = "center";
+    ctx.textBaseline = "bottom";
+
     if (mode >= 0) {
       const labels = [
         "תנועה → גמגום", "אזורים חסרים", "השתקפויות → שגיאות צבע",
         "עיכוב → קפיצות", "עומק → שטחי"
       ];
-      const fade = Math.min(progress * 4, 1) * (1 - Math.max((progress - 0.85) * 6.6, 0));
-      ctx.globalAlpha = fade * 0.75;
+      ctx.globalAlpha = 0.85;
       ctx.fillStyle   = "#ff5a36";
-      ctx.font        = "500 13px 'Heebo', sans-serif";
-      ctx.textAlign   = "center";
-      ctx.textBaseline = "bottom";
       ctx.fillText(labels[mode], W / 2, H - 18);
       ctx.globalAlpha = 1;
     }
 
+    // "click to continue" hint (dimmed, bottom-right)
+    const hintLabel = mode < 4 ? "לחץ להמשך ←" : "לחץ לחזרה ↺";
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle   = "#c8a882";
+    ctx.font        = "400 11px 'Heebo', sans-serif";
+    ctx.textAlign   = "left";
+    ctx.fillText(hintLabel, 12, H - 10);
+    ctx.globalAlpha = 1;
+
     t++;
+    modeT++;
   }
 
   return {
@@ -4013,6 +4019,8 @@ export function initLimits() {
     },
     enter() {
       t = 0;
+      modeT = 0;
+      currentMode = -1;
       lastMode = -2;
       items.forEach(el => el.classList.remove("lim-active"));
     },
