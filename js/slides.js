@@ -3590,10 +3590,10 @@ export function initSfMLiDAR() {
       return img;
     });
 
-    // 3 columns × 2 rows grid layout
-    const COLS = 3, ROWS = 2, GAP = 4, LABEL_H = 17;
-    const cellW = (W - GAP * (COLS - 1)) / COLS;   // ~130.7 px
-    const cellH = (H - GAP * (ROWS - 1)) / ROWS;   // 168 px
+    // 2 columns × 3 rows grid layout
+    const COLS = 2, ROWS = 3, GAP = 4, LABEL_H = 17;
+    const cellW = (W - GAP * (COLS - 1)) / COLS;   // 198 px
+    const cellH = (H - GAP * (ROWS - 1)) / ROWS;   // ~110 px
     const imgH  = cellH - LABEL_H;
 
     const cells = [];
@@ -3601,18 +3601,14 @@ export function initSfMLiDAR() {
       for (let c = 0; c < COLS; c++)
         cells.push({ x: c * (cellW + GAP), y: r * (cellH + GAP) });
 
-    // draw one pipeline image into a cell rect, scaled to cover it
+    // draw one pipeline image into a cell rect, scaled to contain it
     const drawCell = (img, cx, cy, cw, ch) => {
       if (!img.complete || !img.naturalWidth) return;
       const iw = img.naturalWidth, ih = img.naturalHeight;
-      // cover: fill cell without distortion
-      const scale = Math.max(cw / iw, ch / ih);
+      // contain: fit whole image, centred, no crop
+      const scale = Math.min(cw / iw, ch / ih);
       const dw = iw * scale, dh = ih * scale;
-      ctx.save();
-      ctx.rect(cx, cy, cw, ch);
-      ctx.clip();
       ctx.drawImage(img, cx + (cw - dw) / 2, cy + (ch - dh) / 2, dw, dh);
-      ctx.restore();
     };
 
     const HOLD = 90;   // frames per step highlight (~1.5 s at 60 fps)
