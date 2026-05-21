@@ -3922,16 +3922,25 @@ export function initLimits() {
           ry += (Math.cos(t * 0.37 + phase) * 0.025);
         }
       } else if (mode === 1) {
-        // Missing areas: coverage gaps from limited camera angles
-        // oy > 0 = lower part of teapot (cameras can't shoot from beneath)
-        if (oy > 0.3) {
-          alpha = 0;
-        } else if (oy > 0.1) {
-          alpha *= Math.max(0, 1 - (oy - 0.1) / 0.2);
-        }
-        // Scattered surface patches — real reconstruction gaps
+        // Scan sweep reveals only what cameras can capture.
+        // Blind spots stay dark the entire time — they simply never light up.
         const patch = Math.sin(ox * 4.7 + oz * 3.3) * Math.cos(oy * 5.1 + oz * 2.8);
-        if (patch > 0.68) alpha *= Math.max(0, 1 - (patch - 0.68) * 3.0);
+        const blind = oy > 0.28
+          || (oy > 0.1 && rng < (oy - 0.1) / 0.18)
+          || patch > 0.68;
+
+        if (blind) {
+          alpha = 0;
+        } else {
+          // Beam sweeps oy from -1.05 → +1 over 0.75 of progress, then holds
+          const scanPos = -1.05 + 2.05 * Math.min(progress / 0.75, 1);
+          if (oy > scanPos + 0.06) {
+            alpha = 0;       // ahead of scanner, not yet reached
+          } else if (oy > scanPos - 0.04) {
+            alpha = 2.0;     // beam glow
+          }
+          // else already scanned: alpha stays 1
+        }
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
         wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
@@ -3969,12 +3978,32 @@ export function initLimits() {
     // Sort far→near (depth 0 first, depth 1 on top)
     projected.sort((a, b) => a.depth - b.depth);
 
+    // Draw scan line for mode 1 during sweep phase
+    if (mode === 1 && progress < 0.75) {
+      const scanPos = -1.05 + 2.05 * (progress / 0.75);
+      const scanY = CY + scanPos * SCALE * (2.0 / 3.5);
+      const grad = ctx.createLinearGradient(0, scanY - 6, 0, scanY + 6);
+      grad.addColorStop(0,   "rgba(160,230,255,0)");
+      grad.addColorStop(0.5, "rgba(160,230,255,0.35)");
+      grad.addColorStop(1,   "rgba(160,230,255,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, scanY - 6, W, 12);
+    }
+
     projected.forEach(({ sx, sy, depth, alpha, wrongColor, proj, rng }) => {
       if (alpha < 0.05) return;
       const size = (1.4 + depth * 1.8) * proj;
 
       let color;
-      if (wrongColor) {
+      if (alpha > 1.2) {
+        // Scan beam glow: bright cyan-white flash
+        color = `rgba(160,230,255,0.95)`;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(sx, sy, Math.max(0.8, size * 1.5), 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      } else if (wrongColor) {
         const hues = ["255,80,30", "80,200,255", "200,255,80"];
         const h = hues[Math.floor(rng * hues.length)];
         color = `rgba(${h},${(alpha * 0.92).toFixed(2)})`;
