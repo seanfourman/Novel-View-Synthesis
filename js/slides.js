@@ -3922,9 +3922,16 @@ export function initLimits() {
           ry += (Math.cos(t * 0.37 + phase) * 0.025);
         }
       } else if (mode === 1) {
-        // Missing areas: entire bottom half invisible (never captured by cameras below)
-        if (ry > 0) alpha = 0;
-        else if (ry > -0.08) alpha *= 0.15;  // soft edge right at the equator
+        // Missing areas: coverage gaps from limited camera angles
+        // oy > 0 = lower part of teapot (cameras can't shoot from beneath)
+        if (oy > 0.3) {
+          alpha = 0;
+        } else if (oy > 0.1) {
+          alpha *= Math.max(0, 1 - (oy - 0.1) / 0.2);
+        }
+        // Scattered surface patches — real reconstruction gaps
+        const patch = Math.sin(ox * 4.7 + oz * 3.3) * Math.cos(oy * 5.1 + oz * 2.8);
+        if (patch > 0.68) alpha *= Math.max(0, 1 - (patch - 0.68) * 3.0);
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
         wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
