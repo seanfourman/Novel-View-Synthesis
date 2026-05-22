@@ -110,7 +110,7 @@ def render_frame(renderer, scene, cam_node, az, el=18.0, dist=3.2):
 renderer = pyrender.OffscreenRenderer(RENDER_W, RENDER_H)
 camera   = pyrender.PerspectiveCamera(yfov=0.65, aspectRatio=1.0)
 
-# ── 1. Nine polaroid thumbnails — opaque background, closer crop ─────────────
+# ── 1. Nine polaroid thumbnails - opaque background, closer crop ─────────────
 scene_pol = make_scene(mesh, transparent=False)
 cam_pol   = scene_pol.add(camera, pose=camera_pose(0))
 
@@ -125,7 +125,7 @@ for i, az in enumerate(POLAROID_ANGLES):
     print(f"  polaroid {i:02d}  az={az}°")
 
 
-# ── 2. 36-frame sprite sheet — transparent background ────────────────────────
+# ── 2. 36-frame sprite sheet - transparent background ────────────────────────
 scene_spr = make_scene(mesh, transparent=True)
 cam_spr   = scene_spr.add(camera, pose=camera_pose(0))
 

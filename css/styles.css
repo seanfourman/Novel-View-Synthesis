@@ -14,10 +14,10 @@
   --accent-3: #00b894;
   --good: #2ecc71;
   --bad: #e74c3c;
-  --slide-pad-y: clamp(2rem,  4vh, 3.5rem);
-  --slide-pad-x: clamp(2.25rem,  6vw, 5.5rem);
-  --section-gap: clamp(1rem,  2vh, 1.35rem);
-  --section-gap-compact: clamp(1rem,  0.9vh, 1rem);
+  --slide-pad-y: clamp(2rem, 4vh, 3.5rem);
+  --slide-pad-x: clamp(2.25rem, 6vw, 5.5rem);
+  --section-gap: clamp(1rem, 2vh, 1.35rem);
+  --section-gap-compact: clamp(1rem, 0.9vh, 1rem);
   --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.18);
   --shadow-sm: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
 }
@@ -85,7 +85,16 @@ code,
   overflow: hidden;
 }
 
-.slide > :where(.centered, .split, .spatial-slide, .sts-layout, .live-tour-slide, .classic-layout, .nvs-process-slide) {
+.slide
+  > :where(
+    .centered,
+    .split,
+    .spatial-slide,
+    .sts-layout,
+    .live-tour-slide,
+    .classic-layout,
+    .nvs-process-slide
+  ) {
   align-self: center;
   margin-block: 0;
   margin-inline: auto;
@@ -110,7 +119,7 @@ code,
   max-width: 1500px;
   display: grid;
   grid-template-columns: 1fr 1.2fr;
-  gap: clamp(2.5rem,  5vw, 4rem);
+  gap: clamp(2.5rem, 5vw, 4rem);
   align-items: center;
 }
 .split-left {
@@ -136,14 +145,14 @@ code,
 }
 
 h1.big-title {
-  font-size: clamp(3.5rem,  9vw, 7.5rem);
+  font-size: clamp(3.5rem, 9vw, 7.5rem);
   line-height: 0.95;
   font-weight: 800;
   letter-spacing: -0.04em;
   font-family: "Heebo", "Inter", sans-serif;
 }
 h1.big-title.small {
-  font-size: clamp(2.8rem,  6vw, 5rem);
+  font-size: clamp(2.8rem, 6vw, 5rem);
 }
 .big-title .accent,
 .accent {
@@ -151,7 +160,7 @@ h1.big-title.small {
 }
 
 h2 {
-  font-size: clamp(2rem,  4.2vw, 3.5rem);
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
   line-height: 1.1;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -165,14 +174,14 @@ h2 em {
 }
 
 .lead {
-  font-size: clamp(1.05rem,  1.5vw, 1.4rem);
+  font-size: clamp(1.05rem, 1.5vw, 1.4rem);
   color: var(--ink-soft);
   font-weight: 400;
   max-width: 720px;
   line-height: 1.55;
 }
 .lead.small {
-  font-size: clamp(1rem,  1.15vw, 1.1rem);
+  font-size: clamp(1rem, 1.15vw, 1.1rem);
 }
 .caption {
   color: var(--muted);
@@ -293,7 +302,7 @@ code {
 }
 .title-wrap h1.big-title {
   margin-bottom: 2rem;
-  font-size: clamp(4.5rem,  12vw, 10rem);
+  font-size: clamp(4.5rem, 12vw, 10rem);
 }
 #title-bg {
   position: absolute;
@@ -333,7 +342,7 @@ code {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: clamp(1rem,  1vh, 1rem);
+  gap: clamp(1rem, 1vh, 1rem);
 }
 .live-tour-head {
   display: flex;
@@ -343,7 +352,7 @@ code {
 }
 .live-tour-head h2 {
   width: 100%;
-  font-size: clamp(1.7rem,  3.25vw, 3rem);
+  font-size: clamp(1.7rem, 3.25vw, 3rem);
   line-height: 1.06;
   text-align: center;
   letter-spacing: 0;
@@ -351,18 +360,18 @@ code {
 .live-tour-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1rem,  1.6vw, 1.2rem);
+  gap: clamp(1rem, 1.6vw, 1.2rem);
   direction: ltr;
 }
 .live-tour-item {
   min-width: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: clamp(1rem,  1.1vh, 1rem);
+  gap: clamp(1rem, 1.1vh, 1rem);
 }
 .live-tour-panel {
   position: relative;
-  height: clamp(430px,  64vh, 640px);
+  height: clamp(430px, 64vh, 640px);
   overflow: hidden;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -390,7 +399,7 @@ code {
   align-items: center;
   gap: 0;
   margin: 0;
-  padding: 0 clamp(1rem,  0.3vw, 1rem);
+  padding: 0 clamp(1rem, 0.3vw, 1rem);
 }
 .tour-notes p {
   margin: 0;
@@ -399,7 +408,7 @@ code {
 .tour-notes p:first-child {
   color: var(--ink);
   font-weight: 700;
-  font-size: clamp(1.15rem,  1.35vw, 1.35rem);
+  font-size: clamp(1.15rem, 1.35vw, 1.35rem);
   line-height: 1.35;
   padding-bottom: 0.52rem;
   margin-bottom: 0.55rem;
@@ -417,7 +426,7 @@ code {
 }
 .tour-notes p + p {
   color: var(--ink-soft);
-  font-size: clamp(1rem,  1.12vw, 1.18rem);
+  font-size: clamp(1rem, 1.12vw, 1.18rem);
   line-height: 1.55;
   white-space: nowrap;
 }
@@ -432,18 +441,18 @@ code {
   width: min(100%, 1200px);
 }
 .spatial-slide h2 {
-  font-size: clamp(2rem,  3.4vw, 3rem);
-  margin-top: clamp(1rem,  0.8vh, 1rem);
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  margin-top: clamp(1rem, 0.8vh, 1rem);
 }
 .spatial-lead {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.55rem;
-  margin-top: clamp(1.2rem,  2.2vh, 2rem);
+  margin-top: clamp(1.2rem, 2.2vh, 2rem);
 }
 .spatial-lead p {
-  font-size: clamp(1.1rem,  1.4vw, 1.35rem);
+  font-size: clamp(1.1rem, 1.4vw, 1.35rem);
   color: var(--ink-soft);
   line-height: 1.6;
   margin: 0;
@@ -452,20 +461,20 @@ code {
   text-align: center;
 }
 .spatial-domains-label {
-  font-size: clamp(1rem,  1vw, 1rem);
+  font-size: clamp(1rem, 1vw, 1rem);
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: clamp(2.2rem,  3.8vh, 3.2rem);
+  margin-top: clamp(2.2rem, 3.8vh, 3.2rem);
 }
 .spatial-domains {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(2rem,  3.5vh, 3rem) clamp(4rem,  8vw, 9rem);
+  gap: clamp(2rem, 3.5vh, 3rem) clamp(4rem, 8vw, 9rem);
   width: 100%;
   max-width: 800px;
-  margin-top: clamp(1rem,  0.8vh, 1rem);
+  margin-top: clamp(1rem, 0.8vh, 1rem);
 }
 .domain-card {
   display: flex;
@@ -474,25 +483,25 @@ code {
   gap: 0.6rem;
 }
 .domain-icon {
-  width: clamp(52px,  5.5vw, 68px);
-  height: clamp(52px,  5.5vw, 68px);
+  width: clamp(52px, 5.5vw, 68px);
+  height: clamp(52px, 5.5vw, 68px);
   color: var(--accent);
   stroke: var(--accent);
 }
 .domain-label {
-  font-size: clamp(1rem,  1.1vw, 1.15rem);
+  font-size: clamp(1rem, 1.1vw, 1.15rem);
   font-weight: 600;
   color: var(--ink);
   line-height: 1.3;
   text-align: center;
 }
 .spatial-closing {
-  font-size: clamp(1.25rem,  1.55vw, 1.55rem);
+  font-size: clamp(1.25rem, 1.55vw, 1.55rem);
   font-weight: 400;
   color: var(--ink);
   white-space: nowrap;
   line-height: 1.55;
-  margin-top: clamp(5rem,  8vh, 7rem);
+  margin-top: clamp(5rem, 8vh, 7rem);
 }
 
 /* ========== SLIDE 4: STATIC → SPATIAL ========== */
@@ -504,10 +513,10 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1rem,  1vh, 1rem);
+  gap: clamp(1rem, 1vh, 1rem);
 }
 .sts-title {
-  font-size: clamp(2rem,  3.5vw, 3.2rem);
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin: 0;
@@ -518,13 +527,13 @@ code {
   gap: 0.3rem;
 }
 .sts-sub {
-  font-size: clamp(1rem,  1.1vw, 1.08rem);
+  font-size: clamp(1rem, 1.1vw, 1.08rem);
   color: var(--ink-soft);
   line-height: 1.55;
   margin: 0;
 }
 .sts-pre {
-  font-size: clamp(1rem,  1.1vw, 1.08rem);
+  font-size: clamp(1rem, 1.1vw, 1.08rem);
   color: var(--muted);
   font-weight: 600;
   margin: 0;
@@ -537,8 +546,8 @@ code {
 }
 .sts-orb-anchor {
   position: relative;
-  width: clamp(400px,  58vmin, 660px);
-  height: clamp(400px,  58vmin, 660px);
+  width: clamp(400px, 58vmin, 660px);
+  height: clamp(400px, 58vmin, 660px);
   flex-shrink: 0;
 }
 .sts-orb-wrap {
@@ -555,7 +564,7 @@ code {
 .sts-arc-item {
   position: absolute;
   width: 148px;
-  font-size: clamp(1rem,  1.15vw, 1.15rem);
+  font-size: clamp(1rem, 1.15vw, 1.15rem);
   font-weight: 700;
   color: var(--ink);
   text-align: center;
@@ -587,7 +596,7 @@ code {
   bottom: 20%;
   left: -163px;
 }
-/* Phase layers — only the active one is visible */
+/* Phase layers - only the active one is visible */
 .sts-layer {
   position: absolute;
   inset: 0;
@@ -598,19 +607,25 @@ code {
   opacity: 0;
   transition: opacity 0.45s ease;
 }
-.sts-orb-wrap[data-phase="1"] #sts-img { opacity: 1; }
-.sts-orb-wrap[data-phase="2"] #sts-c2  { opacity: 1; }
-.sts-orb-wrap[data-phase="3"] #sts-img3 { opacity: 1; }
+.sts-orb-wrap[data-phase="1"] #sts-img {
+  opacity: 1;
+}
+.sts-orb-wrap[data-phase="2"] #sts-c2 {
+  opacity: 1;
+}
+.sts-orb-wrap[data-phase="3"] #sts-img3 {
+  opacity: 1;
+}
 .sts-bullets {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem,  1vh, 1rem);
+  gap: clamp(1rem, 1vh, 1rem);
   flex: 1;
   max-width: 200px;
 }
 .sts-bullets li {
-  font-size: clamp(1rem,  1vw, 1rem);
+  font-size: clamp(1rem, 1vw, 1rem);
   color: var(--ink-soft);
   line-height: 1.4;
   padding: 0.55rem 0.9rem;
@@ -620,7 +635,7 @@ code {
   background: #fafafa;
 }
 .sts-footer {
-  font-size: clamp(1.05rem,  1.2vw, 1.2rem);
+  font-size: clamp(1.05rem, 1.2vw, 1.2rem);
   color: var(--ink-soft);
   line-height: 1.6;
   white-space: nowrap;
@@ -632,22 +647,22 @@ code {
   gap: var(--section-gap-compact);
 }
 .problem-slide h2 {
-  font-size: clamp(2rem,  3.4vw, 3rem);
-  margin-top: clamp(1rem,  0.8vh, 1rem);
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  margin-top: clamp(1rem, 0.8vh, 1rem);
 }
 .problem-body {
   display: grid;
   grid-template-columns: 1fr 1.25fr;
-  gap: clamp(2rem,  4vw, 4rem);
+  gap: clamp(2rem, 4vw, 4rem);
   width: 100%;
   align-items: center;
-  margin-top: clamp(1rem,  2vh, 1.8rem);
+  margin-top: clamp(1rem, 2vh, 1.8rem);
   direction: ltr;
 }
 .problem-visual {
   position: relative;
   width: 100%;
-  height: clamp(340px,  56vh, 560px);
+  height: clamp(340px, 56vh, 560px);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -674,7 +689,7 @@ code {
 .pv-flash.active {
   opacity: 1;
 }
-/* Camera icon button — circular, bottom-center of the 3D canvas */
+/* Camera icon button - circular, bottom-center of the 3D canvas */
 .photo-btn {
   position: absolute;
   bottom: 16px;
@@ -691,7 +706,10 @@ code {
   justify-content: center;
   cursor: pointer;
   backdrop-filter: blur(4px);
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.1s,
+    box-shadow 0.15s;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   z-index: 5;
 }
@@ -703,7 +721,7 @@ code {
   transform: translateX(-50%) scale(0.92);
 }
 
-/* ── Photo stamp — flies in from the left ────────────── */
+/* ── Photo stamp - flies in from the left ────────────── */
 .pv-stamp-overlay {
   position: fixed;
   left: 0;
@@ -730,15 +748,27 @@ code {
   animation: stamp-fly-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 @keyframes stamp-fly-in {
-  0%   { transform: translateX(-120vw) rotate(-4deg); opacity: 0; }
-  40%  { opacity: 1; }
-  70%  { transform: translateX(12px) rotate(2deg); }
-  85%  { transform: translateX(-4px) rotate(0.5deg); }
-  100% { transform: translateX(0) rotate(1.5deg); opacity: 1; }
+  0% {
+    transform: translateX(-120vw) rotate(-4deg);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateX(12px) rotate(2deg);
+  }
+  85% {
+    transform: translateX(-4px) rotate(0.5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(1.5deg);
+    opacity: 1;
+  }
 }
 .pv-stamp-img {
   display: block;
-  width: clamp(260px,  32vw, 460px);
+  width: clamp(260px, 32vw, 460px);
   height: auto;
   border-radius: 1px;
 }
@@ -772,7 +802,9 @@ code {
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 .pv-stamp-close:hover {
   background: #c93d18;
@@ -787,19 +819,19 @@ code {
   gap: 0.8rem;
 }
 .problem-intro {
-  font-size: clamp(1.1rem,  1.4vw, 1.35rem);
+  font-size: clamp(1.1rem, 1.4vw, 1.35rem);
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
 }
 .problem-sublabel {
-  font-size: clamp(1rem,  0.92vw, 1rem);
+  font-size: clamp(1rem, 0.92vw, 1rem);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
   margin: 0;
-  margin-top: clamp(2rem,  3.5vh, 3rem);
+  margin-top: clamp(2rem, 3.5vh, 3rem);
 }
 .problem-losses {
   display: flex;
@@ -811,7 +843,7 @@ code {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: clamp(1.1rem,  1.4vw, 1.35rem);
+  font-size: clamp(1.1rem, 1.4vw, 1.35rem);
   color: var(--ink-soft);
 }
 .loss-icon {
@@ -821,12 +853,12 @@ code {
   flex-shrink: 0;
 }
 .problem-conclusion {
-  font-size: clamp(1.25rem,  1.55vw, 1.55rem);
+  font-size: clamp(1.25rem, 1.55vw, 1.55rem);
   font-weight: 400;
   color: var(--ink);
   line-height: 1.55;
   margin: 0 auto;
-  margin-top: clamp(2rem,  3.5vh, 3rem);
+  margin-top: clamp(2rem, 3.5vh, 3rem);
   padding-top: 1.2rem;
   border-top: none;
   position: relative;
@@ -834,7 +866,7 @@ code {
   text-align: right;
 }
 .problem-conclusion::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -915,7 +947,7 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1rem,  0.8vh, 1rem);
+  gap: clamp(1rem, 0.8vh, 1rem);
   text-align: center;
 }
 
@@ -924,7 +956,7 @@ code {
 }
 
 .nvs-process-slide h2 {
-  font-size: clamp(1.65rem,  3vw, 2.85rem);
+  font-size: clamp(1.65rem, 3vw, 2.85rem);
   line-height: 1.04;
 }
 
@@ -933,12 +965,12 @@ code {
 }
 
 .nvs-process-slide .lead.small {
-  font-size: clamp(1rem,  0.95vw, 1rem);
+  font-size: clamp(1rem, 0.95vw, 1rem);
   line-height: 1.35;
 }
 
 .nvs-process-board {
-  margin-top: clamp(1rem,  0.6vh, 1rem);
+  margin-top: clamp(1rem, 0.6vh, 1rem);
   cursor: pointer;
 }
 
@@ -970,7 +1002,7 @@ code {
 
 .nvs-stage-caption {
   width: min(var(--nvs-display-width, 780px), calc(100vw - 3rem));
-  margin: clamp(1rem,  0.65vh, 1rem) auto 0;
+  margin: clamp(1rem, 0.65vh, 1rem) auto 0;
   padding: 0.54rem 0.95rem;
   display: flex;
   align-items: center;
@@ -990,7 +1022,7 @@ code {
 
 .nvs-stage-caption h3 {
   flex: 0 0 auto;
-  font-size: clamp(1rem,  1.25vw, 1.18rem);
+  font-size: clamp(1rem, 1.25vw, 1.18rem);
   line-height: 1;
   white-space: nowrap;
 }
@@ -1009,7 +1041,7 @@ code {
   min-width: 0;
   margin: 0;
   color: var(--ink-soft);
-  font-size: clamp(1rem,  0.95vw, 1rem);
+  font-size: clamp(1rem, 0.95vw, 1rem);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -1121,12 +1153,12 @@ code {
   letter-spacing: 0.12em;
 }
 .process-copy h3 {
-  font-size: clamp(1.8rem,  3.3vw, 3rem);
+  font-size: clamp(1.8rem, 3.3vw, 3rem);
   line-height: 1.08;
 }
 .process-copy p {
   color: var(--ink-soft);
-  font-size: clamp(1rem,  1.25vw, 1.18rem);
+  font-size: clamp(1rem, 1.25vw, 1.18rem);
   line-height: 1.55;
 }
 
@@ -1149,7 +1181,7 @@ code {
   flex-direction: column;
   gap: 1rem;
   font-family: "JetBrains Mono", monospace;
-  font-size: clamp(1.5rem,  2.4vw, 2.4rem);
+  font-size: clamp(1.5rem, 2.4vw, 2.4rem);
 }
 .field-mlp {
   display: flex;
@@ -1389,21 +1421,21 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1.1rem,  2.3vh, 2rem);
+  gap: clamp(1.1rem, 2.3vh, 2rem);
 }
 .classic-title {
-  font-size: clamp(2rem,  3.5vw, 3.2rem);
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
   line-height: 1.15;
   margin: 0;
 }
 .classic-sub {
-  font-size: clamp(1rem,  1.1vw, 1.1rem);
+  font-size: clamp(1rem, 1.1vw, 1.1rem);
   color: var(--ink-soft);
   margin: 0.3rem 0 0;
   text-align: center;
 }
 .classic-section-label {
-  font-size: clamp(1rem,  1vw, 1rem);
+  font-size: clamp(1rem, 1vw, 1rem);
   font-weight: 600;
   color: var(--muted);
   margin: 0 0 1rem;
@@ -1418,13 +1450,13 @@ code {
 .classic-goals-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: clamp(1.5rem,  3vw, 3rem);
+  gap: clamp(1.5rem, 3vw, 3rem);
   align-items: center;
   width: 100%;
 }
 .classic-flow-arrow {
   flex-shrink: 0;
-  width: clamp(50px,  6vw, 75px);
+  width: clamp(50px, 6vw, 75px);
   display: flex;
   align-items: center;
 }
@@ -1438,17 +1470,21 @@ code {
   gap: 1rem;
   direction: rtl;
 }
-.classic-goals-row > .classic-goal:first-child { justify-self: end; }
-.classic-goals-row > .classic-goal:last-child  { justify-self: start; }
+.classic-goals-row > .classic-goal:first-child {
+  justify-self: end;
+}
+.classic-goals-row > .classic-goal:last-child {
+  justify-self: start;
+}
 .classic-num {
-  font-size: clamp(4.5rem,  7.5vw, 8rem);
+  font-size: clamp(4.5rem, 7.5vw, 8rem);
   font-weight: 900;
   color: var(--accent);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .classic-goal p {
-  font-size: clamp(1rem,  1.2vw, 1.25rem);
+  font-size: clamp(1rem, 1.2vw, 1.25rem);
   font-weight: 600;
   color: var(--ink);
   margin: 0;
@@ -1463,7 +1499,7 @@ code {
 }
 .classic-cards {
   display: flex;
-  gap: clamp(1rem,  2vw, 2.4rem);
+  gap: clamp(1rem, 2vw, 2.4rem);
   justify-content: center;
   width: 100%;
 }
@@ -1482,7 +1518,7 @@ code {
   display: block;
 }
 .classic-card-name {
-  font-size: clamp(1.15rem,  1.4vw, 1.45rem);
+  font-size: clamp(1.15rem, 1.4vw, 1.45rem);
   font-weight: 700;
   color: var(--ink);
   text-align: center;
@@ -1498,7 +1534,7 @@ code {
   margin: 0.4rem auto 0;
 }
 .classic-card-desc {
-  font-size: clamp(1rem,  1.15vw, 1.22rem);
+  font-size: clamp(1rem, 1.15vw, 1.22rem);
   color: var(--ink-soft);
   text-align: center;
   direction: rtl;
@@ -2192,14 +2228,14 @@ code {
     flex-direction: column;
   }
   .live-tour-head h2 {
-    font-size: clamp(1.45rem,  7vw, 2.3rem);
+    font-size: clamp(1.45rem, 7vw, 2.3rem);
     text-align: center;
   }
   .live-tour-grid {
     grid-template-columns: 1fr;
   }
   .live-tour-panel {
-    height: clamp(230px,  34vh, 340px);
+    height: clamp(230px, 34vh, 340px);
   }
   .tour-notes p:first-child {
     padding-bottom: 0.4rem;
@@ -2283,7 +2319,7 @@ code {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(1.8rem,  3vw, 4rem) clamp(1.5rem,  3vw, 4rem);
+  padding: clamp(1.8rem, 3vw, 4rem) clamp(1.5rem, 3vw, 4rem);
   overflow: hidden;
   transition:
     flex 0.65s cubic-bezier(0.77, 0, 0.18, 1),
@@ -2293,10 +2329,15 @@ code {
   box-sizing: border-box;
 }
 
-.cp-sfm  { background: #f8f7f4; border-left: 1px solid rgba(0,0,0,0.07); }
-.cp-lidar { background: #f4f3f0; }
+.cp-sfm {
+  background: #f8f7f4;
+  border-left: 1px solid rgba(0, 0, 0, 0.07);
+}
+.cp-lidar {
+  background: #f4f3f0;
+}
 
-/* Glow overlay — spreads from the center divider outward, mirrored */
+/* Glow overlay - spreads from the center divider outward, mirrored */
 .cp-panel::before {
   content: "";
   position: absolute;
@@ -2306,17 +2347,19 @@ code {
 }
 /* SfM = right panel: glow flows from left (center) → right */
 .cp-sfm::before {
-  background: linear-gradient(to right,
-    rgba(255,120,80,0.38) 0%,
-    rgba(255,120,80,0.14) 55%,
+  background: linear-gradient(
+    to right,
+    rgba(255, 120, 80, 0.38) 0%,
+    rgba(255, 120, 80, 0.14) 55%,
     transparent 90%
   );
 }
 /* LiDAR = left panel: glow flows from right (center) → left */
 .cp-lidar::before {
-  background: linear-gradient(to left,
-    rgba(255,120,80,0.38) 0%,
-    rgba(255,120,80,0.14) 55%,
+  background: linear-gradient(
+    to left,
+    rgba(255, 120, 80, 0.38) 0%,
+    rgba(255, 120, 80, 0.14) 55%,
     transparent 90%
   );
 }
@@ -2326,9 +2369,10 @@ code {
   content: "";
   position: absolute;
   inset: 0;
-  border: 2px solid rgba(255,120,80,0);
-  border-color: rgba(255,120,80, calc(var(--charge, 0) * 0.6));
-  box-shadow: 0 0 calc(var(--charge, 0) * 30px) rgba(255,120,80, calc(var(--charge, 0) * 0.25));
+  border: 2px solid rgba(255, 120, 80, 0);
+  border-color: rgba(255, 120, 80, calc(var(--charge, 0) * 0.6));
+  box-shadow: 0 0 calc(var(--charge, 0) * 30px)
+    rgba(255, 120, 80, calc(var(--charge, 0) * 0.25));
   pointer-events: none;
 }
 
@@ -2336,7 +2380,7 @@ code {
 .cp-content {
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem,  1.35vh, 1.1rem);
+  gap: clamp(1rem, 1.35vh, 1.1rem);
   width: min(100%, 680px);
   max-width: 680px;
   position: relative;
@@ -2351,18 +2395,18 @@ code {
 
 .cp-tag {
   position: absolute;
-  top: clamp(1rem,  -8vh, 1rem);
-  inset-inline-start: clamp(1rem,  3vw, 3rem);
-  font-size: clamp(3.5rem,  6vw, 7rem);
+  top: clamp(1rem, -8vh, 1rem);
+  inset-inline-start: clamp(1rem, 3vw, 3rem);
+  font-size: clamp(3.5rem, 6vw, 7rem);
   font-weight: 900;
-  color: rgba(255,90,54,0.11);
+  color: rgba(255, 90, 54, 0.11);
   line-height: 1;
   pointer-events: none;
   z-index: -1;
 }
 
 .cp-title {
-  font-size: clamp(1.9rem,  3.1vw, 3.4rem);
+  font-size: clamp(1.9rem, 3.1vw, 3.4rem);
   font-weight: 800;
   color: var(--ink);
   margin: 0;
@@ -2371,7 +2415,7 @@ code {
 }
 
 .cp-desc {
-  font-size: clamp(1rem,  1.15vw, 1.18rem);
+  font-size: clamp(1rem, 1.15vw, 1.18rem);
   color: var(--ink-soft);
   line-height: 1.62;
   margin: 0;
@@ -2381,7 +2425,7 @@ code {
   margin: 0.1rem 0 0;
 }
 .cp-results-label {
-  font-size: clamp(1rem,  1.05vw, 1.08rem);
+  font-size: clamp(1rem, 1.05vw, 1.08rem);
   font-weight: 800;
   color: var(--muted);
   margin: 0 0 0.35rem;
@@ -2392,14 +2436,14 @@ code {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem,  0.75vh, 1rem);
+  gap: clamp(1rem, 0.75vh, 1rem);
 }
 .cp-results li {
   position: relative;
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font-size: clamp(1rem,  1.08vw, 1.08rem);
+  font-size: clamp(1rem, 1.08vw, 1.08rem);
   font-weight: 600;
   color: var(--ink);
   line-height: 1.35;
@@ -2427,17 +2471,17 @@ code {
 .cp-cols {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(1rem,  1.1vw, 1rem);
+  gap: clamp(1rem, 1.1vw, 1rem);
   margin-top: 0.1rem;
 }
 .cp-col {
-  --cp-mark-offset: clamp(1rem,  0.9vw, 1rem);
-  --cp-mark-size: clamp(3.4rem,  4.8vw, 5.8rem);
-  --cp-mark-thick: clamp(1rem,  0.7vw, 1rem);
+  --cp-mark-offset: clamp(1rem, 0.9vw, 1rem);
+  --cp-mark-size: clamp(3.4rem, 4.8vw, 5.8rem);
+  --cp-mark-thick: clamp(1rem, 0.7vw, 1rem);
   position: relative;
   min-width: 0;
   overflow: hidden;
-  padding: clamp(1rem,  0.75vw, 1rem) clamp(1rem,  1vw, 1rem);
+  padding: clamp(1rem, 0.75vw, 1rem) clamp(1rem, 1vw, 1rem);
 }
 .cp-col::before {
   content: "";
@@ -2464,17 +2508,21 @@ code {
     linear-gradient(#000 0 0) center / var(--cp-mark-thick) 100% no-repeat;
 }
 .cp-cons::before {
-  width: clamp(2.2rem,  3vw, 3.6rem);
+  width: clamp(2.2rem, 3vw, 3.6rem);
   height: var(--cp-mark-thick);
   background: #c0392b;
 }
 .cp-col-title {
-  font-size: clamp(1rem,  1.05vw, 1.08rem);
+  font-size: clamp(1rem, 1.05vw, 1.08rem);
   font-weight: 700;
   margin-bottom: 0.45rem;
 }
-.cp-pros .cp-col-title { color: #2a7a4b; }
-.cp-cons .cp-col-title { color: #c0392b; }
+.cp-pros .cp-col-title {
+  color: #2a7a4b;
+}
+.cp-cons .cp-col-title {
+  color: #c0392b;
+}
 .cp-col ul {
   margin: 0;
   padding-right: 1.1rem;
@@ -2483,68 +2531,83 @@ code {
   gap: 0.2rem;
 }
 .cp-col li {
-  font-size: clamp(1rem,  1vw, 1.02rem);
+  font-size: clamp(1rem, 1vw, 1.02rem);
   color: var(--ink-soft);
   line-height: 1.38;
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-content {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-content {
   width: min(100%, 620px);
   max-width: 620px;
-  gap: clamp(1rem,  1vh, 1rem);
+  gap: clamp(1rem, 1vh, 1rem);
   transform: scale(0.96);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-title {
-  font-size: clamp(1.75rem,  2.9vw, 3rem);
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-title {
+  font-size: clamp(1.75rem, 2.9vw, 3rem);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-desc {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-desc {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: clamp(1rem,  1.04vw, 1.08rem);
+  font-size: clamp(1rem, 1.04vw, 1.08rem);
   line-height: 1.55;
   min-block-size: calc(3em * 1.55);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-results {
   padding-block: 0.1rem;
   min-block-size: 6.9rem;
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results-label {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-results-label {
   margin-bottom: 0.25rem;
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-cols {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-cols {
   min-block-size: 9rem;
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-sfm .cp-cols {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-sfm
+  .cp-cols {
   margin-top: 16px;
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-results li {
-  font-size: clamp(1rem,  0.96vw, 1rem);
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-results
+  li {
+  font-size: clamp(1rem, 0.96vw, 1rem);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-col {
-  padding-block: clamp(1rem,  0.9vh, 1rem);
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-col {
+  padding-block: clamp(1rem, 0.9vh, 1rem);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-col li {
-  font-size: clamp(1rem,  0.93vw, 1rem);
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-col
+  li {
+  font-size: clamp(1rem, 0.93vw, 1rem);
 }
 
-:where(.compare-split:not([data-active]), .compare-split[data-active=""]) .cp-col li:nth-child(n + 4) {
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-col
+  li:nth-child(n + 4) {
   display: none;
 }
 
 .compare-split[data-active="sfm"] .cp-sfm,
 .compare-split[data-active="lidar"] .cp-lidar {
-  padding: clamp(2rem,  4vw, 5rem) clamp(1.8rem,  4vw, 5rem);
+  padding: clamp(2rem, 4vw, 5rem) clamp(1.8rem, 4vw, 5rem);
   background: #fbfaf8;
 }
 
@@ -2552,13 +2615,13 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar .cp-content {
   width: min(100%, 760px);
   max-width: 760px;
-  gap: clamp(1rem,  1.6vh, 1.25rem);
+  gap: clamp(1rem, 1.6vh, 1.25rem);
   transform: none;
 }
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-title,
 .compare-split[data-active="lidar"] .cp-lidar .cp-title {
-  font-size: clamp(2.1rem,  3.3vw, 3.8rem);
+  font-size: clamp(2.1rem, 3.3vw, 3.8rem);
 }
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-desc,
@@ -2568,13 +2631,13 @@ code {
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-cols,
 .compare-split[data-active="lidar"] .cp-lidar .cp-cols {
-  gap: clamp(1rem,  1.4vw, 1.25rem);
+  gap: clamp(1rem, 1.4vw, 1.25rem);
   margin-top: 0.25rem;
 }
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-col,
 .compare-split[data-active="lidar"] .cp-lidar .cp-col {
-  padding: clamp(1rem,  0.9vw, 1rem) clamp(1rem,  1.2vw, 1rem);
+  padding: clamp(1rem, 0.9vw, 1rem) clamp(1rem, 1.2vw, 1rem);
 }
 
 /* ── Charge bar ── */
@@ -2584,7 +2647,7 @@ code {
   left: 0;
   right: 0;
   height: 3px;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
 }
 /* SfM = left panel visually: bar grows from right (center) → left */
 .cp-sfm .cp-charge-bar {
@@ -2619,7 +2682,7 @@ code {
   left: 50%;
   transform: translateX(-50%);
   background: none;
-  color: rgba(255,90,54,0.55);
+  color: rgba(255, 90, 54, 0.55);
   border: none;
   border-radius: 0;
   width: auto;
@@ -2629,23 +2692,37 @@ code {
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s, color 0.2s;
+  transition:
+    opacity 0.3s,
+    color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.25rem 0.5rem;
-  filter: drop-shadow(0 0 6px rgba(255,90,54,0.5));
+  filter: drop-shadow(0 0 6px rgba(255, 90, 54, 0.5));
 }
 .cp-back-btn:hover {
   color: var(--accent);
-  filter: drop-shadow(0 0 10px rgba(255,90,54,0.8));
+  filter: drop-shadow(0 0 10px rgba(255, 90, 54, 0.8));
 }
 
 /* ── Selected state ── */
-.compare-split[data-active="sfm"]  .cp-sfm  { flex: 9; cursor: default; }
-.compare-split[data-active="sfm"]  .cp-lidar { flex: 1; cursor: pointer; }
-.compare-split[data-active="lidar"] .cp-lidar { flex: 9; cursor: default; }
-.compare-split[data-active="lidar"] .cp-sfm  { flex: 1; cursor: pointer; }
+.compare-split[data-active="sfm"] .cp-sfm {
+  flex: 9;
+  cursor: default;
+}
+.compare-split[data-active="sfm"] .cp-lidar {
+  flex: 1;
+  cursor: pointer;
+}
+.compare-split[data-active="lidar"] .cp-lidar {
+  flex: 9;
+  cursor: default;
+}
+.compare-split[data-active="lidar"] .cp-sfm {
+  flex: 1;
+  cursor: pointer;
+}
 
 /* Collapsed panel: hide content, show label + back btn */
 .compare-split[data-active="sfm"] .cp-lidar .cp-content,
@@ -2669,18 +2746,24 @@ code {
 .compare-split[data-active="sfm"] .cp-lidar::before,
 .compare-split[data-active="lidar"] .cp-sfm::before {
   opacity: 1;
-  background: radial-gradient(ellipse 200% 55% at 50% 118%, rgba(255,90,54,0.3) 0%, transparent 55%);
+  background: radial-gradient(
+    ellipse 200% 55% at 50% 118%,
+    rgba(255, 90, 54, 0.3) 0%,
+    transparent 55%
+  );
 }
 
 /* Divider line between panels */
-.cp-sfm { border-left: 1.5px solid rgba(0,0,0,0.1); }
+.cp-sfm {
+  border-left: 1.5px solid rgba(0, 0, 0, 0.1);
+}
 
 /* ── Panel visualizations ── */
 .cp-vis {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: clamp(180px,  26vw, 340px);
+  width: clamp(180px, 26vw, 340px);
   aspect-ratio: 400 / 340;
   height: auto;
   opacity: 0;
@@ -2689,15 +2772,21 @@ code {
   z-index: 0;
 }
 
-.cp-vis-sfm  { left:  clamp(1rem,  4%, 4rem); }
-.cp-vis-lf   { left:  clamp(1rem,  4%, 4rem); }
+.cp-vis-sfm {
+  left: clamp(1rem, 4%, 4rem);
+}
+.cp-vis-lf {
+  left: clamp(1rem, 4%, 4rem);
+}
 
-.compare-split[data-active="sfm"]   .cp-vis-sfm,
-.compare-split[data-active="lidar"] .cp-vis-lf  { opacity: 1; }
+.compare-split[data-active="sfm"] .cp-vis-sfm,
+.compare-split[data-active="lidar"] .cp-vis-lf {
+  opacity: 1;
+}
 
 /* SfM canvas: wider aspect to give more breathing room for the layout */
 .compare-split[data-active="sfm"] .cp-vis-sfm {
-  width: clamp(280px,  40vw, 580px);
+  width: clamp(280px, 40vw, 580px);
   aspect-ratio: 520 / 340;
 }
 
@@ -2705,7 +2794,7 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar {
   flex-direction: row-reverse;
   align-items: center;
-  gap: clamp(1rem,  2vw, 2rem);
+  gap: clamp(1rem, 2vw, 2rem);
 }
 .compare-split[data-active="lidar"] .cp-vis-lf {
   position: relative;
@@ -2713,7 +2802,7 @@ code {
   left: auto;
   transform: none;
   flex-shrink: 0;
-  width: clamp(230px,  30vw, 420px);
+  width: clamp(230px, 30vw, 420px);
   height: auto;
   opacity: 1;
 }
@@ -2738,21 +2827,21 @@ code {
   justify-content: center;
   height: 100%;
   width: 100%;
-  padding: clamp(1rem,  2vw, 1.5rem) clamp(1rem,  3vw, 2.5rem);
+  padding: clamp(1rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2.5rem);
   gap: 0.6rem;
   box-sizing: border-box;
 }
 
 .bunny-pipeline-slide h2 {
   margin: 0;
-  font-size: clamp(1.25rem,  2.5vw, 1.75rem);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
 }
 
 .bp-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: clamp(1rem,  1vw, 1rem);
+  gap: clamp(1rem, 1vw, 1rem);
   width: 100%;
   max-width: 960px;
   flex: 1;
@@ -2766,8 +2855,11 @@ code {
   overflow: hidden;
   border: 2.5px solid transparent;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  transition: border-color 0.35s, box-shadow 0.35s, opacity 0.35s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition:
+    border-color 0.35s,
+    box-shadow 0.35s,
+    opacity 0.35s;
   min-height: 0;
 }
 
@@ -2789,12 +2881,12 @@ code {
 }
 
 .bp-label {
-  font-size: clamp(1rem,  1.1vw, 1rem);
+  font-size: clamp(1rem, 1.1vw, 1rem);
   padding: 5px 8px 6px;
   text-align: center;
   background: #f4f3f0;
   color: #444;
-  border-top: 1px solid rgba(0,0,0,0.07);
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
   white-space: nowrap;
 }
 
@@ -2805,7 +2897,9 @@ code {
 
 .bp-cell.bp-active {
   border-color: #af261c;
-  box-shadow: 0 0 0 1px #af261c, 0 4px 20px rgba(175,38,28,0.22);
+  box-shadow:
+    0 0 0 1px #af261c,
+    0 4px 20px rgba(175, 38, 28, 0.22);
 }
 
 .bp-cell.bp-dim {
@@ -2813,23 +2907,24 @@ code {
 }
 
 /* ============================================================
-   SLIDE 8 — Why classical methods failed
+   SLIDE 8 - Why classical methods failed
    ============================================================ */
 .limits-slide {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: clamp(2rem,  4vw, 5rem) clamp(2rem,  5vw, 7rem) clamp(1.5rem,  3vw, 3rem);
+  padding: clamp(2rem, 4vw, 5rem) clamp(2rem, 5vw, 7rem)
+    clamp(1.5rem, 3vw, 3rem);
   box-sizing: border-box;
   direction: rtl;
-  gap: clamp(1rem,  2vh, 2rem);
+  gap: clamp(1rem, 2vh, 2rem);
 }
 
 .limits-row {
   display: flex;
   align-items: center;
-  gap: clamp(2rem,  5vw, 6rem);
+  gap: clamp(2rem, 5vw, 6rem);
   flex: 1;
   min-height: 0;
 }
@@ -2839,11 +2934,11 @@ code {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem,  1.5vh, 1.4rem);
+  gap: clamp(1rem, 1.5vh, 1.4rem);
 }
 
 .limits-title {
-  font-size: clamp(1.9rem,  3vw, 3.4rem);
+  font-size: clamp(1.9rem, 3vw, 3.4rem);
   font-weight: 800;
   color: var(--ink);
   margin: 0;
@@ -2851,7 +2946,7 @@ code {
 }
 
 .limits-body {
-  font-size: clamp(1rem,  1.05vw, 1.08rem);
+  font-size: clamp(1rem, 1.05vw, 1.08rem);
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
@@ -2873,7 +2968,9 @@ code {
   gap: 0.85rem;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  transition: background 0.25s ease, transform 0.25s ease;
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease;
   cursor: default;
   opacity: 0.45;
 }
@@ -2890,7 +2987,10 @@ code {
   border-radius: 50%;
   background: var(--muted);
   flex-shrink: 0;
-  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
 .limit-item.lim-active .limit-dot {
@@ -2900,14 +3000,14 @@ code {
 }
 
 .limit-text {
-  font-size: clamp(1rem,  1.1vw, 1.12rem);
+  font-size: clamp(1rem, 1.1vw, 1.12rem);
   font-weight: 600;
   color: var(--ink);
   font-family: "Heebo", sans-serif;
 }
 
 .limits-conclusion {
-  font-size: clamp(1rem,  1.2vw, 1.2rem);
+  font-size: clamp(1rem, 1.2vw, 1.2rem);
   color: var(--ink);
   line-height: 1.6;
   margin: 0;
@@ -2925,7 +3025,7 @@ code {
 #c-limits {
   border-radius: 16px;
   display: block;
-  width: clamp(280px,  32vw, 480px);
+  width: clamp(280px, 32vw, 480px);
   height: auto;
 }
 
@@ -2938,13 +3038,18 @@ code {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: clamp(2rem,  4vw, 5rem) clamp(2rem,  5vw, 7rem) clamp(1.5rem,  3vw, 3rem);
+  padding: clamp(2rem, 4vw, 5rem) clamp(2rem, 5vw, 7rem)
+    clamp(1.5rem, 3vw, 3rem);
   box-sizing: border-box;
   direction: rtl;
-  gap: clamp(1rem,  1.6vh, 1.6rem);
+  gap: clamp(1rem, 1.6vh, 1.6rem);
   text-align: center;
-  --nvs-pad-x: clamp(2rem,  5vw, 7rem);  /* mirror of the horizontal padding above */
-  --accent-soft: #ffb499;                /* pale orange — used for past models */
+  --nvs-pad-x: clamp(
+    2rem,
+    5vw,
+    7rem
+  ); /* mirror of the horizontal padding above */
+  --accent-soft: #ffb499; /* pale orange - used for past models */
 }
 
 .nvs-intro-slide > .kicker {
@@ -2952,7 +3057,7 @@ code {
 }
 
 .nvs-intro-title {
-  font-size: clamp(1.9rem,  3vw, 3.2rem);
+  font-size: clamp(1.9rem, 3vw, 3.2rem);
   font-weight: 800;
   color: var(--ink);
   line-height: 1.15;
@@ -2970,7 +3075,7 @@ code {
 }
 
 .nvs-intro-body p {
-  font-size: clamp(1rem,  1.05vw, 1.12rem);
+  font-size: clamp(1rem, 1.05vw, 1.12rem);
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
@@ -2985,7 +3090,7 @@ code {
 
 /* Redesigned emphasis: no right border; a centred gradient bar above */
 .nvs-intro-emphasis {
-  font-size: clamp(1.15rem,  1.3vw, 1.35rem) !important;
+  font-size: clamp(1.15rem, 1.3vw, 1.35rem) !important;
   color: var(--ink) !important;
   font-weight: 600;
   margin-top: 0.6rem;
@@ -3009,9 +3114,10 @@ code {
 /* ---------- Timeline (full-bleed, edge-to-edge) ---------- */
 .nvs-tl-wrap {
   margin-top: auto;
-  /* escape the slide's horizontal padding so the timeline reaches both edges */
-  margin-left:  calc(-1 * var(--nvs-pad-x));
-  margin-right: calc(-1 * var(--nvs-pad-x));
+  /* Cancel BOTH layers of padding: the outer .slide's --slide-pad-x
+     AND this slide's inner --nvs-pad-x. Without this the line stops short. */
+  margin-left: calc(-1 * (var(--nvs-pad-x) + var(--slide-pad-x)));
+  margin-right: calc(-1 * (var(--nvs-pad-x) + var(--slide-pad-x)));
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -3026,7 +3132,8 @@ code {
   text-transform: uppercase;
   font-family: "JetBrains Mono", monospace;
   text-align: center;
-  padding: 0 var(--nvs-pad-x);
+  /* Wrap is now full-bleed (cancels both padding layers); restore inner gutter. */
+  padding: 0 calc(var(--nvs-pad-x) + var(--slide-pad-x));
 }
 
 .nvs-tl {
@@ -3046,7 +3153,9 @@ code {
   border-radius: 0;
 }
 
-/* Fill starts at the first dot (5%) and grows to the active dot. */
+/* Fill starts at the first dot (5%) and grows to the active dot.
+   The `left` transition is used during the wraparound: slide off right, snap
+   to off-screen left, then slide in to first dot. */
 .nvs-tl-fill {
   position: absolute;
   top: 50%;
@@ -3055,7 +3164,9 @@ code {
   width: 0;
   background: linear-gradient(90deg, var(--accent-soft), var(--accent));
   transform: translateY(-50%);
-  transition: width 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    left  0.75s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 18px rgba(255, 90, 54, 0.5);
   border-radius: 3px;
 }
@@ -3120,17 +3231,21 @@ code {
   color: var(--ink-soft);
   white-space: nowrap;
   align-self: start;
-  transition: color 0.25s ease, font-weight 0.25s ease;
+  transition:
+    color 0.25s ease,
+    font-weight 0.25s ease;
 }
 
-/* Past nodes — already crossed by the fill bar (pale orange, not purple) */
+/* Past nodes - already crossed by the fill bar (pale orange, not purple) */
 .nvs-tl-node.tl-past .nvs-tl-dot {
   background: var(--accent-soft);
   border-color: var(--accent-soft);
 }
-.nvs-tl-node.tl-past .nvs-tl-year { color: var(--accent-soft); }
+.nvs-tl-node.tl-past .nvs-tl-year {
+  color: var(--accent-soft);
+}
 
-/* Active node — pulsing ring */
+/* Active node - pulsing ring */
 .nvs-tl-node.tl-active .nvs-tl-dot {
   background: var(--accent);
   border-color: var(--accent);
@@ -3147,8 +3262,13 @@ code {
 }
 
 @keyframes nvsTlPulse {
-  0%, 100% { box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22); }
-  50%      { box-shadow: 0 0 0 14px rgba(255, 90, 54, 0.04); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(255, 90, 54, 0.04);
+  }
 }
 
 /* ---------- Detail (centred, no box, no right border) ---------- */
@@ -3169,7 +3289,9 @@ code {
   opacity: 0;
   transform: translateY(6px);
   /* Inactive slides fade out fast so they're gone before the next one starts. */
-  transition: opacity 0.22s ease, transform 0.3s ease;
+  transition:
+    opacity 0.22s ease,
+    transform 0.3s ease;
   pointer-events: none;
 }
 
@@ -3177,13 +3299,16 @@ code {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  /* Active slide fades in after the outgoing one has cleared. */
-  transition: opacity 0.45s ease 0.18s, transform 0.45s ease 0.18s;
+  /* Stretched to match the fill bar's 0.75s travel: the new card lands
+     visually at the same moment the bar reaches the active dot. */
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
 }
 
 .nvs-tl-detail-year {
   font-family: "JetBrains Mono", monospace;
-  font-size: clamp(2rem,  2.6vw, 2.4rem);
+  font-size: clamp(2rem, 2.6vw, 2.4rem);
   font-weight: 700;
   color: var(--accent);
   letter-spacing: -0.02em;

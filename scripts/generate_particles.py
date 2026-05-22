@@ -7,7 +7,7 @@ from PIL import Image
 
 BASE   = Path("assets/generated/bunny_pipeline")
 OUT    = BASE / "particles.json"
-STRIDE = 7   # sample every 7px — ~5400 particles for a 512² image
+STRIDE = 7   # sample every 7px - ~5400 particles for a 512² image
 
 rgb   = np.array(Image.open(BASE / "01_input_rgb.png").convert("RGB"))
 depth = np.array(Image.open(BASE / "02_depth_gray.png").convert("L"))

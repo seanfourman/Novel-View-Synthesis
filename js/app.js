@@ -134,25 +134,25 @@ function updateChrome() {
 
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
-  0:  initTitleBg,          // slide 1
-  // slide 2 (spatial domains) — no canvas
-  2:  initProblemVis,       // slide 3
-  3:  initStaticToSpatial,  // slide 4
-  // slide 5 (live room tour) — iframes only
-  5:  initClassic,          // slide 6
-  6:  initSfMLiDAR,         // slide 7
-  7:  initLimits,           // slide 8 (why classical methods failed)
-  8:  initNvsIntro,         // slide 9 (transition to NVS + model timeline)
-  9:  initDepthBasedNVS,    // slide 10
-  10: initApplications,     // slide 11
-  11: initWhyHard,          // slide 12
-  // slide 13 (NeRF intro) — no canvas
-  13: initRotatable,        // slide 14
-  15: initRayDemo,          // slide 16
-  16: initTraining,         // slide 17
-  17: initClickableViews,   // slide 18
-  18: initOrbitScrubber,    // slide 19
-  21: initEndBg,            // slide 22
+  0: initTitleBg, // slide 1
+  // slide 2 (spatial domains) - no canvas
+  2: initProblemVis, // slide 3
+  3: initStaticToSpatial, // slide 4
+  // slide 5 (live room tour) - iframes only
+  5: initClassic, // slide 6
+  6: initSfMLiDAR, // slide 7
+  7: initLimits, // slide 8 (why classical methods failed)
+  8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
+  9: initDepthBasedNVS, // slide 10
+  10: initApplications, // slide 11
+  11: initWhyHard, // slide 12
+  // slide 13 (NeRF intro) - no canvas
+  13: initRotatable, // slide 14
+  15: initRayDemo, // slide 16
+  16: initTraining, // slide 17
+  17: initClickableViews, // slide 18
+  18: initOrbitScrubber, // slide 19
+  21: initEndBg, // slide 22
 };
 
 const sceneInstances = {};

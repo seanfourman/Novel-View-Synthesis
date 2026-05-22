@@ -13,7 +13,7 @@ OUT = Path("assets/generated/teapot_particles.json")
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 
-# ── Body profile (r, z) — approximate Newell teapot silhouette ───────────────
+# ── Body profile (r, z) - approximate Newell teapot silhouette ───────────────
 BODY_PROFILE = [
     (0.00, 0.00),   # bottom centre
     (0.38, 0.00),   # bottom flat
@@ -48,7 +48,7 @@ HANDLE_CTRL = np.array([
 ], dtype=float)
 
 # ── Spout control points (Bézier tube, on −x side) ───────────────────────────
-# S-curve: sweeps out+down first, then reverses up — like a gooseneck spout
+# S-curve: sweeps out+down first, then reverses up - like a gooseneck spout
 SPOUT_CTRL = np.array([
     [-0.90, 0.0, 0.88],   # body attachment (lower belly)
     [-2.20, 0.0, 0.15],   # out and DOWN → lower belly of S

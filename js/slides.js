@@ -2014,45 +2014,61 @@ export function initWhyHard() {
 }
 
 export function initClassic() {
-  const cSfm   = document.getElementById("c-sfm");
-  const cMvs   = document.getElementById("c-mvs");
+  const cSfm = document.getElementById("c-sfm");
+  const cMvs = document.getElementById("c-mvs");
   const cPhoto = document.getElementById("c-photo");
   const cLidar = document.getElementById("c-lidar");
-  const cLf    = document.getElementById("c-lf");
+  const cLf = document.getElementById("c-lf");
   if (!cSfm) return { tick() {} };
 
   const ACCENT = "#ff5a36";
-  const INK    = "#1a1a1a";
-  const BG     = "#f5f5f5";
+  const INK = "#1a1a1a";
+  const BG = "#f5f5f5";
 
   // ── SfM: sparse points appearing + cameras orbiting ──
   // ── SfM: camera moves along arc, sparse points accumulate ──
   const sfmDraw = (() => {
     const ctx = cSfm.getContext("2d");
-    const W = cSfm.width, H = cSfm.height;
+    const W = cSfm.width,
+      H = cSfm.height;
     const S = W / 200;
-    const cx = W * 0.5, cy = H * 0.62;
-    const arcR = W * 0.38, arcY = H * 0.18;
+    const cx = W * 0.5,
+      cy = H * 0.62;
+    const arcR = W * 0.38,
+      arcY = H * 0.18;
 
     const scenePts = [
-      {x:W*0.22,y:H*0.52},{x:W*0.35,y:H*0.44},{x:W*0.50,y:H*0.55},
-      {x:W*0.62,y:H*0.42},{x:W*0.76,y:H*0.50},{x:W*0.42,y:H*0.64},
-      {x:W*0.58,y:H*0.63},{x:W*0.28,y:H*0.68},{x:W*0.70,y:H*0.60},
-    ].map(p => ({ ...p, found: false }));
+      { x: W * 0.22, y: H * 0.52 },
+      { x: W * 0.35, y: H * 0.44 },
+      { x: W * 0.5, y: H * 0.55 },
+      { x: W * 0.62, y: H * 0.42 },
+      { x: W * 0.76, y: H * 0.5 },
+      { x: W * 0.42, y: H * 0.64 },
+      { x: W * 0.58, y: H * 0.63 },
+      { x: W * 0.28, y: H * 0.68 },
+      { x: W * 0.7, y: H * 0.6 },
+    ].map((p) => ({ ...p, found: false }));
 
-    const camPath = Array.from({length: 7}, (_, i) => ({
-      x: W*0.12 + (i/6) * W*0.76,
-      y: arcY + Math.sin((i/6) * Math.PI) * (-18 * S),
+    const camPath = Array.from({ length: 7 }, (_, i) => ({
+      x: W * 0.12 + (i / 6) * W * 0.76,
+      y: arcY + Math.sin((i / 6) * Math.PI) * (-18 * S),
     }));
 
-    const SWEEP = 200, HOLD = 40, CYCLE = (SWEEP + HOLD) * 2;
+    const SWEEP = 200,
+      HOLD = 40,
+      CYCLE = (SWEEP + HOLD) * 2;
     let t = 0;
 
     const drawCamIcon = (x, y, angle) => {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-      ctx.fillStyle = ACCENT; ctx.fillRect(-6*S, -4*S, 12*S, 8*S);
-      ctx.beginPath(); ctx.arc(7*S, 0, 3*S, 0, Math.PI*2);
-      ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillStyle = ACCENT;
+      ctx.fillRect(-6 * S, -4 * S, 12 * S, 8 * S);
+      ctx.beginPath();
+      ctx.arc(7 * S, 0, 3 * S, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
       ctx.restore();
     };
 
@@ -2061,54 +2077,71 @@ export function initClassic() {
       const phase = t % CYCLE;
 
       let prog;
-      if      (phase < SWEEP)            prog = phase / SWEEP;
-      else if (phase < SWEEP + HOLD)     prog = 1;
-      else if (phase < SWEEP*2 + HOLD)   prog = 1 - (phase - SWEEP - HOLD) / SWEEP;
-      else                               prog = 0;
+      if (phase < SWEEP) prog = phase / SWEEP;
+      else if (phase < SWEEP + HOLD) prog = 1;
+      else if (phase < SWEEP * 2 + HOLD)
+        prog = 1 - (phase - SWEEP - HOLD) / SWEEP;
+      else prog = 0;
 
       const goingRight = phase < SWEEP + HOLD;
-      const camX = W*0.12 + prog * W*0.76;
+      const camX = W * 0.12 + prog * W * 0.76;
       const camY = arcY + Math.sin(prog * Math.PI) * (-18 * S);
 
-      scenePts.forEach(p => {
-        if ( goingRight && !p.found && camX >= p.x) p.found = true;
-        if (!goingRight &&  p.found && camX <= p.x) p.found = false;
+      scenePts.forEach((p) => {
+        if (goingRight && !p.found && camX >= p.x) p.found = true;
+        if (!goingRight && p.found && camX <= p.x) p.found = false;
       });
 
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
 
-      ctx.setLineDash([3*S, 5*S]);
-      ctx.beginPath(); ctx.moveTo(W*0.12, arcY); ctx.lineTo(W*0.88, arcY);
-      ctx.strokeStyle = "rgba(255,90,54,0.1)"; ctx.lineWidth = S; ctx.stroke();
+      ctx.setLineDash([3 * S, 5 * S]);
+      ctx.beginPath();
+      ctx.moveTo(W * 0.12, arcY);
+      ctx.lineTo(W * 0.88, arcY);
+      ctx.strokeStyle = "rgba(255,90,54,0.1)";
+      ctx.lineWidth = S;
+      ctx.stroke();
       ctx.setLineDash([]);
 
       if (goingRight) {
         ctx.beginPath();
-        ctx.moveTo(W*0.12, arcY);
+        ctx.moveTo(W * 0.12, arcY);
         ctx.lineTo(camX, camY);
-        ctx.strokeStyle = "rgba(255,90,54,0.38)"; ctx.lineWidth = S; ctx.stroke();
+        ctx.strokeStyle = "rgba(255,90,54,0.38)";
+        ctx.lineWidth = S;
+        ctx.stroke();
       }
 
-      camPath.forEach(stop => {
+      camPath.forEach((stop) => {
         if (goingRight) {
-          if (stop.x > camX + 4*S) return;
+          if (stop.x > camX + 4 * S) return;
         } else {
           if (stop.x > camX) return;
         }
-        ctx.save(); ctx.translate(stop.x, stop.y);
-        ctx.fillStyle = "rgba(255,90,54,0.5)"; ctx.fillRect(-4*S,-2.5*S,8*S,5*S);
+        ctx.save();
+        ctx.translate(stop.x, stop.y);
+        ctx.fillStyle = "rgba(255,90,54,0.5)";
+        ctx.fillRect(-4 * S, -2.5 * S, 8 * S, 5 * S);
         ctx.restore();
       });
 
-      if (goingRight) scenePts.forEach(p => {
-        if (!p.found) return;
-        ctx.beginPath(); ctx.moveTo(camX, camY); ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = "rgba(255,90,54,0.12)"; ctx.lineWidth = 0.7*S; ctx.stroke();
-      });
+      if (goingRight)
+        scenePts.forEach((p) => {
+          if (!p.found) return;
+          ctx.beginPath();
+          ctx.moveTo(camX, camY);
+          ctx.lineTo(p.x, p.y);
+          ctx.strokeStyle = "rgba(255,90,54,0.12)";
+          ctx.lineWidth = 0.7 * S;
+          ctx.stroke();
+        });
 
-      scenePts.forEach(p => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.found ? 2.8*S : 1.5*S, 0, Math.PI*2);
-        ctx.fillStyle = p.found ? INK : "rgba(0,0,0,0.15)"; ctx.fill();
+      scenePts.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.found ? 2.8 * S : 1.5 * S, 0, Math.PI * 2);
+        ctx.fillStyle = p.found ? INK : "rgba(0,0,0,0.15)";
+        ctx.fill();
       });
 
       const angle = Math.PI * 0.5 + (prog - 0.5) * 0.4;
@@ -2119,20 +2152,25 @@ export function initClassic() {
   // ── MVS: sparse → dense split with sweeping divider ──
   const mvsDraw = (() => {
     const ctx = cMvs.getContext("2d");
-    const W = cMvs.width, H = cMvs.height;
+    const W = cMvs.width,
+      H = cMvs.height;
     const S = W / 200;
-    const cx = W * 0.5, cy = H * 0.5;
+    const cx = W * 0.5,
+      cy = H * 0.5;
     const R = Math.round(42 * S);
-    const STEP = 4.5 * S, SPARSE = 13 * S;
+    const STEP = 4.5 * S,
+      SPARSE = 13 * S;
 
-    const dense = [], sparse = [];
+    const dense = [],
+      sparse = [];
     for (let dy = -R; dy <= R; dy += STEP) {
       for (let dx = -R; dx <= R; dx += STEP) {
-        if (dx*dx + dy*dy > R*R) continue;
-        const dz = Math.sqrt(Math.max(0, 1 - (dx*dx + dy*dy) / (R*R)));
-        const p = { x: cx+dx, y: cy+dy, z: dz };
+        if (dx * dx + dy * dy > R * R) continue;
+        const dz = Math.sqrt(Math.max(0, 1 - (dx * dx + dy * dy) / (R * R)));
+        const p = { x: cx + dx, y: cy + dy, z: dz };
         dense.push(p);
-        if (Math.abs(dx % SPARSE) < 5*S && Math.abs(dy % SPARSE) < 5*S) sparse.push(p);
+        if (Math.abs(dx % SPARSE) < 5 * S && Math.abs(dy % SPARSE) < 5 * S)
+          sparse.push(p);
       }
     }
 
@@ -2141,42 +2179,54 @@ export function initClassic() {
       t += dtScale;
       const divX = cx + Math.sin(t * 0.016) * (W * 0.44);
 
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
 
-      sparse.forEach(p => {
+      sparse.forEach((p) => {
         if (p.x > divX) return;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2*S, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2 * S, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.fill();
       });
 
-      dense.forEach(p => {
+      dense.forEach((p) => {
         if (p.x <= divX) return;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 2*S, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(10,80,200,0.85)"; ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2 * S, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(10,80,200,0.85)";
+        ctx.fill();
       });
 
-      ctx.beginPath(); ctx.moveTo(divX, cy - R - 4*S); ctx.lineTo(divX, cy + R + 4*S);
-      ctx.strokeStyle = ACCENT; ctx.lineWidth = 1.5*S; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(divX, cy - R - 4 * S);
+      ctx.lineTo(divX, cy + R + 4 * S);
+      ctx.strokeStyle = ACCENT;
+      ctx.lineWidth = 1.5 * S;
+      ctx.stroke();
     };
   })();
 
   // ── Photogrammetry: rotating vase wireframe + orbiting camera ──
   const photoDraw = (() => {
     const ctx = cPhoto.getContext("2d");
-    const W = cPhoto.width, H = cPhoto.height, cx = W / 2, cy = H / 2;
+    const W = cPhoto.width,
+      H = cPhoto.height,
+      cx = W / 2,
+      cy = H / 2;
     const pxS = W / 200;
     const S = 20 * pxS;
     const STEPS = 10; // rotational segments
     // Vase profile: {y, r} pairs from bottom to top
     const profile = [
-      {y:-2.8, r:0.25},
-      {y:-2.2, r:1.4},
-      {y:-1.2, r:1.7},
-      {y: 0.0, r:1.3},
-      {y: 1.2, r:1.6},
-      {y: 2.0, r:1.1},
-      {y: 2.5, r:0.7},
-      {y: 2.8, r:0.8},
+      { y: -2.8, r: 0.25 },
+      { y: -2.2, r: 1.4 },
+      { y: -1.2, r: 1.7 },
+      { y: 0.0, r: 1.3 },
+      { y: 1.2, r: 1.6 },
+      { y: 2.0, r: 1.1 },
+      { y: 2.5, r: 0.7 },
+      { y: 2.8, r: 0.8 },
     ];
     const RINGS = profile.length;
     // Build vertices
@@ -2184,61 +2234,93 @@ export function initClassic() {
     for (let r = 0; r < RINGS; r++) {
       for (let s = 0; s < STEPS; s++) {
         const a = (s / STEPS) * Math.PI * 2;
-        v3.push([Math.cos(a) * profile[r].r, profile[r].y, Math.sin(a) * profile[r].r]);
+        v3.push([
+          Math.cos(a) * profile[r].r,
+          profile[r].y,
+          Math.sin(a) * profile[r].r,
+        ]);
       }
     }
     // Build edges: ring edges + vertical edges
     const edges = [];
     for (let r = 0; r < RINGS; r++) {
       for (let s = 0; s < STEPS; s++) {
-        edges.push([r*STEPS+s, r*STEPS+(s+1)%STEPS]);       // ring
-        if (r < RINGS-1) edges.push([r*STEPS+s, (r+1)*STEPS+s]); // vertical
+        edges.push([r * STEPS + s, r * STEPS + ((s + 1) % STEPS)]); // ring
+        if (r < RINGS - 1) edges.push([r * STEPS + s, (r + 1) * STEPS + s]); // vertical
       }
     }
     let t = 0;
     return (dtScale = 1) => {
       t += dtScale;
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-      const rx = t * 0.008, ry = t * 0.018;
-      const cX = Math.cos(rx), sX = Math.sin(rx), cY = Math.cos(ry), sY = Math.sin(ry);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
+      const rx = t * 0.008,
+        ry = t * 0.018;
+      const cX = Math.cos(rx),
+        sX = Math.sin(rx),
+        cY = Math.cos(ry),
+        sY = Math.sin(ry);
       const proj = v3.map(([x, y, z]) => {
-        const y2 = y*cX - z*sX, z2 = y*sX + z*cX;
-        const x3 = x*cY + z2*sY;
-        return [cx + x3*S, cy - y2*S];
+        const y2 = y * cX - z * sX,
+          z2 = y * sX + z * cX;
+        const x3 = x * cY + z2 * sY;
+        return [cx + x3 * S, cy - y2 * S];
       });
-      ctx.strokeStyle = "rgba(26,26,26,0.7)"; ctx.lineWidth = pxS;
+      ctx.strokeStyle = "rgba(26,26,26,0.7)";
+      ctx.lineWidth = pxS;
       edges.forEach(([a, b]) => {
-        ctx.beginPath(); ctx.moveTo(...proj[a]); ctx.lineTo(...proj[b]); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(...proj[a]);
+        ctx.lineTo(...proj[b]);
+        ctx.stroke();
       });
       // Orbiting camera
       const ca = t * 0.032;
-      const bx = cx + Math.cos(ca)*W*0.41, by = cy + Math.sin(ca)*H*0.37;
-      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy);
-      ctx.strokeStyle = "rgba(255,90,54,0.22)"; ctx.lineWidth = 0.9*pxS; ctx.stroke();
-      ctx.fillStyle = ACCENT; ctx.fillRect(bx-5*pxS, by-3.5*pxS, 10*pxS, 7*pxS);
+      const bx = cx + Math.cos(ca) * W * 0.41,
+        by = cy + Math.sin(ca) * H * 0.37;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle = "rgba(255,90,54,0.22)";
+      ctx.lineWidth = 0.9 * pxS;
+      ctx.stroke();
+      ctx.fillStyle = ACCENT;
+      ctx.fillRect(bx - 5 * pxS, by - 3.5 * pxS, 10 * pxS, 7 * pxS);
     };
   })();
 
   // ── LiDAR: sweeping beam accumulating hit points ──
   const lidarDraw = (() => {
     const ctx = cLidar.getContext("2d");
-    const W = cLidar.width, H = cLidar.height;
+    const W = cLidar.width,
+      H = cLidar.height;
     const S = W / 200;
-    const sx = W * 0.5, sy = H * 0.88;
+    const sx = W * 0.5,
+      sy = H * 0.88;
     const walls = [
-      [W*0.18,H*0.28,W*0.50,H*0.28],[W*0.50,H*0.28,W*0.50,H*0.68],
-      [W*0.18,H*0.28,W*0.18,H*0.68],[W*0.62,H*0.38,W*0.82,H*0.38],
-      [W*0.82,H*0.38,W*0.82,H*0.68],
+      [W * 0.18, H * 0.28, W * 0.5, H * 0.28],
+      [W * 0.5, H * 0.28, W * 0.5, H * 0.68],
+      [W * 0.18, H * 0.28, W * 0.18, H * 0.68],
+      [W * 0.62, H * 0.38, W * 0.82, H * 0.38],
+      [W * 0.82, H * 0.38, W * 0.82, H * 0.68],
     ];
-    const intersect = (ax,ay,bx,by,cx,cy,dx,dy) => {
-      const rx=bx-ax,ry=by-ay,sx2=dx-cx,sy2=dy-cy,cross=rx*sy2-ry*sx2;
-      if (Math.abs(cross)<1e-9) return null;
-      const t=(cx-ax)*sy2-(cy-ay)*sx2,u=(cx-ax)*ry-(cy-ay)*rx;
-      return (t/cross>=0 && u/cross>=0 && u/cross<=1)
-        ? [ax+(t/cross)*rx, ay+(t/cross)*ry] : null;
+    const intersect = (ax, ay, bx, by, cx, cy, dx, dy) => {
+      const rx = bx - ax,
+        ry = by - ay,
+        sx2 = dx - cx,
+        sy2 = dy - cy,
+        cross = rx * sy2 - ry * sx2;
+      if (Math.abs(cross) < 1e-9) return null;
+      const t = (cx - ax) * sy2 - (cy - ay) * sx2,
+        u = (cx - ax) * ry - (cy - ay) * rx;
+      return t / cross >= 0 && u / cross >= 0 && u / cross <= 1
+        ? [ax + (t / cross) * rx, ay + (t / cross) * ry]
+        : null;
     };
     const pts = [];
-    const SWEEP_F = 220, PAUSE_F = 70, CYCLE = SWEEP_F + PAUSE_F;
+    const SWEEP_F = 220,
+      PAUSE_F = 70,
+      CYCLE = SWEEP_F + PAUSE_F;
     let t = 0;
     let prevCycle = 0;
     return (dtScale = 1) => {
@@ -2251,59 +2333,99 @@ export function initClassic() {
       }
       const sweeping = phase < SWEEP_F;
 
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
 
       // draw walls gray
-      ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1.2*S;
-      walls.forEach(([x1,y1,x2,y2]) => {
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.lineWidth = 1.2 * S;
+      walls.forEach(([x1, y1, x2, y2]) => {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
       });
 
-      // paint blue over walls — fade out during pause phase
-      const fadeAlpha = sweeping ? 0.85 : 0.85 * (1 - (phase - SWEEP_F) / PAUSE_F);
+      // paint blue over walls - fade out during pause phase
+      const fadeAlpha = sweeping
+        ? 0.85
+        : 0.85 * (1 - (phase - SWEEP_F) / PAUSE_F);
       if (fadeAlpha > 0) {
-        pts.forEach(p => {
-          ctx.beginPath(); ctx.arc(p.x, p.y, 1.2*S, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(10,80,200,${fadeAlpha})`; ctx.fill();
+        pts.forEach((p) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 1.2 * S, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(10,80,200,${fadeAlpha})`;
+          ctx.fill();
         });
       }
 
-      ctx.beginPath(); ctx.arc(sx, sy, 4*S, 0, Math.PI * 2);
-      ctx.fillStyle = ACCENT; ctx.fill();
+      ctx.beginPath();
+      ctx.arc(sx, sy, 4 * S, 0, Math.PI * 2);
+      ctx.fillStyle = ACCENT;
+      ctx.fill();
 
       if (!sweeping) return;
 
-      const FADE_IN = 20, FADE_OUT = 35;
-      const laserAlpha = phase < FADE_IN
-        ? phase / FADE_IN
-        : phase > SWEEP_F - FADE_OUT
-          ? (SWEEP_F - phase) / FADE_OUT
-          : 1;
+      const FADE_IN = 20,
+        FADE_OUT = 35;
+      const laserAlpha =
+        phase < FADE_IN
+          ? phase / FADE_IN
+          : phase > SWEEP_F - FADE_OUT
+            ? (SWEEP_F - phase) / FADE_OUT
+            : 1;
 
       const sweep = (phase / SWEEP_F) * Math.PI - Math.PI * 0.5;
       const ang = -Math.PI / 2 + sweep;
-      const edx = Math.cos(ang) * H * 1.6, edy = Math.sin(ang) * H * 1.6;
-      let hit = null, minD = Infinity;
-      walls.forEach(([x1,y1,x2,y2]) => {
-        const h = intersect(sx,sy,sx+edx,sy+edy,x1,y1,x2,y2);
-        if (h) { const d=Math.hypot(h[0]-sx,h[1]-sy); if(d<minD){minD=d;hit=h;} }
+      const edx = Math.cos(ang) * H * 1.6,
+        edy = Math.sin(ang) * H * 1.6;
+      let hit = null,
+        minD = Infinity;
+      walls.forEach(([x1, y1, x2, y2]) => {
+        const h = intersect(sx, sy, sx + edx, sy + edy, x1, y1, x2, y2);
+        if (h) {
+          const d = Math.hypot(h[0] - sx, h[1] - sy);
+          if (d < minD) {
+            minD = d;
+            hit = h;
+          }
+        }
       });
-      const beamEnd = hit ? [hit[0], hit[1]] : [sx + edx * 0.25, sy + edy * 0.25];
-      if (hit) pts.push({ x:hit[0], y:hit[1] });
+      const beamEnd = hit
+        ? [hit[0], hit[1]]
+        : [sx + edx * 0.25, sy + edy * 0.25];
+      if (hit) pts.push({ x: hit[0], y: hit[1] });
       // glow halo under beam
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = `rgba(255,90,54,${0.15 * laserAlpha})`; ctx.lineWidth = 2.5*S; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(beamEnd[0], beamEnd[1]);
+      ctx.strokeStyle = `rgba(255,90,54,${0.15 * laserAlpha})`;
+      ctx.lineWidth = 2.5 * S;
+      ctx.stroke();
       // main beam
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(beamEnd[0], beamEnd[1]);
-      ctx.strokeStyle = `rgba(255,90,54,${0.92 * laserAlpha})`; ctx.lineWidth = 0.8*S; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(beamEnd[0], beamEnd[1]);
+      ctx.strokeStyle = `rgba(255,90,54,${0.92 * laserAlpha})`;
+      ctx.lineWidth = 0.8 * S;
+      ctx.stroke();
       // wall impact flash
       if (hit) {
-        const ig = ctx.createRadialGradient(hit[0], hit[1], 0, hit[0], hit[1], 6*S);
+        const ig = ctx.createRadialGradient(
+          hit[0],
+          hit[1],
+          0,
+          hit[0],
+          hit[1],
+          6 * S,
+        );
         ig.addColorStop(0, `rgba(255,200,140,${laserAlpha})`);
         ig.addColorStop(0.4, `rgba(255,90,54,${0.7 * laserAlpha})`);
         ig.addColorStop(1, "rgba(255,90,54,0)");
-        ctx.beginPath(); ctx.arc(hit[0], hit[1], 6*S, 0, Math.PI * 2);
-        ctx.fillStyle = ig; ctx.fill();
+        ctx.beginPath();
+        ctx.arc(hit[0], hit[1], 6 * S, 0, Math.PI * 2);
+        ctx.fillStyle = ig;
+        ctx.fill();
       }
     };
   })();
@@ -2311,27 +2433,46 @@ export function initClassic() {
   // ── Light Fields: grid of cameras pulsing rays to centre ──
   const lfDraw = (() => {
     const ctx = cLf.getContext("2d");
-    const W = cLf.width, H = cLf.height, cx = W / 2, cy = H * 0.62;
+    const W = cLf.width,
+      H = cLf.height,
+      cx = W / 2,
+      cy = H * 0.62;
     const S = W / 200;
     const grid = [];
     for (let r = 0; r < 3; r++)
       for (let c = 0; c < 5; c++)
-        grid.push({ x: W*0.1 + c*(W*0.8/4), y: H*0.1 + r*(H*0.32/2), ph: (r*5+c)*0.42 });
+        grid.push({
+          x: W * 0.1 + c * ((W * 0.8) / 4),
+          y: H * 0.1 + r * ((H * 0.32) / 2),
+          ph: (r * 5 + c) * 0.42,
+        });
     let t = 0;
     return (dtScale = 1) => {
       t += dtScale;
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-      grid.forEach(cam => {
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, W, H);
+      grid.forEach((cam) => {
         const pulse = 0.5 + 0.5 * Math.sin(t * 0.028 + cam.ph);
-        ctx.beginPath(); ctx.moveTo(cam.x, cam.y); ctx.lineTo(cx, cy);
-        ctx.strokeStyle = `rgba(255,90,54,${0.04 + pulse * 0.82})`; ctx.lineWidth = 0.5*S; ctx.stroke();
-        ctx.beginPath(); ctx.arc(cam.x, cam.y, (1 + pulse * 1.2) * S, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(26,26,26,${0.15 + pulse * 0.85})`; ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cam.x, cam.y);
+        ctx.lineTo(cx, cy);
+        ctx.strokeStyle = `rgba(255,90,54,${0.04 + pulse * 0.82})`;
+        ctx.lineWidth = 0.5 * S;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cam.x, cam.y, (1 + pulse * 1.2) * S, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(26,26,26,${0.15 + pulse * 0.85})`;
+        ctx.fill();
       });
-      ctx.beginPath(); ctx.arc(cx, cy, 7*S, 0, Math.PI * 2);
-      ctx.fillStyle = ACCENT; ctx.fill();
-      ctx.beginPath(); ctx.arc(cx, cy, 7*S, 0, Math.PI * 2);
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5*S; ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 7 * S, 0, Math.PI * 2);
+      ctx.fillStyle = ACCENT;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 7 * S, 0, Math.PI * 2);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5 * S;
+      ctx.stroke();
     };
   })();
 
@@ -2340,7 +2481,7 @@ export function initClassic() {
   return {
     tick(visible, dtScale = 1) {
       if (!visible) return;
-      draws.forEach(fn => fn(dtScale));
+      draws.forEach((fn) => fn(dtScale));
     },
     enter() {},
   };
@@ -3163,13 +3304,17 @@ export function initProblemVis() {
     canvas.style.cursor = "grabbing";
   };
   // Max phi that keeps camera above floor (floor y = -0.5, add 0.2 margin)
-  const maxPhi = () => Math.acos(Math.max(-0.999, (-0.5 + 0.2 - target.y) / sph.r));
+  const maxPhi = () =>
+    Math.acos(Math.max(-0.999, (-0.5 + 0.2 - target.y) / sph.r));
 
   const moveDrag = (e) => {
     if (!isDown) return;
     const t = e.touches ? e.touches[0] : e;
     sph.theta -= (t.clientX - px) * 0.007;
-    sph.phi = Math.max(0.15, Math.min(maxPhi(), sph.phi + (t.clientY - py) * 0.007));
+    sph.phi = Math.max(
+      0.15,
+      Math.min(maxPhi(), sph.phi + (t.clientY - py) * 0.007),
+    );
     px = t.clientX;
     py = t.clientY;
     applyCamera();
@@ -3241,10 +3386,24 @@ export function initProblemVis() {
 
   stampClose.addEventListener("click", closeStamp);
   window.addEventListener("wheel", closeStamp, { passive: true });
-  window.addEventListener("keydown", (e) => {
-    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","PageUp","PageDown"," "].includes(e.key))
-      closeStamp();
-  }, { passive: true });
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (
+        [
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+          "PageUp",
+          "PageDown",
+          " ",
+        ].includes(e.key)
+      )
+        closeStamp();
+    },
+    { passive: true },
+  );
 
   // ── Tick ───────────────────────────────────────────────
   let t = 0;
@@ -3259,15 +3418,15 @@ export function initProblemVis() {
 }
 
 /* =========================================================
-   Slide 4: Static → Spatial — 3-phase NeRF pipeline demo
+   Slide 4: Static → Spatial - 3-phase NeRF pipeline demo
    Phase 1 → input images (video)
    Phase 2 → camera-sphere visualization (Three.js)
    Phase 3 → 3D rotatable drum kit (Three.js)
    ========================================================= */
 export function initStaticToSpatial() {
-  const orb  = document.getElementById("sts-orb");
+  const orb = document.getElementById("sts-orb");
   const img1 = document.getElementById("sts-img");
-  const c2   = document.getElementById("sts-c2");
+  const c2 = document.getElementById("sts-c2");
   const img3 = document.getElementById("sts-img3");
   if (!orb || !img1 || !c2 || !img3) return { tick() {} };
 
@@ -3275,15 +3434,23 @@ export function initStaticToSpatial() {
 
   // ── Phase 1: 20 evenly-spaced drum stills, slow cycling ──
   const P1_SLOW = 42; // ticks between frames (~700ms at 60fps)
-  const p1Urls  = Array.from({ length: 20 }, (_, i) => `assets/test/r_${i * 10}.png`);
-  let p1Idx = 0, p1Tick = 0;
+  const p1Urls = Array.from(
+    { length: 20 },
+    (_, i) => `assets/test/r_${i * 10}.png`,
+  );
+  let p1Idx = 0,
+    p1Tick = 0;
   img1.src = p1Urls[0];
 
   // ── Phase 2: Three.js camera-sphere (NeRF paper style) ─
-  const r2   = new THREE.WebGLRenderer({ canvas: c2, antialias: true, alpha: false });
+  const r2 = new THREE.WebGLRenderer({
+    canvas: c2,
+    antialias: true,
+    alpha: false,
+  });
   r2.setClearColor(0xffffff, 1);
   r2.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  const s2   = new THREE.Scene();
+  const s2 = new THREE.Scene();
   const cam2 = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
 
   // Impostor drum: actual render swapped per camera angle (looks pixel-perfect)
@@ -3308,59 +3475,85 @@ export function initStaticToSpatial() {
     return img;
   });
   // Show first frame immediately once loaded
-  iImgs[0].onload = () => { impostorTex.image = iImgs[0]; impostorTex.needsUpdate = true; };
+  iImgs[0].onload = () => {
+    impostorTex.image = iImgs[0];
+    impostorTex.needsUpdate = true;
+  };
   let lastIIdx = -1;
 
   // Camera frustums on dome (hemisphere, ring-based)
-  const CAM_R  = 2.8;
-  const FDEPTH = 0.30;
-  const FHW    = 0.13;
-  const FHH    = 0.09;
+  const CAM_R = 2.8;
+  const FDEPTH = 0.3;
+  const FHW = 0.13;
+  const FHH = 0.09;
 
   const makeFrustum = (pos) => {
-    const dir  = pos.clone().normalize().negate(); // inward toward drum
-    const tmp  = Math.abs(dir.y) < 0.9
-      ? new THREE.Vector3(0, 1, 0)
-      : new THREE.Vector3(1, 0, 0);
-    const rt   = new THREE.Vector3().crossVectors(dir, tmp).normalize();
-    const up3  = new THREE.Vector3().crossVectors(rt, dir).normalize();
+    const dir = pos.clone().normalize().negate(); // inward toward drum
+    const tmp =
+      Math.abs(dir.y) < 0.9
+        ? new THREE.Vector3(0, 1, 0)
+        : new THREE.Vector3(1, 0, 0);
+    const rt = new THREE.Vector3().crossVectors(dir, tmp).normalize();
+    const up3 = new THREE.Vector3().crossVectors(rt, dir).normalize();
     const apex = pos.clone();
-    const bc   = pos.clone().addScaledVector(dir, FDEPTH);
-    const co   = [
-      bc.clone().addScaledVector(rt,  FHW).addScaledVector(up3,  FHH),
-      bc.clone().addScaledVector(rt, -FHW).addScaledVector(up3,  FHH),
+    const bc = pos.clone().addScaledVector(dir, FDEPTH);
+    const co = [
+      bc.clone().addScaledVector(rt, FHW).addScaledVector(up3, FHH),
+      bc.clone().addScaledVector(rt, -FHW).addScaledVector(up3, FHH),
       bc.clone().addScaledVector(rt, -FHW).addScaledVector(up3, -FHH),
-      bc.clone().addScaledVector(rt,  FHW).addScaledVector(up3, -FHH),
+      bc.clone().addScaledVector(rt, FHW).addScaledVector(up3, -FHH),
     ];
     const pts = [
-      apex, co[0], apex, co[1], apex, co[2], apex, co[3],
-      co[0], co[1], co[1], co[2], co[2], co[3], co[3], co[0],
+      apex,
+      co[0],
+      apex,
+      co[1],
+      apex,
+      co[2],
+      apex,
+      co[3],
+      co[0],
+      co[1],
+      co[1],
+      co[2],
+      co[2],
+      co[3],
+      co[3],
+      co[0],
     ];
     return new THREE.LineSegments(
       new THREE.BufferGeometry().setFromPoints(pts),
-      new THREE.LineBasicMaterial({ color: 0x222222 })
+      new THREE.LineBasicMaterial({ color: 0x222222 }),
     );
   };
 
-  // Concentric latitude rings — dome + base ring at drum level
+  // Concentric latitude rings - dome + base ring at drum level
   const domeRings = [
     { el: -12, count: 9, offset: Math.PI / 9 },
-    { el: 10,  count: 8, offset: 0 },
-    { el: 32,  count: 7, offset: Math.PI / 7 },
-    { el: 54,  count: 5, offset: Math.PI / 5 },
-    { el: 74,  count: 3, offset: Math.PI / 6 },
+    { el: 10, count: 8, offset: 0 },
+    { el: 32, count: 7, offset: Math.PI / 7 },
+    { el: 54, count: 5, offset: Math.PI / 5 },
+    { el: 74, count: 3, offset: Math.PI / 6 },
   ];
-  const toRad = d => d * Math.PI / 180;
+  const toRad = (d) => (d * Math.PI) / 180;
   for (const { el, count, offset } of domeRings) {
     const phi = toRad(el);
-    const yp  = Math.sin(phi) * CAM_R;
-    const rp  = Math.cos(phi) * CAM_R;
+    const yp = Math.sin(phi) * CAM_R;
+    const rp = Math.cos(phi) * CAM_R;
     for (let k = 0; k < count; k++) {
-      const az  = (k / count) * Math.PI * 2 + offset;
+      const az = (k / count) * Math.PI * 2 + offset;
       const pos = new THREE.Vector3(Math.cos(az) * rp, yp, Math.sin(az) * rp);
       const rayEnd = pos.clone().multiplyScalar(0.85);
-      const rayGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), rayEnd]);
-      s2.add(new THREE.LineSegments(rayGeo, new THREE.LineBasicMaterial({ color: 0xcccccc })));
+      const rayGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(),
+        rayEnd,
+      ]);
+      s2.add(
+        new THREE.LineSegments(
+          rayGeo,
+          new THREE.LineBasicMaterial({ color: 0xcccccc }),
+        ),
+      );
       s2.add(makeFrustum(pos));
     }
   }
@@ -3372,16 +3565,23 @@ export function initStaticToSpatial() {
   };
   updateCam2();
 
-  // ── Phase 3: NeRF orbit — all 200 frames cycling ────────
-  const NERF_N   = 200;
-  const nerfUrls = Array.from({ length: NERF_N }, (_, i) => `assets/test/r_${i}.png`);
-  let p3Idx = 0, p3Tick = 0;
+  // ── Phase 3: NeRF orbit - all 200 frames cycling ────────
+  const NERF_N = 200;
+  const nerfUrls = Array.from(
+    { length: NERF_N },
+    (_, i) => `assets/test/r_${i}.png`,
+  );
+  let p3Idx = 0,
+    p3Tick = 0;
   let p3Preloaded = false;
 
   const preloadPhase3 = () => {
     if (p3Preloaded) return;
     p3Preloaded = true;
-    nerfUrls.forEach(url => { const pre = new Image(); pre.src = url; });
+    nerfUrls.forEach((url) => {
+      const pre = new Image();
+      pre.src = url;
+    });
   };
 
   // ── Resize ─────────────────────────────────────────────
@@ -3400,7 +3600,8 @@ export function initStaticToSpatial() {
     orb.dataset.phase = String(p);
     if (p === 3) {
       preloadPhase3();
-      p3Idx = 0; p3Tick = 0;
+      p3Idx = 0;
+      p3Tick = 0;
       img3.src = nerfUrls[0];
     }
   }
@@ -3444,38 +3645,43 @@ export function initStaticToSpatial() {
 }
 
 /* ============================================================
-   SLIDE 7 — SfM vs LiDAR interactive split
+   SLIDE 7 - SfM vs LiDAR interactive split
    ============================================================ */
 export function initSfMLiDAR() {
   const split = document.getElementById("compare-split");
   if (!split) return { tick() {}, enter() {} };
 
   const panels = Array.from(split.querySelectorAll(".cp-panel"));
-  const fills  = {};
-  panels.forEach(p => { fills[p.dataset.side] = p.querySelector(".cp-charge-fill"); });
+  const fills = {};
+  panels.forEach((p) => {
+    fills[p.dataset.side] = p.querySelector(".cp-charge-fill");
+  });
 
-  const charges  = { sfm: 0, lidar: 0 };
+  const charges = { sfm: 0, lidar: 0 };
   const pressing = { sfm: false, lidar: false };
-  let   active   = null;
+  let active = null;
 
   const VIS_ACCENT = "#ff5a36";
-  const VIS_INK    = "#1a1a1a";
+  const VIS_INK = "#1a1a1a";
 
   // ── SfM panel canvas: real bunny polaroids → 3D bunny rotating in orbit ──
   const sfmVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-sfm");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;   // 400 × 340
+    const W = cv.width,
+      H = cv.height; // 400 × 340
 
     const BASE = "assets/generated/bunny_renders/";
-    const SPRITE_FRAMES = 36, SPRITE_COLS = 6;
-    const SPRITE_FW = 300, SPRITE_FH = 300;
+    const SPRITE_FRAMES = 36,
+      SPRITE_COLS = 6;
+    const SPRITE_FW = 300,
+      SPRITE_FH = 300;
 
     // Real bunny polaroid images (9 angles)
-    const polaroidImgs = Array.from({length: 9}, (_, i) => {
+    const polaroidImgs = Array.from({ length: 9 }, (_, i) => {
       const img = new Image();
-      img.src = BASE + `polaroid_${String(i).padStart(2,"0")}.png`;
+      img.src = BASE + `polaroid_${String(i).padStart(2, "0")}.png`;
       return img;
     });
 
@@ -3483,17 +3689,27 @@ export function initSfMLiDAR() {
     const spriteSheet = new Image();
     spriteSheet.src = BASE + "sprite_sheet.png";
 
-    // Photo positions: (x, y, rotation_rad) — scattered 3×3 grid on left zone
+    // Photo positions: (x, y, rotation_rad) - scattered 3×3 grid on left zone
     // Canvas is now 520×340: photos on left ~x:15-155, orbit on right ~x:310-500
     const photos = [
-      [46, 78, -0.28], [94, 58, 0.16], [142, 80, -0.10],
-      [22, 158, 0.13], [76, 155, -0.22], [134, 157, 0.19],
-      [46, 236, -0.07], [96, 226, 0.23], [142, 238, -0.16],
+      [46, 78, -0.28],
+      [94, 58, 0.16],
+      [142, 80, -0.1],
+      [22, 158, 0.13],
+      [76, 155, -0.22],
+      [134, 157, 0.19],
+      [46, 236, -0.07],
+      [96, 226, 0.23],
+      [142, 238, -0.16],
     ];
 
-    const PW = 72, PH = 84;   // polaroid display size on canvas
-    const ox = 390, oy = H * 0.57;   // orbit centre shifted right + down
-    const rx = 90, ry1 = 54, ry2 = 28;
+    const PW = 72,
+      PH = 84; // polaroid display size on canvas
+    const ox = 390,
+      oy = H * 0.57; // orbit centre shifted right + down
+    const rx = 90,
+      ry1 = 54,
+      ry2 = 28;
     const N = 26;
     let t = 0;
 
@@ -3503,17 +3719,20 @@ export function initSfMLiDAR() {
       ctx.rotate(angle);
       // Drop shadow
       ctx.shadowColor = "rgba(0,0,0,0.16)";
-      ctx.shadowBlur = 7; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+      ctx.shadowBlur = 7;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 3;
       ctx.fillStyle = "#f8f6f2";
-      ctx.fillRect(-PW/2, -PH/2, PW, PH);
+      ctx.fillRect(-PW / 2, -PH / 2, PW, PH);
       ctx.shadowColor = "transparent";
       // Bunny photo inside frame
-      const m = 4, bot = 11;
+      const m = 4,
+        bot = 11;
       if (img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, -PW/2+m, -PH/2+m, PW-m*2, PH-m-bot);
+        ctx.drawImage(img, -PW / 2 + m, -PH / 2 + m, PW - m * 2, PH - m - bot);
       } else {
         ctx.fillStyle = "#d8d4ce";
-        ctx.fillRect(-PW/2+m, -PH/2+m, PW-m*2, PH-m-bot);
+        ctx.fillRect(-PW / 2 + m, -PH / 2 + m, PW - m * 2, PH - m - bot);
       }
       ctx.restore();
     };
@@ -3526,73 +3745,133 @@ export function initSfMLiDAR() {
       photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
       // Arrow (centred in the gap between photos and orbit)
-      const ax = 210, ay = H*0.5, aw = 32, ah = 8;
+      const ax = 210,
+        ay = H * 0.5,
+        aw = 32,
+        ah = 8;
       ctx.fillStyle = "#909090";
       ctx.beginPath();
-      ctx.moveTo(ax, ay-ah/2); ctx.lineTo(ax+aw-ah, ay-ah/2);
-      ctx.lineTo(ax+aw-ah, ay-ah); ctx.lineTo(ax+aw, ay);
-      ctx.lineTo(ax+aw-ah, ay+ah); ctx.lineTo(ax+aw-ah, ay+ah/2);
-      ctx.lineTo(ax, ay+ah/2); ctx.closePath(); ctx.fill();
+      ctx.moveTo(ax, ay - ah / 2);
+      ctx.lineTo(ax + aw - ah, ay - ah / 2);
+      ctx.lineTo(ax + aw - ah, ay - ah);
+      ctx.lineTo(ax + aw, ay);
+      ctx.lineTo(ax + aw - ah, ay + ah);
+      ctx.lineTo(ax + aw - ah, ay + ah / 2);
+      ctx.lineTo(ax, ay + ah / 2);
+      ctx.closePath();
+      ctx.fill();
 
       const rot = t * 0.007;
 
       // Orbit rings
-      const outer = Array.from({length: N}, (_, i) => {
-        const a = (i/N)*Math.PI*2 + rot;
-        return { x: ox+Math.cos(a)*rx, y: oy+Math.sin(a)*ry1, z: Math.sin(a) };
+      const outer = Array.from({ length: N }, (_, i) => {
+        const a = (i / N) * Math.PI * 2 + rot;
+        return {
+          x: ox + Math.cos(a) * rx,
+          y: oy + Math.sin(a) * ry1,
+          z: Math.sin(a),
+        };
       });
-      const inner = Array.from({length: N}, (_, i) => {
-        const a = (i/N)*Math.PI*2 - rot*0.55 + Math.PI*0.18;
-        return { x: ox+Math.cos(a)*rx*0.72, y: oy+Math.sin(a)*ry2, z: Math.sin(a) };
+      const inner = Array.from({ length: N }, (_, i) => {
+        const a = (i / N) * Math.PI * 2 - rot * 0.55 + Math.PI * 0.18;
+        return {
+          x: ox + Math.cos(a) * rx * 0.72,
+          y: oy + Math.sin(a) * ry2,
+          z: Math.sin(a),
+        };
       });
 
       // Back-half mesh + arcs
       ctx.lineWidth = 0.8;
       for (let i = 0; i < N; i++) {
-        const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
+        const o = outer[i],
+          inn = inner[i],
+          o2 = outer[(i + 1) % N];
         if (o.z > 0 || inn.z > 0) continue;
         ctx.strokeStyle = "rgba(175,38,28,0.13)";
-        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(inn.x,inn.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y);
+        ctx.lineTo(inn.x, inn.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y);
+        ctx.lineTo(o2.x, o2.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(inn.x, inn.y);
+        ctx.lineTo(o2.x, o2.y);
+        ctx.stroke();
       }
-      ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,Math.PI,Math.PI*2);
-      ctx.strokeStyle = "rgba(175,38,28,0.38)"; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,Math.PI,Math.PI*2);
-      ctx.strokeStyle = "rgba(175,38,28,0.30)"; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, rx, ry1, 0, Math.PI, Math.PI * 2);
+      ctx.strokeStyle = "rgba(175,38,28,0.38)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, rx * 0.72, ry2, 0, Math.PI, Math.PI * 2);
+      ctx.strokeStyle = "rgba(175,38,28,0.30)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
 
       // Rotating 3D bunny (sprite sheet, synced to orbit speed)
-      const frame = Math.floor(rot * SPRITE_FRAMES / (2 * Math.PI)) % SPRITE_FRAMES;
-      const fc = frame % SPRITE_COLS, fr = Math.floor(frame / SPRITE_COLS);
+      const frame =
+        Math.floor((rot * SPRITE_FRAMES) / (2 * Math.PI)) % SPRITE_FRAMES;
+      const fc = frame % SPRITE_COLS,
+        fr = Math.floor(frame / SPRITE_COLS);
       const bSize = 130;
       if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
         ctx.drawImage(
           spriteSheet,
-          fc * SPRITE_FW, fr * SPRITE_FH, SPRITE_FW, SPRITE_FH,
-          ox - bSize/2, oy - bSize/2 - 8, bSize, bSize
+          fc * SPRITE_FW,
+          fr * SPRITE_FH,
+          SPRITE_FW,
+          SPRITE_FH,
+          ox - bSize / 2,
+          oy - bSize / 2 - 8,
+          bSize,
+          bSize,
         );
       }
 
       // Front-half mesh + arcs (drawn over bunny)
       ctx.lineWidth = 0.8;
       for (let i = 0; i < N; i++) {
-        const o = outer[i], inn = inner[i], o2 = outer[(i+1)%N];
+        const o = outer[i],
+          inn = inner[i],
+          o2 = outer[(i + 1) % N];
         if (o.z <= 0 || inn.z <= 0) continue;
         ctx.strokeStyle = "rgba(175,38,28,0.13)";
-        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(inn.x,inn.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(inn.x,inn.y); ctx.lineTo(o2.x,o2.y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y);
+        ctx.lineTo(inn.x, inn.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y);
+        ctx.lineTo(o2.x, o2.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(inn.x, inn.y);
+        ctx.lineTo(o2.x, o2.y);
+        ctx.stroke();
       }
-      ctx.beginPath(); ctx.ellipse(ox,oy,rx,ry1,0,0,Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.80)"; ctx.lineWidth = 2; ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(ox,oy,rx*0.72,ry2,0,0,Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.68)"; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, rx, ry1, 0, 0, Math.PI);
+      ctx.strokeStyle = "rgba(175,38,28,0.80)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, rx * 0.72, ry2, 0, 0, Math.PI);
+      ctx.strokeStyle = "rgba(175,38,28,0.68)";
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
 
       // Camera dots
       for (let i = 0; i < N; i++) {
         const o = outer[i];
-        ctx.beginPath(); ctx.arc(o.x, o.y, 2.8, 0, Math.PI*2);
-        ctx.fillStyle = o.z > 0 ? "rgba(175,38,28,0.88)" : "rgba(175,38,28,0.32)";
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle =
+          o.z > 0 ? "rgba(175,38,28,0.88)" : "rgba(175,38,28,0.32)";
         ctx.fill();
       }
     };
@@ -3603,32 +3882,47 @@ export function initSfMLiDAR() {
     const cv = split.querySelector(".cp-vis-lf");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
-    const W = cv.width, H = cv.height;   // 400 × 340
+    const W = cv.width,
+      H = cv.height; // 400 × 340
 
     const BASE = "assets/generated/bunny_pipeline/";
-    const mk = s => { const i = new Image(); i.src = BASE + s; return i; };
-    const imgRGB   = mk("01_input_rgb.png");
+    const mk = (s) => {
+      const i = new Image();
+      i.src = BASE + s;
+      return i;
+    };
+    const imgRGB = mk("01_input_rgb.png");
     const imgDepth = mk("03_depth_colormap.png");
     const imgHoles = mk("07_left_view_holes_overlay.png");
-    const imgLeft  = mk("08_left_view_inpainted.png");
+    const imgLeft = mk("08_left_view_inpainted.png");
     const imgRight = mk("12_right_view_inpainted.png");
 
     // Grid: 2 columns × 3 rows
-    const COLS = 2, ROWS = 3, GAP = 4, LABEL_H = 16;
-    const CW = Math.floor((W - GAP * (COLS - 1)) / COLS);   // ~198
-    const CH = Math.floor((H - GAP * (ROWS - 1)) / ROWS);   // ~110
-    const IMG_H = CH - LABEL_H;                              // image area height
+    const COLS = 2,
+      ROWS = 3,
+      GAP = 4,
+      LABEL_H = 16;
+    const CW = Math.floor((W - GAP * (COLS - 1)) / COLS); // ~198
+    const CH = Math.floor((H - GAP * (ROWS - 1)) / ROWS); // ~110
+    const IMG_H = CH - LABEL_H; // image area height
 
-    const LABELS = ["קלט RGB", "מפת עומק", "פרוקסי 3D", "הזזה + חורים", "מבט ימין", "מבט שמאל"];
+    const LABELS = [
+      "קלט RGB",
+      "מפת עומק",
+      "פרוקסי 3D",
+      "הזזה + חורים",
+      "מבט ימין",
+      "מבט שמאל",
+    ];
 
     // Cell positions [cx, cy]
     const cells = [
-      [0,        0          ],   // 0: RGB
-      [CW + GAP, 0          ],   // 1: Depth
-      [0,        CH + GAP   ],   // 2: Particles
-      [CW + GAP, CH + GAP   ],   // 3: Warp
-      [0,        2*(CH+GAP) ],   // 4: Left novel view
-      [CW + GAP, 2*(CH+GAP) ],   // 5: Right novel view
+      [0, 0], // 0: RGB
+      [CW + GAP, 0], // 1: Depth
+      [0, CH + GAP], // 2: Particles
+      [CW + GAP, CH + GAP], // 3: Warp
+      [0, 2 * (CH + GAP)], // 4: Left novel view
+      [CW + GAP, 2 * (CH + GAP)], // 5: Right novel view
     ];
 
     // Pixel buffer for the particle cell (dirty-rect update, transparent background)
@@ -3636,7 +3930,11 @@ export function initSfMLiDAR() {
     const pd = pixBuf.data;
 
     let particles = null;
-    fetch(BASE + "particles.json").then(r => r.json()).then(d => { particles = d; });
+    fetch(BASE + "particles.json")
+      .then((r) => r.json())
+      .then((d) => {
+        particles = d;
+      });
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
@@ -3645,11 +3943,15 @@ export function initSfMLiDAR() {
       if (!img.complete || !img.naturalWidth) return;
       const [cx, cy] = cells[ci];
       ctx.save();
-      ctx.beginPath(); ctx.rect(cx, cy, CW, IMG_H); ctx.clip();
+      ctx.beginPath();
+      ctx.rect(cx, cy, CW, IMG_H);
+      ctx.clip();
       ctx.globalAlpha = alpha;
-      const iw = img.naturalWidth, ih = img.naturalHeight;
-      const s  = Math.min(CW / iw, IMG_H / ih) * zoom;
-      const dw = iw * s, dh = ih * s;
+      const iw = img.naturalWidth,
+        ih = img.naturalHeight;
+      const s = Math.min(CW / iw, IMG_H / ih) * zoom;
+      const dw = iw * s,
+        dh = ih * s;
       ctx.drawImage(img, cx + (CW - dw) / 2, cy + (IMG_H - dh) / 2, dw, dh);
       ctx.globalAlpha = 1;
       ctx.restore();
@@ -3675,29 +3977,49 @@ export function initSfMLiDAR() {
       for (let y = cy; y < cy + IH; y++) {
         for (let x = cx; x < cx + CW; x++) {
           const i = (y * W + x) * 4;
-          pd[i]=0; pd[i+1]=0; pd[i+2]=0; pd[i+3]=0;
+          pd[i] = 0;
+          pd[i + 1] = 0;
+          pd[i + 2] = 0;
+          pd[i + 3] = 0;
         }
       }
       const tilt = Math.min(t / 120, 1);
-      const CX = cx + CW / 2, CY = cy + IH / 2;
-      const SX = CW * 0.82,   SY = IH * 0.86;
+      const CX = cx + CW / 2,
+        CY = cy + IH / 2;
+      const SX = CW * 0.82,
+        SY = IH * 0.86;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        const nx = p[0], ny = p[1], nz = p[2], r = p[3], g = p[4], b = p[5];
+        const nx = p[0],
+          ny = p[1],
+          nz = p[2],
+          r = p[3],
+          g = p[4],
+          b = p[5];
         const phase = (i * 2.3999) % 6.2832;
-        const wz  = nz + tilt * Math.sin(t * 0.045 + phase) * 0.048;
-        const fx  = cx + (nx + 0.5) * CW;
-        const fy  = cy + (ny + 0.5) * IH;
-        const px3 = CX + (nx + 0.30 * wz) * SX;
+        const wz = nz + tilt * Math.sin(t * 0.045 + phase) * 0.048;
+        const fx = cx + (nx + 0.5) * CW;
+        const fy = cy + (ny + 0.5) * IH;
+        const px3 = CX + (nx + 0.3 * wz) * SX;
         const py3 = CY + (ny - 0.18 * wz) * SY;
-        const px  = Math.round(fx + tilt * (px3 - fx));
-        const py  = Math.round(fy + tilt * (py3 - fy));
-        if (px < cx || px >= cx+CW-1 || py < cy || py >= cy+IH-1) continue;
+        const px = Math.round(fx + tilt * (px3 - fx));
+        const py = Math.round(fy + tilt * (py3 - fy));
+        if (px < cx || px >= cx + CW - 1 || py < cy || py >= cy + IH - 1)
+          continue;
         const idx = (py * W + px) * 4;
-        pd[idx]=r; pd[idx+1]=g; pd[idx+2]=b; pd[idx+3]=255;
-        pd[idx+4]=r; pd[idx+5]=g; pd[idx+6]=b; pd[idx+7]=255;
-        const idx2 = ((py+1)*W+px)*4;
-        pd[idx2]=r; pd[idx2+1]=g; pd[idx2+2]=b; pd[idx2+3]=255;
+        pd[idx] = r;
+        pd[idx + 1] = g;
+        pd[idx + 2] = b;
+        pd[idx + 3] = 255;
+        pd[idx + 4] = r;
+        pd[idx + 5] = g;
+        pd[idx + 6] = b;
+        pd[idx + 7] = 255;
+        const idx2 = ((py + 1) * W + px) * 4;
+        pd[idx2] = r;
+        pd[idx2 + 1] = g;
+        pd[idx2 + 2] = b;
+        pd[idx2 + 3] = 255;
       }
       ctx.putImageData(pixBuf, 0, 0, cx, cy, CW, IH);
     }
@@ -3708,44 +4030,46 @@ export function initSfMLiDAR() {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
 
-      // Cell 0 — Input RGB (slow Ken Burns)
+      // Cell 0 - Input RGB (slow Ken Burns)
       const zoom = 1 + 0.04 * Math.abs(Math.sin(t * 0.003));
       drawCell(imgRGB, 0, 1, zoom);
       drawLabel(0);
 
-      // Cell 1 — Depth colormap
+      // Cell 1 - Depth colormap
       drawCell(imgDepth, 1);
       drawLabel(1);
 
-      // Cell 2 — 3D particle proxy (fly-in + dance)
+      // Cell 2 - 3D particle proxy (fly-in + dance)
       drawParticleCell(t);
       drawLabel(2);
 
-      // Cell 3 — Camera shift: oscillate normal ↔ holes
+      // Cell 3 - Camera shift: oscillate normal ↔ holes
       const osc = (1 - Math.cos(t * 0.055)) / 2;
-      drawCell(imgRGB,   3, 1);
+      drawCell(imgRGB, 3, 1);
       drawCell(imgHoles, 3, osc);
       drawLabel(3);
 
-      // Cell 4 — Left novel view
+      // Cell 4 - Left novel view
       drawCell(imgLeft, 4);
       drawLabel(4);
 
-      // Cell 5 — Right novel view
+      // Cell 5 - Right novel view
       drawCell(imgRight, 5);
       drawLabel(5);
     };
   })();
 
   const CHARGE_RATE = 1 / 30; // ~0.5 s hold to select
-  const DRAIN_RATE  = 1 / 25;  // drains faster than it charges
+  const DRAIN_RATE = 1 / 25; // drains faster than it charges
 
   function select(side) {
     active = side;
     split.dataset.active = side;
     charges.sfm = charges.lidar = 0;
     pressing.sfm = pressing.lidar = false;
-    panels.forEach(p => { p.style.setProperty("--charge", 0); });
+    panels.forEach((p) => {
+      p.style.setProperty("--charge", 0);
+    });
     fills[side] && (fills[side].style.width = "0%");
   }
 
@@ -3754,7 +4078,7 @@ export function initSfMLiDAR() {
     split.dataset.active = "";
     charges.sfm = charges.lidar = 0;
     pressing.sfm = pressing.lidar = false;
-    panels.forEach(p => {
+    panels.forEach((p) => {
       p.style.setProperty("--charge", 0);
       const f = p.querySelector(".cp-charge-fill");
       if (f) f.style.width = "0%";
@@ -3762,71 +4086,94 @@ export function initSfMLiDAR() {
   }
 
   // Long-press listeners (inactive panels) + single-click on collapsed panel to go back
-  panels.forEach(p => {
+  panels.forEach((p) => {
     const side = p.dataset.side;
-    const start = () => { if (!active) pressing[side] = true; };
-    const stop  = () => { pressing[side] = false; };
-    p.addEventListener("mousedown",   start);
-    p.addEventListener("touchstart",  start, { passive: true });
-    p.addEventListener("mouseup",     stop);
-    p.addEventListener("mouseleave",  stop);
-    p.addEventListener("touchend",    stop);
+    const start = () => {
+      if (!active) pressing[side] = true;
+    };
+    const stop = () => {
+      pressing[side] = false;
+    };
+    p.addEventListener("mousedown", start);
+    p.addEventListener("touchstart", start, { passive: true });
+    p.addEventListener("mouseup", stop);
+    p.addEventListener("mouseleave", stop);
+    p.addEventListener("touchend", stop);
     p.addEventListener("touchcancel", stop);
     // clicking the collapsed (thin) panel resets back to neutral
-    p.addEventListener("click", () => { if (active && active !== side) reset(); });
+    p.addEventListener("click", () => {
+      if (active && active !== side) reset();
+    });
   });
 
   // Back buttons also reset (and stop propagation so panel click doesn't double-fire)
-  split.querySelectorAll(".cp-back-btn").forEach(btn => {
-    btn.addEventListener("mousedown", e => e.stopPropagation());
-    btn.addEventListener("click",     e => { e.stopPropagation(); reset(); });
+  split.querySelectorAll(".cp-back-btn").forEach((btn) => {
+    btn.addEventListener("mousedown", (e) => e.stopPropagation());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      reset();
+    });
   });
 
   // Prevent text selection while holding
-  split.addEventListener("mousedown", e => e.preventDefault());
+  split.addEventListener("mousedown", (e) => e.preventDefault());
 
   return {
     tick(visible, dtScale = 1) {
       if (!visible) return;
-      if (active === "sfm")   { sfmVisDraw(dtScale); return; }
-      if (active === "lidar") { lfVisDraw(dtScale);  return; }
-      ["sfm", "lidar"].forEach(side => {
+      if (active === "sfm") {
+        sfmVisDraw(dtScale);
+        return;
+      }
+      if (active === "lidar") {
+        lfVisDraw(dtScale);
+        return;
+      }
+      ["sfm", "lidar"].forEach((side) => {
         if (pressing[side]) {
           charges[side] = Math.min(1, charges[side] + CHARGE_RATE * dtScale);
-          if (charges[side] >= 1) { select(side); return; }
+          if (charges[side] >= 1) {
+            select(side);
+            return;
+          }
         } else {
           charges[side] = Math.max(0, charges[side] - DRAIN_RATE * dtScale);
         }
-        const panel = panels.find(p => p.dataset.side === side);
-        if (panel) panel.style.setProperty("--charge", charges[side].toFixed(3));
-        if (fills[side]) fills[side].style.width = (charges[side] * 100).toFixed(1) + "%";
+        const panel = panels.find((p) => p.dataset.side === side);
+        if (panel)
+          panel.style.setProperty("--charge", charges[side].toFixed(3));
+        if (fills[side])
+          fills[side].style.width = (charges[side] * 100).toFixed(1) + "%";
       });
     },
-    enter() { reset(); },
+    enter() {
+      reset();
+    },
   };
 }
 
 /* ============================================================
-   SLIDE 8 — Why classical methods failed (Utah Teapot point cloud)
+   SLIDE 8 - Why classical methods failed (Utah Teapot point cloud)
    ============================================================ */
 export function initLimits() {
   const canvas = document.getElementById("c-limits");
   if (!canvas) return { tick() {}, enter() {} };
   const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
+  const W = canvas.width,
+    H = canvas.height;
 
   // Build fallback sphere (used until teapot JSON loads)
   function makeSphere(n) {
     return Array.from({ length: n }, () => {
       const theta = Math.random() * Math.PI * 2;
-      const phi   = Math.acos(2 * Math.random() - 1);
-      const r     = 0.55 + Math.random() * 0.45;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 0.55 + Math.random() * 0.45;
       return {
         ox: Math.sin(phi) * Math.cos(theta) * r,
         oy: Math.sin(phi) * Math.sin(theta) * r * 0.75,
         oz: Math.cos(phi) * r,
         phase: Math.random() * Math.PI * 2,
-        rng:   Math.random(),
+        rng: Math.random(),
       };
     });
   }
@@ -3838,23 +4185,25 @@ export function initLimits() {
 
   // Saturn model is z-up: map px→ox, -pz→oy (flip so top is up), py→oz (depth)
   fetch("assets/generated/limits_model.json")
-    .then(r => r.json())
-    .then(data => {
+    .then((r) => r.json())
+    .then((data) => {
       pts = data.map(([px, py, pz]) => ({
-        ox:    px,
-        oy:   -pz,   // negate: positive z (top) renders above screen centre
-        oz:    py,
+        ox: px,
+        oy: -pz, // negate: positive z (top) renders above screen centre
+        oz: py,
         phase: Math.random() * Math.PI * 2,
-        rng:   Math.random(),
+        rng: Math.random(),
       }));
     })
-    .catch(() => { /* keep sphere fallback */ });
+    .catch(() => {
+      /* keep sphere fallback */
+    });
 
   // Click-driven mode: each click advances to the next failure mode (0-4)
-  let currentMode = -1;   // -1 = clean/idle, 0-4 = active failure mode
-  let modeT       = 0;    // 60fps-equivalent ticks since current mode became active
-  let t           = 0;    // 60fps-equivalent ticks since this slide initialised
-  let lastMode    = -2;
+  let currentMode = -1; // -1 = clean/idle, 0-4 = active failure mode
+  let modeT = 0; // 60fps-equivalent ticks since current mode became active
+  let t = 0; // 60fps-equivalent ticks since this slide initialised
+  let lastMode = -2;
 
   const items = Array.from(document.querySelectorAll(".limit-item"));
 
@@ -3869,9 +4218,9 @@ export function initLimits() {
   });
 
   function draw() {
-    const mode     = currentMode;
-    const progress = Math.min(modeT / 200, 1.0);  // 0→1 over ~3.3 s
-    const baseRot  = t * 0.006;
+    const mode = currentMode;
+    const progress = Math.min(modeT / 200, 1.0); // 0→1 over ~3.3 s
+    const baseRot = t * 0.006;
 
     // Update highlighted item
     if (mode !== lastMode) {
@@ -3886,12 +4235,23 @@ export function initLimits() {
 
     // Subtle grid lines (reference frame)
     ctx.strokeStyle = "rgba(255,255,255,0.04)";
-    ctx.lineWidth   = 1;
+    ctx.lineWidth = 1;
     const gstep = 60;
-    for (let gx = 0; gx < W; gx += gstep) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
-    for (let gy = 0; gy < H; gy += gstep) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+    for (let gx = 0; gx < W; gx += gstep) {
+      ctx.beginPath();
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, H);
+      ctx.stroke();
+    }
+    for (let gy = 0; gy < H; gy += gstep) {
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(W, gy);
+      ctx.stroke();
+    }
 
-    const CX = W * 0.5, CY = H * 0.5;
+    const CX = W * 0.5,
+      CY = H * 0.5;
     const SCALE = Math.min(W, H) * 0.68;
 
     // Build projected points
@@ -3901,7 +4261,8 @@ export function initLimits() {
       let glitch = false;
       let wrongColor = false;
 
-      const cosY = Math.cos(baseRot), sinY = Math.sin(baseRot);
+      const cosY = Math.cos(baseRot),
+        sinY = Math.sin(baseRot);
       let rx = ox * cosY - oz * sinY;
       let ry = oy;
       let rz = ox * sinY + oz * cosY;
@@ -3912,22 +4273,23 @@ export function initLimits() {
         const stutterPhase = t % 22;
         if (stutterPhase < 16) {
           const frozenRot = Math.floor(t / 22) * 22 * 0.006;
-          const cf = Math.cos(frozenRot), sf = Math.sin(frozenRot);
+          const cf = Math.cos(frozenRot),
+            sf = Math.sin(frozenRot);
           rx = ox * cf - oz * sf;
           rz = ox * sf + oz * cf;
         }
         // Extra jitter on right hemisphere
         if (rz > 0.1) {
-          rx += (Math.sin(t * 0.41 + phase) * 0.03);
-          ry += (Math.cos(t * 0.37 + phase) * 0.025);
+          rx += Math.sin(t * 0.41 + phase) * 0.03;
+          ry += Math.cos(t * 0.37 + phase) * 0.025;
         }
       } else if (mode === 1) {
         // Scan sweep reveals only what cameras can capture.
-        // Blind spots stay dark the entire time — they simply never light up.
-        const patch = Math.sin(ox * 4.7 + oz * 3.3) * Math.cos(oy * 5.1 + oz * 2.8);
-        const blind = oy > 0.28
-          || (oy > 0.1 && rng < (oy - 0.1) / 0.18)
-          || patch > 0.68;
+        // Blind spots stay dark the entire time - they simply never light up.
+        const patch =
+          Math.sin(ox * 4.7 + oz * 3.3) * Math.cos(oy * 5.1 + oz * 2.8);
+        const blind =
+          oy > 0.28 || (oy > 0.1 && rng < (oy - 0.1) / 0.18) || patch > 0.68;
 
         if (blind) {
           alpha = 0;
@@ -3935,27 +4297,28 @@ export function initLimits() {
           // Beam sweeps oy from -1.05 → +1 over 0.75 of progress, then holds
           const scanPos = -1.05 + 2.05 * Math.min(progress / 0.75, 1);
           if (oy > scanPos + 0.06) {
-            alpha = 0;       // ahead of scanner, not yet reached
+            alpha = 0; // ahead of scanner, not yet reached
           } else if (oy > scanPos - 0.04) {
-            alpha = 2.0;     // beam glow
+            alpha = 2.0; // beam glow
           }
           // else already scanned: alpha stays 1
         }
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
-        wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
+        wrongColor = Math.sin(t * 0.13 + phase * 3.7) > 0.4;
         if (wrongColor) {
           rx += Math.sin(t * 0.09 + phase) * 0.05;
           ry += Math.cos(t * 0.11 + phase) * 0.04;
         }
       } else if (mode === 3) {
         // Real-time lag: ultra-slow rotation then time-warp jump
-        const lagRot = (Math.floor(t / 8) * 8) * 0.0008;
-        const cl = Math.cos(lagRot), sl = Math.sin(lagRot);
+        const lagRot = Math.floor(t / 8) * 8 * 0.0008;
+        const cl = Math.cos(lagRot),
+          sl = Math.sin(lagRot);
         rx = ox * cl - oz * sl;
         rz = ox * sl + oz * cl;
         // Every 50 ticks: "frame skip" jitter
-        if ((t % 50) > 46) {
+        if (t % 50 > 46) {
           rx += (rng - 0.5) * 0.25;
           ry += (rng - 0.5) * 0.2;
         }
@@ -3967,10 +4330,10 @@ export function initLimits() {
 
       // Perspective project: viewer at z = -3.5, focal = 2.0
       // Near (rz ≈ -1) → larger proj; far (rz ≈ +1) → smaller proj
-      const proj  = 2.0 / (rz + 3.5);
-      const sx    = CX + rx * SCALE * proj;
-      const sy    = CY + ry * SCALE * proj;
-      const depth = (1 - rz) / 2;  // 0=far(rz=1), 1=near(rz=-1)
+      const proj = 2.0 / (rz + 3.5);
+      const sx = CX + rx * SCALE * proj;
+      const sy = CY + ry * SCALE * proj;
+      const depth = (1 - rz) / 2; // 0=far(rz=1), 1=near(rz=-1)
 
       return { sx, sy, depth, alpha, wrongColor, proj, rng };
     });
@@ -3983,9 +4346,9 @@ export function initLimits() {
       const scanPos = -1.05 + 2.05 * (progress / 0.75);
       const scanY = CY + scanPos * SCALE * (2.0 / 3.5);
       const grad = ctx.createLinearGradient(0, scanY - 6, 0, scanY + 6);
-      grad.addColorStop(0,   "rgba(160,230,255,0)");
+      grad.addColorStop(0, "rgba(160,230,255,0)");
       grad.addColorStop(0.5, "rgba(160,230,255,0.35)");
-      grad.addColorStop(1,   "rgba(160,230,255,0)");
+      grad.addColorStop(1, "rgba(160,230,255,0)");
       ctx.fillStyle = grad;
       ctx.fillRect(0, scanY - 6, W, 12);
     }
@@ -4009,7 +4372,9 @@ export function initLimits() {
         color = `rgba(${h},${(alpha * 0.92).toFixed(2)})`;
       } else {
         const v = Math.round(80 + depth * 120);
-        const r = Math.min(255, v + 40), g = Math.round(v * 0.72), b = Math.round(v * 0.52);
+        const r = Math.min(255, v + 40),
+          g = Math.round(v * 0.72),
+          b = Math.round(v * 0.52);
         color = `rgba(${r},${g},${b},${(alpha * 0.88).toFixed(2)})`;
       }
 
@@ -4018,14 +4383,12 @@ export function initLimits() {
       ctx.arc(sx, sy, Math.max(0.5, size), 0, Math.PI * 2);
       ctx.fill();
     });
-
-
   }
 
   return {
     tick(visible, dtScale = 1) {
       if (!visible) return;
-      t     += dtScale;
+      t += dtScale;
       modeT += dtScale;
       draw();
     },
@@ -4034,52 +4397,121 @@ export function initLimits() {
       modeT = 0;
       currentMode = -1;
       lastMode = -2;
-      items.forEach(el => el.classList.remove("lim-active"));
+      items.forEach((el) => el.classList.remove("lim-active"));
     },
   };
 }
 
 /* ============================================================
-   SLIDE 9 — Transition to NVS + model history timeline.
-   Auto-cycles through SRN → NeRF → Mip-NeRF → Instant-NGP → 3DGS → 4D-GS,
-   with a fill bar that flows toward the active node and a fading detail card.
-   Clicking a node jumps to it and resets the auto-cycle timer.
+   SLIDE 9 - Transition to NVS + model history timeline.
+   Auto-cycles through SRN → NeRF → Mip-NeRF → Instant-NGP → 3DGS → 4D-GS.
+   The fill bar travels toward the next node and that node only lights up
+   when the bar arrives (so the active orange dot doesn't snap on early).
+   After the last dot the bar exits off the right edge, resets, and the
+   leading comet re-enters from the left edge to start the cycle again.
    ============================================================ */
 export function initNvsIntro() {
   const slide = document.querySelector('section[data-id="9"]');
   if (!slide) return { tick() {}, enter() {} };
 
-  const fill    = slide.querySelector("#nvs-tl-fill");
-  const nodes   = Array.from(slide.querySelectorAll(".nvs-tl-node"));
+  const fill = slide.querySelector("#nvs-tl-fill");
+  const nodes = Array.from(slide.querySelectorAll(".nvs-tl-node"));
   const details = Array.from(slide.querySelectorAll(".nvs-tl-detail-slide"));
-  if (!fill || !nodes.length || !details.length) return { tick() {}, enter() {} };
+  if (!fill || !nodes.length || !details.length)
+    return { tick() {}, enter() {} };
 
-  // Node centres are positioned by inline left:% in the HTML. We mirror them here
-  // so the fill bar can reach the same x position without measuring the DOM.
+  // Node centres are positioned by inline left:% in the HTML. We mirror them
+  // here so the fill bar can reach the same x position without DOM measurement.
   const NODE_PCT = [5, 23, 41, 59, 77, 95];
-  const TRACK_START_PCT = 5;        // matches .nvs-tl-line left:5%
+  const TRACK_START_PCT = 5;            // matches .nvs-tl-fill left:5%
+  const TRANS_MS = 750;                 // matches the CSS transition duration
+  const CYCLE_TICKS = 200;              // ~3.3 s at 60fps between auto-advances
 
   let activeIdx = -1;
-  let cycleT    = 0;
-  const CYCLE_TICKS = 200;          // ~3.3 s at 60fps before advancing
+  let cycleT = 0;
+  let isWrapping = false;
+  let activeTimer = null;
 
-  function setActive(i) {
+  function applyFillImmediate(left, width) {
+    // Suspend transitions so we can teleport the bar (used by the wraparound).
+    fill.style.transition = "none";
+    fill.style.left = left;
+    fill.style.width = width;
+    // Force the browser to flush the change before re-enabling transitions,
+    // otherwise the next style change just continues the prior animation.
+    void fill.offsetWidth;
+    fill.style.transition = "";
+  }
+
+  function setActive(i, immediate = false) {
     if (i === activeIdx) return;
+    if (activeTimer) clearTimeout(activeTimer);
+
     activeIdx = i;
     cycleT = 0;
 
+    // Past/default state applies immediately; the *new* active dot waits.
     nodes.forEach((n, j) => {
-      n.classList.toggle("tl-active", j === i);
-      n.classList.toggle("tl-past",   j <  i);
+      n.classList.remove("tl-active");
+      n.classList.toggle("tl-past", j < i);
     });
+    // The detail card cross-fades over the same window as the fill travel.
     details.forEach((d, j) => d.classList.toggle("detail-active", j === i));
 
-    // Fill grows from the line start (5%) to the centre of the active node.
-    fill.style.width = (NODE_PCT[i] - TRACK_START_PCT) + "%";
+    // Animate the fill toward the target dot.
+    fill.style.left = "5%";
+    fill.style.width = NODE_PCT[i] - TRACK_START_PCT + "%";
+
+    if (immediate) {
+      nodes[i].classList.add("tl-active");
+    } else {
+      // Delay the active class so the dot lights up exactly when the bar arrives.
+      activeTimer = setTimeout(() => {
+        nodes[i].classList.add("tl-active");
+      }, TRANS_MS);
+    }
+  }
+
+  function startWrap() {
+    isWrapping = true;
+    if (activeTimer) clearTimeout(activeTimer);
+    // Drop the current active flag so the last orange dot stops pulsing while
+    // the bar carries it off. Past dots keep their pale-orange colour for now.
+    nodes.forEach((n) => n.classList.remove("tl-active"));
+
+    // Phase 1: bar slides off the right edge (left 5% → 105%, width unchanged).
+    fill.style.left = "105%";
+
+    setTimeout(() => {
+      // Phase 2: reset all dot/detail state, teleport bar off-screen left.
+      nodes.forEach((n) => n.classList.remove("tl-past", "tl-active"));
+      details.forEach((d) => d.classList.remove("detail-active"));
+      applyFillImmediate("-5%", "0");
+
+      // Phase 3: comet enters from the left edge (only the leading dot is
+      // visible since width is 0 — gradient bar comes back in phase 4).
+      requestAnimationFrame(() => {
+        fill.style.left = "5%";
+      });
+
+      // Phase 4: when the comet reaches the first dot, light it up and resume.
+      setTimeout(() => {
+        activeIdx = -1;
+        cycleT = 0;
+        isWrapping = false;
+        setActive(0, true);
+      }, TRANS_MS);
+    }, TRANS_MS);
+  }
+
+  function advance() {
+    if (activeIdx >= nodes.length - 1) startWrap();
+    else setActive(activeIdx + 1);
   }
 
   nodes.forEach((n) => {
     n.addEventListener("click", () => {
+      if (isWrapping) return;
       setActive(parseInt(n.dataset.idx, 10));
     });
   });
@@ -4087,14 +4519,17 @@ export function initNvsIntro() {
   return {
     tick(visible, dtScale = 1) {
       if (!visible) return;
+      if (isWrapping) return;
       cycleT += dtScale;
-      if (cycleT >= CYCLE_TICKS) {
-        setActive((activeIdx + 1) % nodes.length);
-      }
+      if (cycleT >= CYCLE_TICKS) advance();
     },
     enter() {
       activeIdx = -1;
-      setActive(0);
+      cycleT = 0;
+      isWrapping = false;
+      if (activeTimer) clearTimeout(activeTimer);
+      applyFillImmediate("5%", "0");
+      setActive(0, true);
     },
   };
 }

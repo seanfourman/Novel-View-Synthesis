@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate a round-brilliant diamond point cloud for the limits canvas.
-Thematically perfect — a diamond is the poster child for view-dependent
+Thematically perfect - a diamond is the poster child for view-dependent
 appearance (caustics, reflections, transparency) that classical NVS fails on.
 Pure numpy, no downloads needed.
 Output: assets/generated/limits_model.json  [[x, y, z], ...]  z-up, normalised to [-1, 1]
@@ -17,7 +17,7 @@ OUT.parent.mkdir(parents=True, exist_ok=True)
 # ── Round brilliant diamond proportions ──────────────────────────────────────
 N     = 16          # main symmetry divisions
 R     = 1.00        # girdle radius
-r_t   = 0.58        # table (flat top) radius — wider table
+r_t   = 0.58        # table (flat top) radius - wider table
 h_c   = 0.35        # crown height (shorter = wider/thinner profile)
 h_p   = 0.80        # pavilion depth (shallower than before)
 
@@ -56,9 +56,9 @@ parts.append(fan(np.array([0.0, 0.0, h_c]), tv, 260))
 # Each sector i spans angle [main_a[i], main_a[i+1]].
 # The crown in this sector is a pentagon: tv[i], tv[i+1], gm[i+1], gmid[i], gm[i]
 # Triangulated exactly (no overlaps, no gaps) into 3 triangles:
-#   T1 (star):       tv[i],   tv[ip1], gmid[i]   — upper, near table edge
-#   T2 (left kite):  tv[i],   gmid[i], gm[i]     — left side down to girdle
-#   T3 (right kite): tv[ip1], gm[ip1], gmid[i]   — right side down to girdle
+#   T1 (star):       tv[i],   tv[ip1], gmid[i]   - upper, near table edge
+#   T2 (left kite):  tv[i],   gmid[i], gm[i]     - left side down to girdle
+#   T3 (right kite): tv[ip1], gm[ip1], gmid[i]   - right side down to girdle
 for i in range(N):
     ip1 = (i + 1) % N
     parts.append(tri(tv[i],   tv[ip1], gmid[i],  55))
