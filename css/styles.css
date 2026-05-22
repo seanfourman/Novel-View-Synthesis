@@ -3097,34 +3097,41 @@ code {
 }
 
 .nvs-key-points {
+  align-items: center;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
-  gap: 0.45rem 1.2rem;
+  gap: clamp(0.55rem, 1vw, 0.85rem);
   list-style: none;
-  margin: 0.1rem auto 0.2rem;
-  max-width: min(84ch, 100%);
+  margin: 0.35rem auto 0.45rem;
+  max-width: 100%;
   padding: 0;
+  width: fit-content;
 }
 
 .nvs-key-points li {
   align-items: center;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(255, 90, 54, 0.72), rgba(255, 180, 153, 0.36))
+      border-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
   color: var(--ink);
   display: flex;
   font-size: clamp(1rem, 1.05vw, 1.12rem);
-  font-weight: 700;
-  gap: 0.4rem;
-  line-height: 1.35;
+  font-weight: 600;
+  line-height: 1.25;
+  min-height: 2.1rem;
+  padding: 0.32rem 0.85rem;
   white-space: nowrap;
 }
 
-.nvs-key-points li::before {
-  background: var(--accent);
-  border-radius: 50%;
-  content: "";
-  flex: 0 0 auto;
-  height: 0.4rem;
-  width: 0.4rem;
+@media (max-width: 900px) {
+  .nvs-key-points {
+    flex-wrap: wrap;
+    row-gap: 0.85rem;
+  }
 }
 
 /* Redesigned emphasis: no right border; a centred gradient bar above */
