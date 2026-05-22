@@ -3153,15 +3153,17 @@ code {
   border-radius: 0;
 }
 
-/* Fill starts at the first dot (10%) and grows to the active dot.
-   The `left` transition is used during the wraparound: slide off right, snap
-   to off-screen left, then slide in to first dot.
+/* Fill is always anchored at the very left edge of the screen and grows
+   rightward to the active dot — so the segment between the screen edge and
+   the first dot (SRN) gets painted too, not just the part between dots.
+   The `left` transition is used during the wraparound: slide off right,
+   snap back to 0, then grow the width back out to the first dot.
    No box-shadow here — a glow that follows a width-animated element triggers
    paint on every frame and is the single biggest source of lag on this slide. */
 .nvs-tl-fill {
   position: absolute;
   top: 50%;
-  left: 10%;
+  left: 0;
   height: 3px;
   width: 0;
   background: linear-gradient(90deg, var(--accent-soft), var(--accent));
@@ -3225,11 +3227,13 @@ code {
   z-index: 2;
   transform: scale(1);
   /* Only animate properties that are cheap. Background/border-color are
-     paint-only but the dot is tiny so it's fine; transform is composite-only. */
+     paint-only but the dot is tiny so it's fine; transform is composite-only.
+     0.5s is slow enough that the shrink/grow reads as deliberate motion
+     rather than a quick snap. */
   transition:
-    background 0.32s ease,
-    border-color 0.32s ease,
-    transform 0.32s ease;
+    background 0.5s ease,
+    border-color 0.5s ease,
+    transform 0.5s ease;
 }
 
 /* The pulse ring lives in a pseudo-element so it can be animated with
@@ -3248,8 +3252,8 @@ code {
   pointer-events: none;
   z-index: -1;
   transition:
-    opacity 0.32s ease,
-    transform 0.32s ease;
+    opacity 0.5s ease,
+    transform 0.5s ease;
 }
 
 .nvs-tl-name {
@@ -3285,7 +3289,7 @@ code {
   opacity: 0.22;
   transform: scale(1);
   /* Delayed so the dot finishes appearing before the ring starts breathing. */
-  animation: nvsTlPulse 1.8s ease-in-out 0.32s infinite;
+  animation: nvsTlPulse 1.8s ease-in-out 0.5s infinite;
 }
 .nvs-tl-node.tl-active .nvs-tl-year {
   color: var(--accent);

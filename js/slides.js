@@ -4424,7 +4424,8 @@ export function initNvsIntro() {
   // here so the fill bar can reach the same x position without DOM measurement.
   // Symmetric 10% margins on each side, 16% spacing between dots.
   const NODE_PCT = [10, 26, 42, 58, 74, 90];
-  const TRACK_START_PCT = 10;           // matches .nvs-tl-fill left:10%
+  // Fill bar is anchored at left:0 (the screen's left edge) so the segment
+  // before the first dot is also painted. Width grows to NODE_PCT[i].
   const TRANS_MS = 750;                 // matches the CSS transition duration
   const CYCLE_TICKS = 200;              // ~3.3 s at 60fps between auto-advances
 
@@ -4462,9 +4463,10 @@ export function initNvsIntro() {
     // Bar is in motion — show the comet head so we have a leading indicator.
     fill.classList.remove("at-rest");
 
-    // Animate the fill toward the target dot.
-    fill.style.left = TRACK_START_PCT + "%";
-    fill.style.width = NODE_PCT[i] - TRACK_START_PCT + "%";
+    // Animate the fill toward the target dot. Always anchored at left:0 so
+    // the segment between the screen edge and the first dot stays painted.
+    fill.style.left = "0";
+    fill.style.width = NODE_PCT[i] + "%";
 
     if (immediate) {
       nodes[i].classList.add("tl-active");
@@ -4489,22 +4491,23 @@ export function initNvsIntro() {
     // Comet is moving (off to the right), make sure it's visible.
     fill.classList.remove("at-rest");
 
-    // Phase 1: bar slides off the right edge (left 10% → 105%, width unchanged).
-    fill.style.left = "105%";
+    // Phase 1: bar slides off the right edge as a whole — animate `left`
+    // from 0 to 100% while keeping the width unchanged (~90% at this point).
+    fill.style.left = "100%";
 
     setTimeout(() => {
-      // Phase 2: reset all dot/detail state, teleport bar off-screen left.
+      // Phase 2: reset all dot/detail state, teleport bar back to the left
+      // edge at zero width (invisible).
       nodes.forEach((n) => n.classList.remove("tl-past", "tl-active"));
       details.forEach((d) => d.classList.remove("detail-active"));
-      applyFillImmediate("-10%", "0");
+      applyFillImmediate("0", "0");
 
-      // Phase 3: comet enters from the left edge (only the leading dot is
-      // visible since width is 0 — gradient bar comes back in phase 4).
+      // Phase 3: regrow the bar from the left edge out to the first dot.
       requestAnimationFrame(() => {
-        fill.style.left = TRACK_START_PCT + "%";
+        fill.style.width = NODE_PCT[0] + "%";
       });
 
-      // Phase 4: when the comet reaches the first dot, light it up and resume.
+      // Phase 4: when the leading edge reaches the first dot, light it up.
       setTimeout(() => {
         activeIdx = -1;
         cycleT = 0;
@@ -4538,7 +4541,7 @@ export function initNvsIntro() {
       cycleT = 0;
       isWrapping = false;
       if (activeTimer) clearTimeout(activeTimer);
-      applyFillImmediate(TRACK_START_PCT + "%", "0");
+      applyFillImmediate("0", "0");
       fill.classList.remove("at-rest");
       setActive(0, true);
     },
