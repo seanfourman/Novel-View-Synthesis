@@ -4427,11 +4427,12 @@ export function initNvsIntro() {
   // Fill bar is anchored at left:0 (the screen's left edge) so the segment
   // before the first dot is also painted. Width grows to NODE_PCT[i].
   const TRANS_MS = 750;                 // matches the CSS transition duration
-  const CYCLE_TICKS = 200;              // ~3.3 s at 60fps between auto-advances
+  const CYCLE_TICKS = 420;              // ~7 s at 60fps between auto-advances
 
   let activeIdx = -1;
   let cycleT = 0;
   let isWrapping = false;
+  let autoCycle = true;
   let activeTimer = null;
 
   function applyFillImmediate(left, width) {
@@ -4524,6 +4525,7 @@ export function initNvsIntro() {
 
   nodes.forEach((n) => {
     n.addEventListener("click", () => {
+      autoCycle = false;
       if (isWrapping) return;
       setActive(parseInt(n.dataset.idx, 10));
     });
@@ -4532,6 +4534,7 @@ export function initNvsIntro() {
   return {
     tick(visible, dtScale = 1) {
       if (!visible) return;
+      if (!autoCycle) return;
       if (isWrapping) return;
       cycleT += dtScale;
       if (cycleT >= CYCLE_TICKS) advance();
@@ -4540,6 +4543,7 @@ export function initNvsIntro() {
       activeIdx = -1;
       cycleT = 0;
       isWrapping = false;
+      autoCycle = true;
       if (activeTimer) clearTimeout(activeTimer);
       applyFillImmediate("0", "0");
       fill.classList.remove("at-rest");
