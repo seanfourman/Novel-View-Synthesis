@@ -3155,7 +3155,9 @@ code {
 
 /* Fill starts at the first dot (10%) and grows to the active dot.
    The `left` transition is used during the wraparound: slide off right, snap
-   to off-screen left, then slide in to first dot. */
+   to off-screen left, then slide in to first dot.
+   No box-shadow here — a glow that follows a width-animated element triggers
+   paint on every frame and is the single biggest source of lag on this slide. */
 .nvs-tl-fill {
   position: absolute;
   top: 50%;
@@ -3167,7 +3169,6 @@ code {
   transition:
     width 0.75s cubic-bezier(0.4, 0, 0.2, 1),
     left  0.75s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 18px rgba(255, 90, 54, 0.5);
   border-radius: 3px;
 }
 
@@ -3175,13 +3176,17 @@ code {
   content: "";
   position: absolute;
   top: 50%;
-  right: -9px;
-  width: 18px;
-  height: 18px;
+  right: -7px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--accent);
   transform: translateY(-50%);
-  box-shadow: 0 0 22px rgba(255, 90, 54, 0.7);
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+.nvs-tl-fill.at-rest::after {
+  opacity: 0;
 }
 
 .nvs-tl-node {
@@ -3218,11 +3223,33 @@ code {
   border: 3px solid var(--muted);
   position: relative;
   z-index: 2;
+  transform: scale(1);
+  /* Only animate properties that are cheap. Background/border-color are
+     paint-only but the dot is tiny so it's fine; transform is composite-only. */
   transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+    background 0.32s ease,
+    border-color 0.32s ease,
+    transform 0.32s ease;
+}
+
+/* The pulse ring lives in a pseudo-element so it can be animated with
+   transform + opacity (both composite-only, no paint cost per frame).
+   Old design pulsed box-shadow which paints every frame and was the cause
+   of the lag. */
+.nvs-tl-dot::before {
+  content: "";
+  position: absolute;
+  /* extend outside the dot's circle; -7px gives room for the ring */
+  inset: -7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+  z-index: -1;
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
 }
 
 .nvs-tl-name {
@@ -3245,18 +3272,20 @@ code {
   color: var(--accent-soft);
 }
 
-/* Active node — explicit two-stage animation:
-   nvsTlAppear (0.32s) drives the dot from scale(1) + no-glow to scale(1.45)
-   + 6px glow. `forwards` keeps that final state in place while nvsTlPulse
-   (started after a 0.32s delay) takes over the box-shadow oscillation.
-   The explicit keyframes prevent the previous bug where the scale-up was
-   sometimes skipped and the dot read as "big from the beginning". */
+/* Active node — pure CSS transitions in both directions so the dot scales
+   up *and back down* with the same smooth feel. The pulse runs on the
+   pseudo-element and is interrupted cleanly by the opacity/transform
+   transitions when tl-active is removed. */
 .nvs-tl-node.tl-active .nvs-tl-dot {
   background: var(--accent);
   border-color: var(--accent);
-  animation:
-    nvsTlAppear 0.32s ease-out forwards,
-    nvsTlPulse 1.8s ease-in-out 0.32s infinite;
+  transform: scale(1.45);
+}
+.nvs-tl-node.tl-active .nvs-tl-dot::before {
+  opacity: 0.22;
+  transform: scale(1);
+  /* Delayed so the dot finishes appearing before the ring starts breathing. */
+  animation: nvsTlPulse 1.8s ease-in-out 0.32s infinite;
 }
 .nvs-tl-node.tl-active .nvs-tl-year {
   color: var(--accent);
@@ -3267,38 +3296,17 @@ code {
   font-weight: 700;
 }
 
-@keyframes nvsTlAppear {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
-  }
-  100% {
-    transform: scale(1.45);
-    box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22);
-  }
-}
-
+/* Composite-only pulse: only transform + opacity, no box-shadow. */
 @keyframes nvsTlPulse {
   0%,
   100% {
-    transform: scale(1.45);
-    box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22);
+    transform: scale(1);
+    opacity: 0.22;
   }
   50% {
-    transform: scale(1.45);
-    box-shadow: 0 0 0 14px rgba(255, 90, 54, 0.04);
+    transform: scale(1.55);
+    opacity: 0.04;
   }
-}
-
-/* The comet (leading dot on the fill bar) fades once the bar arrives at its
-   target — otherwise it sits on top of the active dot and makes it read as
-   already-grown before the appear animation has played. */
-.nvs-tl-fill::after {
-  opacity: 1;
-  transition: opacity 0.35s ease;
-}
-.nvs-tl-fill.at-rest::after {
-  opacity: 0;
 }
 
 /* ---------- Detail (centred, no box, no right border) ---------- */

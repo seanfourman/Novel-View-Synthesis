@@ -4540,15 +4540,6 @@ export function initNvsIntro() {
       if (activeTimer) clearTimeout(activeTimer);
       applyFillImmediate(TRACK_START_PCT + "%", "0");
       fill.classList.remove("at-rest");
-      // Force the dot's keyframe animation to restart even if the slide is
-      // re-entered while the same dot is still flagged active (no class change
-      // would otherwise trigger the appear animation).
-      const firstDot = nodes[0].querySelector(".nvs-tl-dot");
-      if (firstDot) {
-        firstDot.style.animation = "none";
-        void firstDot.offsetWidth;
-        firstDot.style.animation = "";
-      }
       setActive(0, true);
     },
   };
