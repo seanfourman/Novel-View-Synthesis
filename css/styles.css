@@ -3129,13 +3129,14 @@ code {
 
 /* Redesigned emphasis: no right border; a centred gradient bar above */
 .nvs-intro-emphasis {
-  font-size: clamp(1.15rem, 1.3vw, 1.35rem) !important;
+  font-size: clamp(1rem, 1.05vw, 1.12rem) !important;
   color: var(--ink) !important;
-  font-weight: 600;
+  font-weight: 400;
   margin-top: 0.6rem;
   padding-top: 1.4rem;
   position: relative;
   max-width: min(94ch, 100%);
+  white-space: nowrap;
 }
 
 .nvs-intro-emphasis::before {
