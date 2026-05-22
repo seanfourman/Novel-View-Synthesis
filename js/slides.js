@@ -3852,9 +3852,10 @@ export function initLimits() {
 
   // Click-driven mode: each click advances to the next failure mode (0-4)
   let currentMode = -1;   // -1 = clean/idle, 0-4 = active failure mode
-  let modeT       = 0;    // ticks since current mode became active
-  let t           = 0;
+  let modeT       = 0;    // seconds since current mode became active
+  let t           = 0;    // seconds since this slide initialised
   let lastMode    = -2;
+  let lastFrameTime = performance.now();
 
   const items = Array.from(document.querySelectorAll(".limit-item"));
 
@@ -3870,8 +3871,8 @@ export function initLimits() {
 
   function draw() {
     const mode     = currentMode;
-    const progress = Math.min(modeT / 200, 1.0);  // 0→1 over ~3.3 s
-    const baseRot  = t * 0.006;
+    const progress = Math.min(modeT / 3.333, 1.0);  // 0→1 over ~3.3 s
+    const baseRot  = t * 0.36;                       // rad/sec
 
     // Update highlighted item
     if (mode !== lastMode) {
@@ -3909,17 +3910,20 @@ export function initLimits() {
       // ── Mode effects ──────────────────────────────────────────
       if (mode === 0) {
         // Motion stutter: freeze rotation in bands, then snap
-        const stutterPhase = t % 22;
-        if (stutterPhase < 16) {
-          const frozenRot = Math.floor(t / 22) * 22 * 0.006;
+        // Period 22 frames @ 60fps = 0.3667 s, frozen for 16 frames = 0.2667 s
+        const STUTTER_PERIOD = 22 / 60;
+        const STUTTER_FROZEN = 16 / 60;
+        const stutterPhase = t % STUTTER_PERIOD;
+        if (stutterPhase < STUTTER_FROZEN) {
+          const frozenRot = Math.floor(t / STUTTER_PERIOD) * STUTTER_PERIOD * 0.36;
           const cf = Math.cos(frozenRot), sf = Math.sin(frozenRot);
           rx = ox * cf - oz * sf;
           rz = ox * sf + oz * cf;
         }
         // Extra jitter on right hemisphere
         if (rz > 0.1) {
-          rx += (Math.sin(t * 0.41 + phase) * 0.03);
-          ry += (Math.cos(t * 0.37 + phase) * 0.025);
+          rx += (Math.sin(t * 24.6 + phase) * 0.03);
+          ry += (Math.cos(t * 22.2 + phase) * 0.025);
         }
       } else if (mode === 1) {
         // Scan sweep reveals only what cameras can capture.
@@ -3943,26 +3947,30 @@ export function initLimits() {
         }
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
-        wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
+        wrongColor = (Math.sin(t * 7.8 + phase * 3.7) > 0.4);
         if (wrongColor) {
-          rx += Math.sin(t * 0.09 + phase) * 0.05;
-          ry += Math.cos(t * 0.11 + phase) * 0.04;
+          rx += Math.sin(t * 5.4 + phase) * 0.05;
+          ry += Math.cos(t * 6.6 + phase) * 0.04;
         }
       } else if (mode === 3) {
         // Real-time lag: ultra-slow rotation then time-warp jump
-        const lagRot = (Math.floor(t / 8) * 8) * 0.0008;
+        // Quantise to 8-frame steps @ 60fps = 0.1333 s, rate 0.048 rad/sec
+        const LAG_STEP = 8 / 60;
+        const lagRot = Math.floor(t / LAG_STEP) * LAG_STEP * 0.048;
         const cl = Math.cos(lagRot), sl = Math.sin(lagRot);
         rx = ox * cl - oz * sl;
         rz = ox * sl + oz * cl;
-        // Every 50 ticks: "frame skip" jitter
-        if ((t % 50) > 46) {
+        // "Frame skip" jitter: every 50/60 s = 0.833 s, for the last 4/60 s = 0.067 s
+        const SKIP_PERIOD = 50 / 60;
+        const SKIP_TRIGGER = 46 / 60;
+        if ((t % SKIP_PERIOD) > SKIP_TRIGGER) {
           rx += (rng - 0.5) * 0.25;
           ry += (rng - 0.5) * 0.2;
         }
       } else if (mode === 4) {
         // Zoom in/out: shift all points along depth axis → perspective compression
         // changes continuously, showing how depth affects what you see
-        rz += Math.sin(modeT * 0.022) * 0.5;
+        rz += Math.sin(modeT * 1.32) * 0.5;
       }
 
       // Perspective project: viewer at z = -3.5, focal = 2.0
@@ -4020,13 +4028,16 @@ export function initLimits() {
     });
 
 
-    t++;
-    modeT++;
   }
 
   return {
     tick(visible) {
+      const now = performance.now();
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+      lastFrameTime = now;
       if (!visible) return;
+      t     += dt;
+      modeT += dt;
       draw();
     },
     enter() {
@@ -4034,6 +4045,7 @@ export function initLimits() {
       modeT = 0;
       currentMode = -1;
       lastMode = -2;
+      lastFrameTime = performance.now();
       items.forEach(el => el.classList.remove("lim-active"));
     },
   };
