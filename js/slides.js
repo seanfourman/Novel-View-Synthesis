@@ -3852,10 +3852,9 @@ export function initLimits() {
 
   // Click-driven mode: each click advances to the next failure mode (0-4)
   let currentMode = -1;   // -1 = clean/idle, 0-4 = active failure mode
-  let modeT       = 0;    // seconds since current mode became active
-  let t           = 0;    // seconds since this slide initialised
+  let modeT       = 0;    // 60fps-equivalent ticks since current mode became active
+  let t           = 0;    // 60fps-equivalent ticks since this slide initialised
   let lastMode    = -2;
-  let lastFrameTime = performance.now();
 
   const items = Array.from(document.querySelectorAll(".limit-item"));
 
@@ -3871,8 +3870,8 @@ export function initLimits() {
 
   function draw() {
     const mode     = currentMode;
-    const progress = Math.min(modeT / 3.333, 1.0);  // 0→1 over ~3.3 s
-    const baseRot  = t * 0.36;                       // rad/sec
+    const progress = Math.min(modeT / 200, 1.0);  // 0→1 over ~3.3 s
+    const baseRot  = t * 0.006;
 
     // Update highlighted item
     if (mode !== lastMode) {
@@ -3910,20 +3909,17 @@ export function initLimits() {
       // ── Mode effects ──────────────────────────────────────────
       if (mode === 0) {
         // Motion stutter: freeze rotation in bands, then snap
-        // Period 22 frames @ 60fps = 0.3667 s, frozen for 16 frames = 0.2667 s
-        const STUTTER_PERIOD = 22 / 60;
-        const STUTTER_FROZEN = 16 / 60;
-        const stutterPhase = t % STUTTER_PERIOD;
-        if (stutterPhase < STUTTER_FROZEN) {
-          const frozenRot = Math.floor(t / STUTTER_PERIOD) * STUTTER_PERIOD * 0.36;
+        const stutterPhase = t % 22;
+        if (stutterPhase < 16) {
+          const frozenRot = Math.floor(t / 22) * 22 * 0.006;
           const cf = Math.cos(frozenRot), sf = Math.sin(frozenRot);
           rx = ox * cf - oz * sf;
           rz = ox * sf + oz * cf;
         }
         // Extra jitter on right hemisphere
         if (rz > 0.1) {
-          rx += (Math.sin(t * 24.6 + phase) * 0.03);
-          ry += (Math.cos(t * 22.2 + phase) * 0.025);
+          rx += (Math.sin(t * 0.41 + phase) * 0.03);
+          ry += (Math.cos(t * 0.37 + phase) * 0.025);
         }
       } else if (mode === 1) {
         // Scan sweep reveals only what cameras can capture.
@@ -3947,30 +3943,26 @@ export function initLimits() {
         }
       } else if (mode === 2) {
         // Wrong colors: random glitch hits
-        wrongColor = (Math.sin(t * 7.8 + phase * 3.7) > 0.4);
+        wrongColor = (Math.sin(t * 0.13 + phase * 3.7) > 0.4);
         if (wrongColor) {
-          rx += Math.sin(t * 5.4 + phase) * 0.05;
-          ry += Math.cos(t * 6.6 + phase) * 0.04;
+          rx += Math.sin(t * 0.09 + phase) * 0.05;
+          ry += Math.cos(t * 0.11 + phase) * 0.04;
         }
       } else if (mode === 3) {
         // Real-time lag: ultra-slow rotation then time-warp jump
-        // Quantise to 8-frame steps @ 60fps = 0.1333 s, rate 0.048 rad/sec
-        const LAG_STEP = 8 / 60;
-        const lagRot = Math.floor(t / LAG_STEP) * LAG_STEP * 0.048;
+        const lagRot = (Math.floor(t / 8) * 8) * 0.0008;
         const cl = Math.cos(lagRot), sl = Math.sin(lagRot);
         rx = ox * cl - oz * sl;
         rz = ox * sl + oz * cl;
-        // "Frame skip" jitter: every 50/60 s = 0.833 s, for the last 4/60 s = 0.067 s
-        const SKIP_PERIOD = 50 / 60;
-        const SKIP_TRIGGER = 46 / 60;
-        if ((t % SKIP_PERIOD) > SKIP_TRIGGER) {
+        // Every 50 ticks: "frame skip" jitter
+        if ((t % 50) > 46) {
           rx += (rng - 0.5) * 0.25;
           ry += (rng - 0.5) * 0.2;
         }
       } else if (mode === 4) {
         // Zoom in/out: shift all points along depth axis → perspective compression
         // changes continuously, showing how depth affects what you see
-        rz += Math.sin(modeT * 1.32) * 0.5;
+        rz += Math.sin(modeT * 0.022) * 0.5;
       }
 
       // Perspective project: viewer at z = -3.5, focal = 2.0
@@ -4031,13 +4023,10 @@ export function initLimits() {
   }
 
   return {
-    tick(visible) {
-      const now = performance.now();
-      const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
-      lastFrameTime = now;
+    tick(visible, dtScale = 1) {
       if (!visible) return;
-      t     += dt;
-      modeT += dt;
+      t     += dtScale;
+      modeT += dtScale;
       draw();
     },
     enter() {
@@ -4045,8 +4034,67 @@ export function initLimits() {
       modeT = 0;
       currentMode = -1;
       lastMode = -2;
-      lastFrameTime = performance.now();
       items.forEach(el => el.classList.remove("lim-active"));
+    },
+  };
+}
+
+/* ============================================================
+   SLIDE 9 — Transition to NVS + model history timeline.
+   Auto-cycles through SRN → NeRF → Mip-NeRF → Instant-NGP → 3DGS → 4D-GS,
+   with a fill bar that flows toward the active node and a fading detail card.
+   Clicking a node jumps to it and resets the auto-cycle timer.
+   ============================================================ */
+export function initNvsIntro() {
+  const slide = document.querySelector('section[data-id="9"]');
+  if (!slide) return { tick() {}, enter() {} };
+
+  const fill    = slide.querySelector("#nvs-tl-fill");
+  const nodes   = Array.from(slide.querySelectorAll(".nvs-tl-node"));
+  const details = Array.from(slide.querySelectorAll(".nvs-tl-detail-slide"));
+  if (!fill || !nodes.length || !details.length) return { tick() {}, enter() {} };
+
+  // Node centres are positioned by inline left:% in the HTML. We mirror them here
+  // so the fill bar can reach the same x position without measuring the DOM.
+  const NODE_PCT = [5, 23, 41, 59, 77, 95];
+  const TRACK_START_PCT = 5;        // matches .nvs-tl-line left:5%
+
+  let activeIdx = -1;
+  let cycleT    = 0;
+  const CYCLE_TICKS = 200;          // ~3.3 s at 60fps before advancing
+
+  function setActive(i) {
+    if (i === activeIdx) return;
+    activeIdx = i;
+    cycleT = 0;
+
+    nodes.forEach((n, j) => {
+      n.classList.toggle("tl-active", j === i);
+      n.classList.toggle("tl-past",   j <  i);
+    });
+    details.forEach((d, j) => d.classList.toggle("detail-active", j === i));
+
+    // Fill grows from the line start (5%) to the centre of the active node.
+    fill.style.width = (NODE_PCT[i] - TRACK_START_PCT) + "%";
+  }
+
+  nodes.forEach((n) => {
+    n.addEventListener("click", () => {
+      setActive(parseInt(n.dataset.idx, 10));
+    });
+  });
+
+  return {
+    tick(visible, dtScale = 1) {
+      if (!visible) return;
+      cycleT += dtScale;
+      if (cycleT >= CYCLE_TICKS) {
+        setActive((activeIdx + 1) % nodes.length);
+      }
+    },
+    enter() {
+      activeIdx = -1;
+      setActive(0);
     },
   };
 }

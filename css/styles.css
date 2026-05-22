@@ -2928,3 +2928,293 @@ code {
   width: clamp(280px,  32vw, 480px);
   height: auto;
 }
+
+/* =========================================================
+   Slide 9 - NVS intro + model history timeline
+   Minimum font size on the deck is 1rem (= 18px because html font-size: 18px).
+   ========================================================= */
+.nvs-intro-slide {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: clamp(2rem,  4vw, 5rem) clamp(2rem,  5vw, 7rem) clamp(1.5rem,  3vw, 3rem);
+  box-sizing: border-box;
+  direction: rtl;
+  gap: clamp(1rem,  1.6vh, 1.6rem);
+  text-align: center;
+  --nvs-pad-x: clamp(2rem,  5vw, 7rem);  /* mirror of the horizontal padding above */
+  --accent-soft: #ffb499;                /* pale orange — used for past models */
+}
+
+.nvs-intro-slide > .kicker {
+  text-align: center;
+}
+
+.nvs-intro-title {
+  font-size: clamp(1.9rem,  3vw, 3.2rem);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 0;
+  text-align: center;
+}
+
+.nvs-intro-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  max-width: 78ch;
+  margin-inline: auto;
+}
+
+.nvs-intro-body p {
+  font-size: clamp(1rem,  1.05vw, 1.12rem);
+  color: var(--ink-soft);
+  line-height: 1.65;
+  margin: 0;
+  text-align: center;
+}
+
+.nvs-intro-body em {
+  color: var(--ink);
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* Redesigned emphasis: no right border; a centred gradient bar above */
+.nvs-intro-emphasis {
+  font-size: clamp(1.15rem,  1.3vw, 1.35rem) !important;
+  color: var(--ink) !important;
+  font-weight: 600;
+  margin-top: 0.6rem;
+  padding-top: 1.4rem;
+  position: relative;
+  max-width: 64ch;
+}
+
+.nvs-intro-emphasis::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+  border-radius: 3px;
+}
+
+/* ---------- Timeline (full-bleed, edge-to-edge) ---------- */
+.nvs-tl-wrap {
+  margin-top: auto;
+  /* escape the slide's horizontal padding so the timeline reaches both edges */
+  margin-left:  calc(-1 * var(--nvs-pad-x));
+  margin-right: calc(-1 * var(--nvs-pad-x));
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.nvs-tl-caption {
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: "JetBrains Mono", monospace;
+  text-align: center;
+  padding: 0 var(--nvs-pad-x);
+}
+
+.nvs-tl {
+  position: relative;
+  height: 168px;
+}
+
+/* The line runs from the very left edge of the screen to the very right edge. */
+.nvs-tl-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--line);
+  transform: translateY(-50%);
+  border-radius: 0;
+}
+
+/* Fill starts at the first dot (5%) and grows to the active dot. */
+.nvs-tl-fill {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+  transform: translateY(-50%);
+  transition: width 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 18px rgba(255, 90, 54, 0.5);
+  border-radius: 3px;
+}
+
+.nvs-tl-fill::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%);
+  box-shadow: 0 0 22px rgba(255, 90, 54, 0.7);
+}
+
+.nvs-tl-node {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 0.7rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  height: 140px;
+}
+
+.nvs-tl-year {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+  align-self: end;
+  transition: color 0.25s ease;
+}
+
+.nvs-tl-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--muted);
+  position: relative;
+  z-index: 2;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.nvs-tl-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  align-self: start;
+  transition: color 0.25s ease, font-weight 0.25s ease;
+}
+
+/* Past nodes — already crossed by the fill bar (pale orange, not purple) */
+.nvs-tl-node.tl-past .nvs-tl-dot {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+.nvs-tl-node.tl-past .nvs-tl-year { color: var(--accent-soft); }
+
+/* Active node — pulsing ring */
+.nvs-tl-node.tl-active .nvs-tl-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.45);
+  animation: nvsTlPulse 1.8s ease-in-out infinite;
+}
+.nvs-tl-node.tl-active .nvs-tl-year {
+  color: var(--accent);
+  font-weight: 700;
+}
+.nvs-tl-node.tl-active .nvs-tl-name {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+@keyframes nvsTlPulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22); }
+  50%      { box-shadow: 0 0 0 14px rgba(255, 90, 54, 0.04); }
+}
+
+/* ---------- Detail (centred, no box, no right border) ---------- */
+.nvs-tl-detail {
+  position: relative;
+  min-height: 5rem;
+  padding: 0 var(--nvs-pad-x);
+}
+
+.nvs-tl-detail-slide {
+  position: absolute;
+  inset: 0 var(--nvs-pad-x);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  opacity: 0;
+  transform: translateY(6px);
+  /* Inactive slides fade out fast so they're gone before the next one starts. */
+  transition: opacity 0.22s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.nvs-tl-detail-slide.detail-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  /* Active slide fades in after the outgoing one has cleared. */
+  transition: opacity 0.45s ease 0.18s, transform 0.45s ease 0.18s;
+}
+
+.nvs-tl-detail-year {
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(2rem,  2.6vw, 2.4rem);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+}
+
+.nvs-tl-detail-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 70ch;
+}
+
+.nvs-tl-detail-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.nvs-tl-detail-fullname {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+  font-family: "Inter", "Heebo", sans-serif;
+}
+
+.nvs-tl-detail-desc {
+  font-size: 1rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  max-width: 64ch;
+}

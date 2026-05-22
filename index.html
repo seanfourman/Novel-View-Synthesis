@@ -27,7 +27,7 @@
     <nav id="dots" aria-label="ניווט בין שקפים"></nav>
     <div id="counter">
       <span id="cur">1</span> <span class="muted">/</span>
-      <span id="tot">16</span>
+      <span id="tot">22</span>
     </div>
 
     <main id="deck">
@@ -631,8 +631,115 @@
         </p>
       </section>
 
-      <!-- ============ SLIDE 9 (was 8): MODEL PROCESS ============ -->
+      <!-- ============ SLIDE 9: TRANSITION TO NVS + MODEL TIMELINE ============ -->
       <section class="slide" data-id="9">
+        <div class="nvs-intro-slide">
+          <div class="kicker">המעבר לעידן הלמידה</div>
+          <h2 class="nvs-intro-title">
+            המעבר ל־<span class="accent">Novel View Synthesis</span>
+          </h2>
+
+          <div class="nvs-intro-body">
+            <p>
+              השלב הבא היה לעבור ממודל שמייצג רק את <em>הצורה</em> של הסביבה,
+              למודל שמבוסס על רשתות נוירונים ולומד את <em>המראה</em> של הסצנה מתוך התמונות עצמן.
+            </p>
+            <p>
+              במקום להסתמך רק על שחזור גיאומטרי קשיח, הרשת לומדת קשר בין מיקום, זווית צפייה, צבע ואור —
+              וכך יכולה לייצר מבטים חדשים שלא צולמו בפועל.
+            </p>
+            <p class="nvs-intro-emphasis">
+              כך נוצר הכיוון המודרני של <span class="accent">Novel View Synthesis</span>:
+              יצירת זוויות חדשות של סצנה מתוך מספר תמונות קיימות, בצורה רציפה ופוטו־ריאליסטית.
+            </p>
+          </div>
+
+          <div class="nvs-tl-wrap">
+            <div class="nvs-tl-caption">ציר זמן · המודלים המובילים בתחום</div>
+            <div class="nvs-tl" id="nvs-tl" dir="ltr">
+              <div class="nvs-tl-line"></div>
+              <div class="nvs-tl-fill" id="nvs-tl-fill"></div>
+              <button class="nvs-tl-node" data-idx="0" type="button" style="left:5%">
+                <span class="nvs-tl-year">2019</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">SRN</span>
+              </button>
+              <button class="nvs-tl-node" data-idx="1" type="button" style="left:23%">
+                <span class="nvs-tl-year">2020</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">NeRF</span>
+              </button>
+              <button class="nvs-tl-node" data-idx="2" type="button" style="left:41%">
+                <span class="nvs-tl-year">2021</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">Mip-NeRF</span>
+              </button>
+              <button class="nvs-tl-node" data-idx="3" type="button" style="left:59%">
+                <span class="nvs-tl-year">2022</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">Instant-NGP</span>
+              </button>
+              <button class="nvs-tl-node" data-idx="4" type="button" style="left:77%">
+                <span class="nvs-tl-year">2023</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">3DGS</span>
+              </button>
+              <button class="nvs-tl-node" data-idx="5" type="button" style="left:95%">
+                <span class="nvs-tl-year">2024</span>
+                <span class="nvs-tl-dot"></span>
+                <span class="nvs-tl-name">4D-GS</span>
+              </button>
+            </div>
+            <div class="nvs-tl-detail" id="nvs-tl-detail">
+              <div class="nvs-tl-detail-slide" data-idx="0">
+                <div class="nvs-tl-detail-year">2019</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">SRN <span class="nvs-tl-detail-fullname">· Scene Representation Networks</span></div>
+                  <div class="nvs-tl-detail-desc">ייצוג רציף של סצנה בתוך רשת נוירונים — הצעד הראשון לעבר NVS לומד.</div>
+                </div>
+              </div>
+              <div class="nvs-tl-detail-slide" data-idx="1">
+                <div class="nvs-tl-detail-year">2020</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">NeRF <span class="nvs-tl-detail-fullname">· Neural Radiance Fields</span></div>
+                  <div class="nvs-tl-detail-desc">פריצת הדרך — רשת אחת לומדת צבע וצפיפות בכל נקודה במרחב, לכל זווית.</div>
+                </div>
+              </div>
+              <div class="nvs-tl-detail-slide" data-idx="2">
+                <div class="nvs-tl-detail-year">2021</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">Mip-NeRF <span class="nvs-tl-detail-fullname">· Multi-scale NeRF · Google</span></div>
+                  <div class="nvs-tl-detail-desc">החלקת אליאסינג בכל קנה מידה — תמונות חדות מכל מרחק זום.</div>
+                </div>
+              </div>
+              <div class="nvs-tl-detail-slide" data-idx="3">
+                <div class="nvs-tl-detail-year">2022</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">Instant-NGP <span class="nvs-tl-detail-fullname">· Instant Neural Graphics Primitives · NVIDIA</span></div>
+                  <div class="nvs-tl-detail-desc">קידוד hash-grid הוריד את זמן האימון משעות לשניות.</div>
+                </div>
+              </div>
+              <div class="nvs-tl-detail-slide" data-idx="4">
+                <div class="nvs-tl-detail-year">2023</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">3DGS <span class="nvs-tl-detail-fullname">· 3D Gaussian Splatting · INRIA</span></div>
+                  <div class="nvs-tl-detail-desc">מיליוני גאוסיאנים מטושטשים במקום רשת — רנדור בזמן אמת, איכות SOTA.</div>
+                </div>
+              </div>
+              <div class="nvs-tl-detail-slide" data-idx="5">
+                <div class="nvs-tl-detail-year">2024</div>
+                <div class="nvs-tl-detail-body">
+                  <div class="nvs-tl-detail-name">4D-GS <span class="nvs-tl-detail-fullname">· Dynamic Gaussian Splatting</span></div>
+                  <div class="nvs-tl-detail-desc">הרחבה לסצנות דינמיות שמשתנות בזמן — תנועה ושינוי לאורך זמן.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 10: MODEL PROCESS ============ -->
+      <section class="slide" data-id="10">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -664,7 +771,7 @@
       </section>
 
       <!-- ============ SLIDE 8: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="10">
+      <section class="slide" data-id="11">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -740,7 +847,7 @@
       </section>
 
       <!-- ============ SLIDE 9: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="11">
+      <section class="slide" data-id="12">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -813,7 +920,7 @@
       </section>
 
       <!-- ============ SLIDE 10: NERF INTRO ============ -->
-      <section class="slide" data-id="12">
+      <section class="slide" data-id="13">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -829,7 +936,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="13">
+      <section class="slide" data-id="14">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -857,7 +964,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="14">
+      <section class="slide" data-id="15">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -904,7 +1011,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="15">
+      <section class="slide" data-id="16">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -930,7 +1037,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -976,7 +1083,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -1004,7 +1111,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -1040,7 +1147,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="19">
+      <section class="slide" data-id="20">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -1069,7 +1176,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="20">
+      <section class="slide" data-id="21">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -1100,7 +1207,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="21">
+      <section class="slide" data-id="22">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>
