@@ -3054,6 +3054,7 @@ code {
 
 .nvs-intro-slide > .kicker {
   text-align: center;
+  margin-top: clamp(3.5rem, 10vh, 7rem);
 }
 
 .nvs-intro-title {
@@ -3070,7 +3071,7 @@ code {
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
-  max-width: 78ch;
+  max-width: min(96ch, 100%);
   margin-inline: auto;
 }
 
@@ -3079,6 +3080,7 @@ code {
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
+  max-width: 78ch;
   text-align: center;
 }
 
@@ -3096,7 +3098,7 @@ code {
   margin-top: 0.6rem;
   padding-top: 1.4rem;
   position: relative;
-  max-width: 64ch;
+  max-width: min(94ch, 100%);
 }
 
 .nvs-intro-emphasis::before {
