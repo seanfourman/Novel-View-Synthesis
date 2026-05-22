@@ -4422,8 +4422,9 @@ export function initNvsIntro() {
 
   // Node centres are positioned by inline left:% in the HTML. We mirror them
   // here so the fill bar can reach the same x position without DOM measurement.
-  const NODE_PCT = [5, 23, 41, 59, 77, 95];
-  const TRACK_START_PCT = 5;            // matches .nvs-tl-fill left:5%
+  // Symmetric 10% margins on each side, 16% spacing between dots.
+  const NODE_PCT = [10, 26, 42, 58, 74, 90];
+  const TRACK_START_PCT = 10;           // matches .nvs-tl-fill left:10%
   const TRANS_MS = 750;                 // matches the CSS transition duration
   const CYCLE_TICKS = 200;              // ~3.3 s at 60fps between auto-advances
 
@@ -4458,16 +4459,23 @@ export function initNvsIntro() {
     // The detail card cross-fades over the same window as the fill travel.
     details.forEach((d, j) => d.classList.toggle("detail-active", j === i));
 
+    // Bar is in motion — show the comet head so we have a leading indicator.
+    fill.classList.remove("at-rest");
+
     // Animate the fill toward the target dot.
-    fill.style.left = "5%";
+    fill.style.left = TRACK_START_PCT + "%";
     fill.style.width = NODE_PCT[i] - TRACK_START_PCT + "%";
 
     if (immediate) {
       nodes[i].classList.add("tl-active");
+      fill.classList.add("at-rest");
     } else {
-      // Delay the active class so the dot lights up exactly when the bar arrives.
+      // Delay the active class so the dot lights up exactly when the bar
+      // arrives. The comet also fades at the same moment, so the active
+      // dot's appear animation plays cleanly without the comet on top of it.
       activeTimer = setTimeout(() => {
         nodes[i].classList.add("tl-active");
+        fill.classList.add("at-rest");
       }, TRANS_MS);
     }
   }
@@ -4478,20 +4486,22 @@ export function initNvsIntro() {
     // Drop the current active flag so the last orange dot stops pulsing while
     // the bar carries it off. Past dots keep their pale-orange colour for now.
     nodes.forEach((n) => n.classList.remove("tl-active"));
+    // Comet is moving (off to the right), make sure it's visible.
+    fill.classList.remove("at-rest");
 
-    // Phase 1: bar slides off the right edge (left 5% → 105%, width unchanged).
+    // Phase 1: bar slides off the right edge (left 10% → 105%, width unchanged).
     fill.style.left = "105%";
 
     setTimeout(() => {
       // Phase 2: reset all dot/detail state, teleport bar off-screen left.
       nodes.forEach((n) => n.classList.remove("tl-past", "tl-active"));
       details.forEach((d) => d.classList.remove("detail-active"));
-      applyFillImmediate("-5%", "0");
+      applyFillImmediate("-10%", "0");
 
       // Phase 3: comet enters from the left edge (only the leading dot is
       // visible since width is 0 — gradient bar comes back in phase 4).
       requestAnimationFrame(() => {
-        fill.style.left = "5%";
+        fill.style.left = TRACK_START_PCT + "%";
       });
 
       // Phase 4: when the comet reaches the first dot, light it up and resume.
@@ -4528,7 +4538,17 @@ export function initNvsIntro() {
       cycleT = 0;
       isWrapping = false;
       if (activeTimer) clearTimeout(activeTimer);
-      applyFillImmediate("5%", "0");
+      applyFillImmediate(TRACK_START_PCT + "%", "0");
+      fill.classList.remove("at-rest");
+      // Force the dot's keyframe animation to restart even if the slide is
+      // re-entered while the same dot is still flagged active (no class change
+      // would otherwise trigger the appear animation).
+      const firstDot = nodes[0].querySelector(".nvs-tl-dot");
+      if (firstDot) {
+        firstDot.style.animation = "none";
+        void firstDot.offsetWidth;
+        firstDot.style.animation = "";
+      }
       setActive(0, true);
     },
   };

@@ -3153,13 +3153,13 @@ code {
   border-radius: 0;
 }
 
-/* Fill starts at the first dot (5%) and grows to the active dot.
+/* Fill starts at the first dot (10%) and grows to the active dot.
    The `left` transition is used during the wraparound: slide off right, snap
    to off-screen left, then slide in to first dot. */
 .nvs-tl-fill {
   position: absolute;
   top: 50%;
-  left: 5%;
+  left: 10%;
   height: 3px;
   width: 0;
   background: linear-gradient(90deg, var(--accent-soft), var(--accent));
@@ -3245,12 +3245,18 @@ code {
   color: var(--accent-soft);
 }
 
-/* Active node - pulsing ring */
+/* Active node — explicit two-stage animation:
+   nvsTlAppear (0.32s) drives the dot from scale(1) + no-glow to scale(1.45)
+   + 6px glow. `forwards` keeps that final state in place while nvsTlPulse
+   (started after a 0.32s delay) takes over the box-shadow oscillation.
+   The explicit keyframes prevent the previous bug where the scale-up was
+   sometimes skipped and the dot read as "big from the beginning". */
 .nvs-tl-node.tl-active .nvs-tl-dot {
   background: var(--accent);
   border-color: var(--accent);
-  transform: scale(1.45);
-  animation: nvsTlPulse 1.8s ease-in-out infinite;
+  animation:
+    nvsTlAppear 0.32s ease-out forwards,
+    nvsTlPulse 1.8s ease-in-out 0.32s infinite;
 }
 .nvs-tl-node.tl-active .nvs-tl-year {
   color: var(--accent);
@@ -3261,14 +3267,38 @@ code {
   font-weight: 700;
 }
 
+@keyframes nvsTlAppear {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
+  }
+  100% {
+    transform: scale(1.45);
+    box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22);
+  }
+}
+
 @keyframes nvsTlPulse {
   0%,
   100% {
+    transform: scale(1.45);
     box-shadow: 0 0 0 6px rgba(255, 90, 54, 0.22);
   }
   50% {
+    transform: scale(1.45);
     box-shadow: 0 0 0 14px rgba(255, 90, 54, 0.04);
   }
+}
+
+/* The comet (leading dot on the fill bar) fades once the bar arrives at its
+   target — otherwise it sits on top of the active dot and makes it read as
+   already-grown before the appear animation has played. */
+.nvs-tl-fill::after {
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+.nvs-tl-fill.at-rest::after {
+  opacity: 0;
 }
 
 /* ---------- Detail (centred, no box, no right border) ---------- */
