@@ -2126,16 +2126,15 @@ export function initClassic() {
         ctx.restore();
       });
 
-      if (goingRight)
-        scenePts.forEach((p) => {
-          if (!p.found) return;
-          ctx.beginPath();
-          ctx.moveTo(camX, camY);
-          ctx.lineTo(p.x, p.y);
-          ctx.strokeStyle = "rgba(255,90,54,0.12)";
-          ctx.lineWidth = 0.7 * S;
-          ctx.stroke();
-        });
+      scenePts.forEach((p) => {
+        if (!p.found) return;
+        ctx.beginPath();
+        ctx.moveTo(camX, camY);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = "rgba(255,90,54,0.12)";
+        ctx.lineWidth = 0.7 * S;
+        ctx.stroke();
+      });
 
       scenePts.forEach((p) => {
         ctx.beginPath();
