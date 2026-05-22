@@ -2104,14 +2104,12 @@ export function initClassic() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      if (goingRight) {
-        ctx.beginPath();
-        ctx.moveTo(W * 0.12, arcY);
-        ctx.lineTo(camX, camY);
-        ctx.strokeStyle = "rgba(255,90,54,0.38)";
-        ctx.lineWidth = S;
-        ctx.stroke();
-      }
+      ctx.beginPath();
+      ctx.moveTo(W * 0.12, arcY);
+      ctx.lineTo(camX, camY);
+      ctx.strokeStyle = "rgba(255,90,54,0.38)";
+      ctx.lineWidth = S;
+      ctx.stroke();
 
       camPath.forEach((stop) => {
         if (goingRight) {
