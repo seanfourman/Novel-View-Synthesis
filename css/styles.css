@@ -3090,6 +3090,43 @@ code {
   font-weight: 700;
 }
 
+.nvs-intro-bridge {
+  color: var(--ink) !important;
+  font-weight: 700;
+  margin-top: 0.25rem !important;
+}
+
+.nvs-key-points {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem 1.2rem;
+  list-style: none;
+  margin: 0.1rem auto 0.2rem;
+  max-width: min(84ch, 100%);
+  padding: 0;
+}
+
+.nvs-key-points li {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-size: clamp(1rem, 1.05vw, 1.12rem);
+  font-weight: 700;
+  gap: 0.4rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.nvs-key-points li::before {
+  background: var(--accent);
+  border-radius: 50%;
+  content: "";
+  flex: 0 0 auto;
+  height: 0.4rem;
+  width: 0.4rem;
+}
+
 /* Redesigned emphasis: no right border; a centred gradient bar above */
 .nvs-intro-emphasis {
   font-size: clamp(1.15rem, 1.3vw, 1.35rem) !important;
