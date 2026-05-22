@@ -3134,7 +3134,7 @@ code {
   }
 }
 
-/* Redesigned emphasis: no right border; a centred gradient bar above */
+/* Redesigned emphasis: no right border; a centred accent bar above */
 .nvs-intro-emphasis {
   font-size: clamp(1rem, 1.05vw, 1.12rem) !important;
   color: var(--ink) !important;
@@ -3152,9 +3152,9 @@ code {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 88px;
+  width: 220px;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-soft), var(--accent));
+  background: var(--accent);
   border-radius: 3px;
 }
 
