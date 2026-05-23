@@ -3769,6 +3769,7 @@ code {
 .srn-type-chips {
   display: flex;
   flex-direction: row-reverse;
+  justify-content: center;
   gap: 0.75rem;
   margin-top: 0.4rem;
 }
