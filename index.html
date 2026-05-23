@@ -756,12 +756,17 @@
               <br>SRN לומדת ייצוג <em>רציף</em> של הסצנה - ישירות מהתמונות.
             </p>
             <div class="srn-tech-diagram">
-              <div class="srn-fn-sig">
-                <span class="srn-fn-f">F<sub>Θ</sub></span>
-                <span class="srn-fn-sep"> : </span>
-                <span class="srn-fn-domain">ℝ<sup>3</sup> × S<sup>2</sup></span>
-                <span class="srn-fn-sep"> → </span>
-                <span class="srn-fn-range">ℝ<sup>3</sup></span>
+              <div class="srn-fn-header">
+                <div class="srn-fn-sig">
+                  <span class="srn-fn-f">F<sub>Θ</sub></span>
+                  <span class="srn-fn-op">:</span>
+                  <span class="srn-fn-domain">ℝ³</span>
+                  <span class="srn-fn-op">×</span>
+                  <span class="srn-fn-domain2">𝕊²</span>
+                  <span class="srn-fn-op srn-fn-main-arrow">→</span>
+                  <span class="srn-fn-range">ℝ³</span>
+                </div>
+                <p class="srn-fn-words">(<bdi class="srn-words-in">מיקום</bdi>, <bdi class="srn-words-in">כיוון</bdi>) <span class="srn-words-arrow">→</span> <bdi class="srn-words-out">צבע</bdi></p>
               </div>
               <div class="srn-mlp-row">
                 <div class="srn-mlp-labels-in">
@@ -820,8 +825,29 @@
                   <span><em>c</em> = (R, G, B)</span>
                 </div>
               </div>
+              <div class="srn-diagram-legend">
+                <div class="srn-lgnd-item">
+                  <span class="srn-lgnd-key">p ∈ ℝ³</span>
+                  <span class="srn-lgnd-val">מיקום תלת-ממדי בסצנה</span>
+                </div>
+                <span class="srn-lgnd-dot">·</span>
+                <div class="srn-lgnd-item">
+                  <span class="srn-lgnd-key">d ∈ S²</span>
+                  <span class="srn-lgnd-val">כיוון וזווית הצפייה</span>
+                </div>
+                <span class="srn-lgnd-dot">·</span>
+                <div class="srn-lgnd-item">
+                  <span class="srn-lgnd-key">c ∈ ℝ³</span>
+                  <span class="srn-lgnd-val">צבע הפיקסל (R, G, B)</span>
+                </div>
+                <span class="srn-lgnd-dot">·</span>
+                <div class="srn-lgnd-item">
+                  <span class="srn-lgnd-key">Θ</span>
+                  <span class="srn-lgnd-val">משקולות הרשת הנלמדות</span>
+                </div>
+              </div>
             </div>
-            <p class="srn-tagline">מבטים חדשים - גם מזוויות שלא צולמו ישירות</p>
+            <p class="srn-tagline">מבטים חדשים — גם מזוויות שלא צולמו ישירות</p>
           </div>
           <div class="srn-visual">
             <video
