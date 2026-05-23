@@ -3616,6 +3616,10 @@ code {
 /* ---- plain-words line ---- */
 .srn-fn-words {
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 0.9vw, 0.85rem);
   white-space: nowrap;
   font-size: clamp(0.74rem, 0.9vw, 0.86rem);
   color: var(--ink-soft);
