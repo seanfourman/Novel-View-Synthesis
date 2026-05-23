@@ -3617,7 +3617,7 @@ code {
 .srn-fn-words {
   margin: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: clamp(0.5rem, 0.9vw, 0.85rem);
   white-space: nowrap;
@@ -3629,6 +3629,56 @@ code {
 .srn-words-in {
   color: rgba(108, 92, 231, 0.85);
   font-weight: 600;
+}
+
+.srn-words-plus {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.srn-words-dir {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.srn-angle-defs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34rem;
+  margin-top: 0.08rem;
+  color: rgba(74, 74, 74, 0.72);
+  font-size: 0.72em;
+  font-weight: 500;
+  line-height: 1;
+  direction: ltr;
+}
+
+.srn-angle-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.srn-angle-key {
+  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  font-weight: 800;
+  color: rgba(74, 74, 74, 0.86);
+}
+
+.srn-angle-label {
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+.srn-angle-sep {
+  width: 1px;
+  height: 0.9em;
+  background: rgba(0, 0, 0, 0.16);
 }
 
 .srn-words-in2 {
@@ -3684,64 +3734,6 @@ code {
   min-width: 0;
   max-width: 270px;
   height: auto;
-}
-
-/* ---- legend row ---- */
-.srn-diagram-legend {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem 0.55rem;
-  width: 100%;
-  direction: ltr;
-  padding-top: 0.05rem;
-}
-
-.srn-lgnd-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.22rem;
-}
-
-.srn-lgnd-item:nth-of-type(1) {
-  grid-column: 1 / span 3;
-}
-
-.srn-lgnd-item:nth-of-type(2) {
-  grid-column: 4 / span 3;
-}
-
-.srn-lgnd-item:nth-of-type(3) {
-  grid-column: 1 / span 2;
-}
-
-.srn-lgnd-item:nth-of-type(4) {
-  grid-column: 3 / span 2;
-}
-
-.srn-lgnd-item:nth-of-type(5) {
-  grid-column: 5 / span 2;
-}
-
-.srn-lgnd-key {
-  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: clamp(0.62rem, 0.78vw, 0.74rem);
-  font-weight: 700;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.srn-lgnd-val {
-  font-size: clamp(0.62rem, 0.78vw, 0.74rem);
-  color: var(--ink-soft);
-  white-space: nowrap;
-  direction: rtl;
-}
-
-.srn-lgnd-dot {
-  display: none;
 }
 
 .srn-tagline {
