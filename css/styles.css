@@ -3535,7 +3535,7 @@ code {
 
 .srn-fn-sig {
   font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: clamp(0.95rem, 1.25vw, 1.18rem);
+  font-size: clamp(1.2rem, 1.6vw, 1.5rem);
   font-weight: 500;
   color: var(--ink);
   display: flex;
@@ -3626,7 +3626,7 @@ code {
 
 .srn-fn-map {
   font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: clamp(0.81rem, 1.06vw, 1rem);
+  font-size: clamp(1rem, 1.35vw, 1.25rem);
   display: flex;
   align-items: center;
   gap: 0.26em;
@@ -3660,7 +3660,7 @@ code {
   justify-content: center;
   gap: clamp(0.5rem, 0.9vw, 0.85rem);
   white-space: nowrap;
-  font-size: clamp(0.74rem, 0.9vw, 0.86rem);
+  font-size: clamp(0.9rem, 1.15vw, 1.05rem);
   color: var(--ink-soft);
   direction: ltr;
 }
