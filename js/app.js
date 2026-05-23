@@ -18,6 +18,7 @@ import {
   initSfMLiDAR,
   initLimits,
   initNvsIntro,
+  initSRN,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -143,16 +144,17 @@ const sceneRegistry = {
   6: initSfMLiDAR, // slide 7
   7: initLimits, // slide 8 (why classical methods failed)
   8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
-  9: initDepthBasedNVS, // slide 10
-  10: initApplications, // slide 11
-  11: initWhyHard, // slide 12
-  // slide 13 (NeRF intro) - no canvas
-  13: initRotatable, // slide 14
-  15: initRayDemo, // slide 16
-  16: initTraining, // slide 17
-  17: initClickableViews, // slide 18
-  18: initOrbitScrubber, // slide 19
-  21: initEndBg, // slide 22
+  9: initSRN, // slide 10 (SRN)
+  10: initDepthBasedNVS, // slide 11
+  11: initApplications, // slide 12
+  12: initWhyHard, // slide 13
+  // slide 14 (NeRF intro) - no canvas
+  14: initRotatable, // slide 15
+  16: initRayDemo, // slide 17
+  17: initTraining, // slide 18
+  18: initClickableViews, // slide 19
+  19: initOrbitScrubber, // slide 20
+  22: initEndBg, // slide 23
 };
 
 const sceneInstances = {};

@@ -4407,6 +4407,49 @@ export function initLimits() {
    After the last dot the bar exits off the right edge, resets, and the
    leading comet re-enters from the left edge to start the cycle again.
    ============================================================ */
+export function initSRN() {
+  const slide = document.querySelector('.slide[data-id="10"]');
+  if (!slide) return { tick() {} };
+
+  const hero = document.getElementById("srn-hero");
+  const thumbBtns = Array.from(slide.querySelectorAll(".srn-thumb"));
+
+  thumbBtns.forEach((btn) => {
+    const thumbVid = btn.querySelector("video");
+
+    btn.addEventListener("click", () => {
+      hero.src = btn.dataset.src;
+      hero.load();
+      hero.play().catch(() => {});
+      thumbBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+
+    btn.addEventListener("mouseenter", () => {
+      if (thumbVid) {
+        thumbVid.loop = true;
+        thumbVid.play().catch(() => {});
+      }
+    });
+    btn.addEventListener("mouseleave", () => {
+      if (thumbVid) thumbVid.pause();
+    });
+  });
+
+  return {
+    enter() {
+      primeVideo(hero, true);
+    },
+    tick(visible) {
+      if (visible) {
+        if (hero && hero.paused) hero.play().catch(() => {});
+      } else {
+        if (hero) hero.pause();
+      }
+    },
+  };
+}
+
 export function initNvsIntro() {
   const slide = document.querySelector('section[data-id="9"]');
   if (!slide) return { tick() {}, enter() {} };
@@ -4423,8 +4466,8 @@ export function initNvsIntro() {
   const NODE_PCT = [10, 26, 42, 58, 74, 90];
   // Fill bar is anchored at left:0 (the screen's left edge) so the segment
   // before the first dot is also painted. Width grows to NODE_PCT[i].
-  const TRANS_MS = 750;                 // matches the CSS transition duration
-  const CYCLE_TICKS = 420;              // ~7 s at 60fps between auto-advances
+  const TRANS_MS = 750; // matches the CSS transition duration
+  const CYCLE_TICKS = 420; // ~7 s at 60fps between auto-advances
 
   let activeIdx = -1;
   let cycleT = 0;
@@ -4458,7 +4501,7 @@ export function initNvsIntro() {
     // The detail card cross-fades over the same window as the fill travel.
     details.forEach((d, j) => d.classList.toggle("detail-active", j === i));
 
-    // Bar is in motion — show the comet head so we have a leading indicator.
+    // Bar is in motion - show the comet head so we have a leading indicator.
     fill.classList.remove("at-rest");
 
     // Animate the fill toward the target dot. Always anchored at left:0 so
@@ -4489,7 +4532,7 @@ export function initNvsIntro() {
     // Comet is moving (off to the right), make sure it's visible.
     fill.classList.remove("at-rest");
 
-    // Phase 1: bar slides off the right edge as a whole — animate `left`
+    // Phase 1: bar slides off the right edge as a whole - animate `left`
     // from 0 to 100% while keeping the width unchanged (~90% at this point).
     fill.style.left = "100%";
 

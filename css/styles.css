@@ -3201,11 +3201,11 @@ code {
 }
 
 /* Fill is always anchored at the very left edge of the screen and grows
-   rightward to the active dot — so the segment between the screen edge and
+   rightward to the active dot - so the segment between the screen edge and
    the first dot (SRN) gets painted too, not just the part between dots.
    The `left` transition is used during the wraparound: slide off right,
    snap back to 0, then grow the width back out to the first dot.
-   No box-shadow here — a glow that follows a width-animated element triggers
+   No box-shadow here - a glow that follows a width-animated element triggers
    paint on every frame and is the single biggest source of lag on this slide. */
 .nvs-tl-fill {
   position: absolute;
@@ -3217,7 +3217,7 @@ code {
   transform: translateY(-50%);
   transition:
     width 0.75s cubic-bezier(0.4, 0, 0.2, 1),
-    left  0.75s cubic-bezier(0.4, 0, 0.2, 1);
+    left 0.75s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 3px;
 }
 
@@ -3323,7 +3323,7 @@ code {
   color: var(--accent-soft);
 }
 
-/* Active node — pure CSS transitions in both directions so the dot scales
+/* Active node - pure CSS transitions in both directions so the dot scales
    up *and back down* with the same smooth feel. The pulse runs on the
    pseudo-element and is interrupted cleanly by the opacity/transform
    transitions when tl-active is removed. */
@@ -3431,4 +3431,206 @@ code {
   color: var(--ink-soft);
   line-height: 1.5;
   max-width: 64ch;
+}
+
+/* ============================================================
+   SRN slide (slide 10)
+   ============================================================ */
+.srn-slide {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  padding: clamp(2rem, 4vw, 4rem) clamp(2rem, 4vw, 5rem);
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.srn-text {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.8rem, 1.2vh, 1.2rem);
+}
+
+.srn-text h2 {
+  font-size: clamp(1.8rem, 2.8vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--ink);
+}
+
+.srn-text .lead.small {
+  max-width: 44ch;
+}
+
+.srn-text .lead.small em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.srn-io-diagram {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  direction: ltr;
+  margin: 0.25rem 0;
+}
+
+.srn-io-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.srn-io-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.srn-io-in {
+  background: rgba(108, 92, 231, 0.09);
+  border: 1.5px solid rgba(108, 92, 231, 0.35);
+  color: var(--accent-2);
+}
+
+.srn-io-out {
+  background: rgba(255, 90, 54, 0.09);
+  border: 1.5px solid rgba(255, 90, 54, 0.35);
+  color: var(--accent);
+}
+
+.srn-io-icon {
+  font-size: 0.95rem;
+}
+
+.srn-io-net {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.srn-io-net-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  direction: rtl;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.srn-io-arrow-svg {
+  width: 3rem;
+  height: auto;
+}
+
+.srn-tagline {
+  font-size: clamp(0.82rem, 0.95vw, 0.95rem);
+  color: var(--accent);
+  font-weight: 600;
+  direction: rtl;
+  margin: 0.25rem 0 0;
+  border-right: 3px solid var(--accent);
+  padding-right: 0.75rem;
+  line-height: 1.5;
+}
+
+.srn-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.srn-hero-video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #111;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.srn-thumbs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.srn-thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.srn-thumb {
+  flex: 0 0 calc(20% - 0.4rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #eee;
+  padding: 0;
+  transition:
+    border-color 0.2s,
+    transform 0.15s;
+  min-width: 0;
+}
+
+.srn-thumb video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.srn-thumb span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  padding: 0.2rem 0;
+  direction: rtl;
+}
+
+.srn-thumb:hover {
+  border-color: rgba(255, 90, 54, 0.45);
+  transform: translateY(-2px);
+}
+
+.srn-thumb.active {
+  border-color: var(--accent);
+}
+
+.srn-thumb.active span {
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .srn-slide {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+  .srn-text h2 {
+    font-size: 1.6rem;
+  }
 }
