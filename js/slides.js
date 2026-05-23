@@ -4722,7 +4722,7 @@ export function initSRNNetAnim() {
     const cellW = imgW / IMG_COLS;
     const cellH = imgH / IMG_ROWS;
 
-    const netX1 = W * 0.27;
+    const netX1 = W * 0.32;
     const netX2 = W * 0.83;
     const layerXs = layerCounts.map((_, i) =>
       netX1 + (netX2 - netX1) * (i / (layerCounts.length - 1))
@@ -4929,33 +4929,41 @@ export function initSRNNetAnim() {
         const cy = nodeY(l, n);
         const baseR = l === 0 || l === layerCounts.length - 1 ? 11 : 7;
 
-        // Activation 0..1
+        // Activation 0..1 and the color of the pulse driving it
         let active = 0;
+        let activeColor = null;
         pulses.forEach((p) => {
+          let pa = 0;
           // Leaving layer l = phase l+2 starting
           if (p.phase === l + 2 && p.t < 0.45) {
-            active = Math.max(active, 1 - p.t / 0.45);
+            pa = Math.max(pa, 1 - p.t / 0.45);
           }
           // Arriving at layer l = phase l+1 ending
           if (p.phase === l + 1 && p.t > 0.55) {
-            active = Math.max(active, (p.t - 0.55) / 0.45);
+            pa = Math.max(pa, (p.t - 0.55) / 0.45);
           }
           // Input layer also lights on phase 1
           if (l === 0 && p.phase === 1) {
-            active = Math.max(active, Math.min(1, p.t * 1.6));
+            pa = Math.max(pa, Math.min(1, p.t * 1.6));
           }
           // Output layer also lights briefly during phase 6
           if (l === layerCounts.length - 1 && p.phase === 6 && p.t < 0.4) {
-            active = Math.max(active, 1 - p.t / 0.4);
+            pa = Math.max(pa, 1 - p.t / 0.4);
+          }
+          if (pa > active) {
+            active = pa;
+            activeColor = p.color;
           }
         });
 
         ctx.save();
         if (l === 0) {
-          ctx.fillStyle = `rgba(108,92,231,${0.12 + active * 0.55})`;
-          ctx.strokeStyle = `rgba(108,92,231,${0.7 + active * 0.3})`;
+          // input layer - use the pixel color when active, neutral when idle
+          const c = activeColor || { r: 180, g: 180, b: 185 };
+          ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${0.12 + active * 0.55})`;
+          ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${0.7 + active * 0.3})`;
           if (active > 0.05) {
-            ctx.shadowColor = "rgba(108,92,231,0.85)";
+            ctx.shadowColor = `rgb(${c.r},${c.g},${c.b})`;
             ctx.shadowBlur = active * 14;
           }
         } else if (l === layerCounts.length - 1) {
@@ -4967,14 +4975,16 @@ export function initSRNNetAnim() {
             ctx.shadowBlur = active * 14;
           }
         } else {
-          ctx.fillStyle = "#f3f3f5";
-          const acR = Math.round(187 - active * 79);
-          const acG = Math.round(187 - active * 95);
-          const acB = Math.round(190 - active * 0);
-          ctx.strokeStyle = `rgba(${acR},${acG},${acB},${0.55 + active * 0.45})`;
-          if (active > 0.05) {
-            ctx.shadowColor = `rgba(108,92,231,${active})`;
+          // hidden layers - fill with pulse color when active, otherwise grey
+          if (activeColor && active > 0.05) {
+            const c = activeColor;
+            ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${0.18 + active * 0.55})`;
+            ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${0.7 + active * 0.3})`;
+            ctx.shadowColor = `rgb(${c.r},${c.g},${c.b})`;
             ctx.shadowBlur = active * 11;
+          } else {
+            ctx.fillStyle = "#f3f3f5";
+            ctx.strokeStyle = "rgba(187,187,190,0.55)";
           }
         }
         ctx.lineWidth = 1.5 + active * 1.5;
@@ -4999,7 +5009,7 @@ export function initSRNNetAnim() {
 
     // ---- Input neuron labels ----
     ctx.save();
-    ctx.fillStyle = "rgba(108,92,231,0.85)";
+    ctx.fillStyle = "rgba(80,80,85,0.85)";
     ctx.font = "italic 10px 'JetBrains Mono', monospace";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
