@@ -3484,7 +3484,14 @@ code {
 .srn-fn-header {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.45rem;
+}
+
+.srn-fn-top-row {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
 }
 
 .srn-fn-sig {
@@ -3541,16 +3548,21 @@ code {
 
 .srn-fn-map {
   font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: clamp(0.78rem, 0.95vw, 0.92rem);
+  font-size: clamp(0.95rem, 1.25vw, 1.18rem);
   display: flex;
-  align-items: baseline;
-  padding-left: 1.4em;
+  align-items: center;
+  gap: 0.32em;
   white-space: nowrap;
 }
 
 .srn-fn-map-input {
   color: rgba(108, 92, 231, 0.75);
   font-weight: 600;
+}
+
+.srn-fn-map-arrow {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .srn-fn-map-output {
@@ -3568,23 +3580,23 @@ code {
   direction: ltr;
 }
 
-.srn-words-paren {
-  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  color: #aaa;
-}
-
 .srn-words-in {
-  color: rgba(108, 92, 231, 0.75);
+  color: rgba(108, 92, 231, 0.85);
   font-weight: 600;
 }
 
+.srn-words-in2 {
+  color: rgba(108, 92, 231, 0.6);
+}
+
 .srn-words-arrow {
-  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  color: #aaa;
+  color: var(--ink);
+  position: relative;
+  top: -0.05em;
 }
 
 .srn-words-out {
-  color: rgba(255, 90, 54, 0.8);
+  color: rgba(255, 90, 54, 0.85);
   font-weight: 600;
 }
 
@@ -3635,6 +3647,7 @@ code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem 0.4rem;
   direction: ltr;
   padding-top: 0.15rem;
