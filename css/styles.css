@@ -3937,9 +3937,9 @@ code {
   text-underline-offset: 2px;
 }
 
-.srn-video-label-1 { top: 2%; }
-.srn-video-label-2 { top: 35%; }
-.srn-video-label-3 { top: 68%; }
+.srn-video-label-1 { top: 5%; }
+.srn-video-label-2 { top: 32%; }
+.srn-video-label-3 { top: 66%; }
 
 .srn-col-labels {
   display: grid;
