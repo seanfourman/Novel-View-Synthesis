@@ -3472,22 +3472,31 @@ code {
 }
 
 .srn-slide-wide .srn-text {
-  padding-left: 37%;
+  padding-left: 52%;
   box-sizing: border-box;
 }
 
 .srn-slide-wide .srn-visual {
   position: absolute;
-  left: clamp(2rem, 4vw, 5rem);
+  left: clamp(0.5rem, 1.5vw, 2rem);
   top: 50%;
   transform: translateY(-50%);
-  width: 31.8%;
+  width: 44%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.srn-slide-wide .srn-video-wrap {
+  width: 100%;
   max-width: 406px;
 }
 
 .srn-visual-caption {
   margin: 0.7rem 0 0;
-  font-size: 12px;
+  width: 100%;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--ink-soft);
   direction: rtl;
