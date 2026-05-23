@@ -3480,9 +3480,9 @@ code {
   position: absolute;
   left: clamp(0.5rem, 1.5vw, 2rem);
   top: 50%;
-  transform: translateY(calc(-50% - 0.5vh));
-  width: 44%;
-  max-width: 580px;
+  transform: translateY(calc(-50% + 4vh));
+  width: 41%;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3490,7 +3490,7 @@ code {
 
 .srn-slide-wide .srn-video-wrap {
   width: 100%;
-  max-width: 406px;
+  max-width: 360px;
 }
 
 .srn-visual-caption {
