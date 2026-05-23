@@ -3519,6 +3519,10 @@ code {
   top: -0.08em;
 }
 
+.srn-fn-times {
+  margin-right: 0.18em;
+}
+
 .srn-fn-domain {
   color: rgba(108, 92, 231, 0.9);
   font-weight: 700;
