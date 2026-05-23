@@ -27,7 +27,7 @@
     <nav id="dots" aria-label="ניווט בין שקפים"></nav>
     <div id="counter">
       <span id="cur">1</span> <span class="muted">/</span>
-      <span id="tot">22</span>
+      <span id="tot">24</span>
     </div>
 
     <main id="deck">
@@ -896,8 +896,74 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 11: MODEL PROCESS ============ -->
+      <!-- ============ SLIDE 11: SRN NETWORK ANIMATION ============ -->
       <section class="slide" data-id="11">
+        <div class="srn-slide">
+          <div class="srn-text">
+            <div class="kicker">המחשת תהליך - איך זה עובד</div>
+            <h2>Scene Representation<br /><span class="accent">Networks</span></h2>
+            <p class="lead small">
+              בהמחשה משמאל רואים את עיקרון הפעולה: לוקחים פיקסל בודד מהתמונה,
+              <br>שולחים את הקואורדינטות שלו דרך כל שכבות הרשת, ומקבלים בחזרה את הצבע שהמודל למד לאותה נקודה.
+            </p>
+            <div class="srn-tech-diagram">
+              <div class="srn-fn-header">
+                <div class="srn-fn-top-row">
+                  <div class="srn-fn-sig">
+                    <span class="srn-fn-f">F<sub>Θ</sub></span>
+                    <span class="srn-fn-op">:</span>
+                    <span class="srn-fn-domain">ℝ³</span>
+                    <span class="srn-fn-op srn-fn-times">×</span>
+                    <span class="srn-fn-domain2">𝕊²</span>
+                    <span class="srn-fn-main-arrow">→</span>
+                    <span class="srn-fn-range">ℝ³</span>
+                  </div>
+                  <div class="srn-fn-map">
+                    <span class="srn-fn-map-input">(p, d)</span>
+                    <span class="srn-fn-map-arrow">→</span>
+                    <span class="srn-fn-map-output">c</span>
+                  </div>
+                </div>
+                <p class="srn-fn-words">
+                  <bdi class="srn-words-in">מיקום (x, y, z)</bdi>
+                  <span class="srn-words-plus">+</span>
+                  <span class="srn-words-dir">
+                    <bdi class="srn-words-in">כיוון (θ, φ)</bdi>
+                    <span class="srn-angle-defs">
+                      <span class="srn-angle-item"><span class="srn-angle-key">θ</span><bdi class="srn-angle-label">זווית אופקית</bdi></span>
+                      <span class="srn-angle-sep"></span>
+                      <span class="srn-angle-item"><span class="srn-angle-key">φ</span><bdi class="srn-angle-label">זווית אנכית</bdi></span>
+                    </span>
+                  </span>
+                  <span class="srn-words-arrow">→</span>
+                  <bdi class="srn-words-out">צבע הפיקסל הנראה</bdi>
+                </p>
+              </div>
+            </div>
+            <p class="srn-tagline">כל פיקסל בתמונה הוא שאילתה נפרדת לרשת.</p>
+          </div>
+          <div class="srn-visual srn-net-visual">
+            <div class="srn-flow-header">
+              <span class="srn-flow-step">פיקסל מהתמונה</span>
+              <span class="srn-flow-sep">→</span>
+              <span class="srn-flow-net">F<sub>Θ</sub> - רשת נוירונים</span>
+              <span class="srn-flow-sep">→</span>
+              <span class="srn-flow-step">צבע פלט</span>
+            </div>
+            <div class="srn-net-canvas-wrap">
+              <canvas id="srn-net-canvas" aria-label="הדמיית רשת נוירונים שמעבדת פיקסל בודד"></canvas>
+            </div>
+            <div class="srn-col-labels srn-net-col-labels">
+              <span>תמונת RGB</span>
+              <span>שכבות חבויות (MLP)</span>
+              <span>צבע באותה נקודה</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 12: MODEL PROCESS ============ -->
+      <section class="slide" data-id="12">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -928,8 +994,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 8: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="12">
+      <!-- ============ SLIDE 13: APPLICATIONS (visual) ============ -->
+      <section class="slide" data-id="13">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -1004,8 +1070,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 9: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="13">
+      <!-- ============ SLIDE 14: WHY HARD (visual) ============ -->
+      <section class="slide" data-id="14">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -1077,8 +1143,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 10: NERF INTRO ============ -->
-      <section class="slide" data-id="14">
+      <!-- ============ SLIDE 15: NERF INTRO ============ -->
+      <section class="slide" data-id="15">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -1094,7 +1160,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="15">
+      <section class="slide" data-id="16">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -1122,7 +1188,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -1169,7 +1235,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -1195,7 +1261,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -1241,7 +1307,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="19">
+      <section class="slide" data-id="20">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -1269,7 +1335,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="20">
+      <section class="slide" data-id="21">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -1305,7 +1371,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="21">
+      <section class="slide" data-id="22">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -1334,7 +1400,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="22">
+      <section class="slide" data-id="23">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -1365,7 +1431,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="23">
+      <section class="slide" data-id="24">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

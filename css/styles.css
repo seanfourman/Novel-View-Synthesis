@@ -3872,6 +3872,34 @@ code {
   text-align: center;
 }
 
+.srn-net-visual {
+  justify-content: center;
+}
+
+.srn-net-canvas-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background:
+    radial-gradient(circle at 50% 50%, #fcfcfd 0%, #f3f3f5 100%);
+  border-radius: 12px;
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+#srn-net-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.srn-net-col-labels {
+  grid-template-columns: 0.7fr 1.3fr 1fr;
+  padding: 0 0.4rem;
+}
+
 .srn-col-labels span {
   font-size: 11px;
   color: var(--ink-soft);

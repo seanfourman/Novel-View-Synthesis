@@ -19,6 +19,7 @@ import {
   initLimits,
   initNvsIntro,
   initSRN,
+  initSRNNetAnim,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -145,16 +146,17 @@ const sceneRegistry = {
   7: initLimits, // slide 8 (why classical methods failed)
   8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
   9: initSRN, // slide 10 (SRN)
-  10: initDepthBasedNVS, // slide 11
-  11: initApplications, // slide 12
-  12: initWhyHard, // slide 13
-  // slide 14 (NeRF intro) - no canvas
-  14: initRotatable, // slide 15
-  16: initRayDemo, // slide 17
-  17: initTraining, // slide 18
-  18: initClickableViews, // slide 19
-  19: initOrbitScrubber, // slide 20
-  22: initEndBg, // slide 23
+  10: initSRNNetAnim, // slide 11 (SRN network animation)
+  11: initDepthBasedNVS, // slide 12
+  12: initApplications, // slide 13
+  13: initWhyHard, // slide 14
+  // slide 15 (NeRF intro) - no canvas
+  15: initRotatable, // slide 16
+  17: initRayDemo, // slide 18
+  18: initTraining, // slide 19
+  19: initClickableViews, // slide 20
+  20: initOrbitScrubber, // slide 21
+  23: initEndBg, // slide 24
 };
 
 const sceneInstances = {};

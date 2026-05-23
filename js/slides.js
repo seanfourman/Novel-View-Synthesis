@@ -4591,3 +4591,456 @@ export function initNvsIntro() {
     },
   };
 }
+
+/* =========================================================
+   Slide 11: SRN network animation - pixel flows through MLP
+   ========================================================= */
+export function initSRNNetAnim() {
+  const slide = document.querySelector('.slide[data-id="11"]');
+  if (!slide) return { tick() {} };
+  const canvas = slide.querySelector("#srn-net-canvas");
+  if (!canvas) return { tick() {} };
+  const ctx = canvas.getContext("2d");
+
+  const dpr = window.devicePixelRatio || 1;
+  let W = 0, H = 0;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = rect.width;
+    H = rect.height;
+  }
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(resize).observe(canvas);
+  }
+
+  // ---- Generate input scene image ----
+  const IMG_COLS = 10, IMG_ROWS = 7;
+  function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  const imgPixels = [];
+  for (let y = 0; y < IMG_ROWS; y++) {
+    for (let x = 0; x < IMG_COLS; x++) {
+      const ny = y / IMG_ROWS;
+      const nx = x / IMG_COLS;
+      let r, g, b;
+      if (ny < 0.4) {
+        const t = ny / 0.4;
+        r = lerp(165, 215, t) + rand(-10, 10);
+        g = lerp(195, 230, t) + rand(-10, 10);
+        b = lerp(235, 248, t) + rand(-8, 8);
+      } else if (ny < 0.6) {
+        r = 95 + rand(0, 50);
+        g = 105 + rand(0, 50);
+        b = 130 + rand(0, 50);
+      } else {
+        r = 75 + rand(0, 60);
+        g = 115 + rand(-10, 50);
+        b = 60 + rand(-10, 30);
+      }
+      // sun glow upper-right
+      const dx = nx - 0.78, dy = ny - 0.15;
+      const sd = Math.sqrt(dx * dx + dy * dy);
+      if (sd < 0.1) { r = 252; g = 235; b = 175; }
+      else if (sd < 0.18) {
+        const t = (sd - 0.1) / 0.08;
+        r = lerp(252, r, t); g = lerp(235, g, t); b = lerp(175, b, t);
+      }
+      imgPixels.push({ r: clamp255(r), g: clamp255(g), b: clamp255(b) });
+    }
+  }
+
+  // ---- Network architecture ----
+  // input (x,y,z + θ,φ) → 3 hidden layers → RGB output
+  const layerCounts = [2, 6, 6, 6, 3];
+  const OUT_RGB = [
+    { r: 235, g: 70, b: 50 },
+    { r: 0, g: 178, b: 130 },
+    { r: 108, g: 92, b: 231 },
+  ];
+
+  // ---- Pulse state ----
+  const pulses = [];
+  let spawnTimer = 130; // spawn first pulse quickly
+  let outColor = { r: 220, g: 220, b: 220 };
+  let outFlash = 0;
+
+  // Phase durations in ticks (60fps reference)
+  // 0: pixel highlight on image
+  // 1: image -> input neurons
+  // 2..5: layer L -> layer L+1 (4 transitions)
+  // 6: output -> swatch
+  const PHASE_DUR = [42, 50, 40, 40, 40, 40, 55];
+
+  function spawnPulse() {
+    const idx = Math.floor(Math.random() * imgPixels.length);
+    pulses.push({
+      px: idx % IMG_COLS,
+      py: Math.floor(idx / IMG_COLS),
+      color: imgPixels[idx],
+      phase: 0,
+      t: 0,
+    });
+  }
+
+  function step(dtScale) {
+    spawnTimer += dtScale;
+    if (spawnTimer > 140) {
+      spawnPulse();
+      spawnTimer = 0;
+    }
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const p = pulses[i];
+      const dur = PHASE_DUR[p.phase] || 40;
+      p.t += dtScale / dur;
+      if (p.t >= 1) {
+        p.t = 0;
+        p.phase++;
+        if (p.phase === 6) {
+          outColor = p.color;
+          outFlash = 1;
+        }
+        if (p.phase > 6) pulses.splice(i, 1);
+      }
+    }
+    if (outFlash > 0) outFlash = Math.max(0, outFlash - dtScale * 0.02);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // ---- Layout ----
+    const imgX = W * 0.025;
+    const imgY = H * 0.18;
+    const imgW = W * 0.16;
+    const imgH = H * 0.64;
+    const cellW = imgW / IMG_COLS;
+    const cellH = imgH / IMG_ROWS;
+
+    const netX1 = W * 0.27;
+    const netX2 = W * 0.83;
+    const layerXs = layerCounts.map((_, i) =>
+      netX1 + (netX2 - netX1) * (i / (layerCounts.length - 1))
+    );
+    const padTop = H * 0.16;
+    const padBot = H * 0.16;
+    const usableH = H - padTop - padBot;
+    function nodeY(l, n) {
+      const c = layerCounts[l];
+      return padTop + (usableH * (n + 0.5)) / c;
+    }
+
+    const swX = W * 0.88;
+    const swY = H * 0.4;
+    const swW = W * 0.085;
+    const swH = H * 0.2;
+
+    // ---- Draw input image ----
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.18)";
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(imgX - 3, imgY - 3, imgW + 6, imgH + 6);
+    ctx.restore();
+
+    for (let y = 0; y < IMG_ROWS; y++) {
+      for (let x = 0; x < IMG_COLS; x++) {
+        const p = imgPixels[y * IMG_COLS + x];
+        ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
+        ctx.fillRect(
+          imgX + x * cellW,
+          imgY + y * cellH,
+          cellW + 0.5,
+          cellH + 0.5,
+        );
+      }
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 0.5;
+    for (let i = 1; i < IMG_COLS; i++) {
+      ctx.beginPath();
+      ctx.moveTo(imgX + i * cellW, imgY);
+      ctx.lineTo(imgX + i * cellW, imgY + imgH);
+      ctx.stroke();
+    }
+    for (let i = 1; i < IMG_ROWS; i++) {
+      ctx.beginPath();
+      ctx.moveTo(imgX, imgY + i * cellH);
+      ctx.lineTo(imgX + imgW, imgY + i * cellH);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(0,0,0,0.22)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(imgX - 0.5, imgY - 0.5, imgW + 1, imgH + 1);
+
+    // Highlight selected pixels (phase 0)
+    pulses.forEach((p) => {
+      if (p.phase === 0) {
+        const px = imgX + p.px * cellW;
+        const py = imgY + p.py * cellH;
+        const alpha = Math.sin(p.t * Math.PI) * 0.95;
+        ctx.save();
+        ctx.strokeStyle = `rgba(255,220,80,${alpha})`;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = `rgba(255,220,80,${alpha})`;
+        ctx.shadowBlur = 14;
+        ctx.strokeRect(px - 1, py - 1, cellW + 2, cellH + 2);
+        ctx.restore();
+      } else if (p.phase >= 1) {
+        // fading marker
+        const fade = Math.max(0, 0.5 - p.phase * 0.07);
+        if (fade > 0.02) {
+          const px = imgX + p.px * cellW;
+          const py = imgY + p.py * cellH;
+          ctx.save();
+          ctx.strokeStyle = `rgba(255,220,80,${fade})`;
+          ctx.lineWidth = 1.4;
+          ctx.strokeRect(px - 0.5, py - 0.5, cellW + 1, cellH + 1);
+          ctx.restore();
+        }
+      }
+    });
+
+    // ---- Faint background connections ----
+    ctx.strokeStyle = "rgba(190,190,190,0.18)";
+    ctx.lineWidth = 0.5;
+    for (let l = 0; l < layerCounts.length - 1; l++) {
+      for (let i = 0; i < layerCounts[l]; i++) {
+        for (let j = 0; j < layerCounts[l + 1]; j++) {
+          ctx.beginPath();
+          ctx.moveTo(layerXs[l], nodeY(l, i));
+          ctx.lineTo(layerXs[l + 1], nodeY(l + 1, j));
+          ctx.stroke();
+        }
+      }
+    }
+
+    // ---- Highlighted connections + traveling particles (phases 2..5) ----
+    pulses.forEach((p) => {
+      if (p.phase >= 2 && p.phase <= 5) {
+        const fromL = p.phase - 2;
+        const toL = p.phase - 1;
+        const x1 = layerXs[fromL];
+        const x2 = layerXs[toL];
+        const wave = 1 - Math.abs(p.t - 0.5) * 2;
+        const lineAlpha = 0.45 * wave;
+        if (lineAlpha > 0.02) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${lineAlpha})`;
+          ctx.lineWidth = 1.1;
+          for (let i = 0; i < layerCounts[fromL]; i++) {
+            for (let j = 0; j < layerCounts[toL]; j++) {
+              ctx.beginPath();
+              ctx.moveTo(x1, nodeY(fromL, i));
+              ctx.lineTo(x2, nodeY(toL, j));
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+        // particles
+        ctx.save();
+        ctx.fillStyle = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+        ctx.shadowColor = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+        ctx.shadowBlur = 6;
+        for (let i = 0; i < layerCounts[fromL]; i++) {
+          for (let j = 0; j < layerCounts[toL]; j++) {
+            const y1 = nodeY(fromL, i);
+            const y2 = nodeY(toL, j);
+            const x = x1 + (x2 - x1) * p.t;
+            const y = y1 + (y2 - y1) * p.t;
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+    });
+
+    // ---- Image → input neurons (phase 1) ----
+    pulses.forEach((p) => {
+      if (p.phase === 1) {
+        const sx = imgX + p.px * cellW + cellW / 2;
+        const sy = imgY + p.py * cellH + cellH / 2;
+        for (let i = 0; i < layerCounts[0]; i++) {
+          const tx = layerXs[0];
+          const ty = nodeY(0, i);
+          const cpx = (sx + tx) / 2;
+          const cpy = (sy + ty) / 2 - 35;
+          const t = p.t;
+          const x = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cpx + t * t * tx;
+          const y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cpy + t * t * ty;
+
+          ctx.save();
+          ctx.strokeStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},0.4)`;
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(cpx, cpy, tx, ty);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+          ctx.shadowColor = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    });
+
+    // ---- Output neurons → swatch (phase 6) ----
+    pulses.forEach((p) => {
+      if (p.phase === 6) {
+        for (let i = 0; i < layerCounts[layerCounts.length - 1]; i++) {
+          const sx = layerXs[layerXs.length - 1];
+          const sy = nodeY(layerCounts.length - 1, i);
+          const tx = swX;
+          const ty = swY + swH / 2;
+          const t = p.t;
+          const x = sx + (tx - sx) * t;
+          const y = sy + (ty - sy) * t;
+          ctx.save();
+          ctx.fillStyle = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+          ctx.shadowColor = `rgb(${p.color.r},${p.color.g},${p.color.b})`;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    });
+
+    // ---- Draw neurons ----
+    for (let l = 0; l < layerCounts.length; l++) {
+      for (let n = 0; n < layerCounts[l]; n++) {
+        const cx = layerXs[l];
+        const cy = nodeY(l, n);
+        const baseR = l === 0 || l === layerCounts.length - 1 ? 11 : 7;
+
+        // Activation 0..1
+        let active = 0;
+        pulses.forEach((p) => {
+          // Leaving layer l = phase l+2 starting
+          if (p.phase === l + 2 && p.t < 0.45) {
+            active = Math.max(active, 1 - p.t / 0.45);
+          }
+          // Arriving at layer l = phase l+1 ending
+          if (p.phase === l + 1 && p.t > 0.55) {
+            active = Math.max(active, (p.t - 0.55) / 0.45);
+          }
+          // Input layer also lights on phase 1
+          if (l === 0 && p.phase === 1) {
+            active = Math.max(active, Math.min(1, p.t * 1.6));
+          }
+          // Output layer also lights briefly during phase 6
+          if (l === layerCounts.length - 1 && p.phase === 6 && p.t < 0.4) {
+            active = Math.max(active, 1 - p.t / 0.4);
+          }
+        });
+
+        ctx.save();
+        if (l === 0) {
+          ctx.fillStyle = `rgba(108,92,231,${0.12 + active * 0.55})`;
+          ctx.strokeStyle = `rgba(108,92,231,${0.7 + active * 0.3})`;
+          if (active > 0.05) {
+            ctx.shadowColor = "rgba(108,92,231,0.85)";
+            ctx.shadowBlur = active * 14;
+          }
+        } else if (l === layerCounts.length - 1) {
+          const c = OUT_RGB[n];
+          ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${0.18 + active * 0.55})`;
+          ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${0.75 + active * 0.25})`;
+          if (active > 0.05) {
+            ctx.shadowColor = `rgb(${c.r},${c.g},${c.b})`;
+            ctx.shadowBlur = active * 14;
+          }
+        } else {
+          ctx.fillStyle = "#f3f3f5";
+          const acR = Math.round(187 - active * 79);
+          const acG = Math.round(187 - active * 95);
+          const acB = Math.round(190 - active * 0);
+          ctx.strokeStyle = `rgba(${acR},${acG},${acB},${0.55 + active * 0.45})`;
+          if (active > 0.05) {
+            ctx.shadowColor = `rgba(108,92,231,${active})`;
+            ctx.shadowBlur = active * 11;
+          }
+        }
+        ctx.lineWidth = 1.5 + active * 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, baseR + active * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // RGB labels on output neurons
+        if (l === layerCounts.length - 1) {
+          const lbls = ["R", "G", "B"];
+          const c = OUT_RGB[n];
+          ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},0.95)`;
+          ctx.font = "bold 10px monospace";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(lbls[n], cx, cy);
+        }
+      }
+    }
+
+    // ---- Input neuron labels ----
+    ctx.save();
+    ctx.fillStyle = "rgba(108,92,231,0.85)";
+    ctx.font = "italic 10px 'JetBrains Mono', monospace";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText("(x,y,z)", layerXs[0] - 18, nodeY(0, 0));
+    ctx.fillText("(θ,φ)", layerXs[0] - 18, nodeY(0, 1));
+    ctx.restore();
+
+    // ---- F_Θ label above hidden layers ----
+    ctx.save();
+    ctx.fillStyle = "rgba(90,90,95,0.7)";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("F_Θ", (layerXs[1] + layerXs[3]) / 2, padTop - 18);
+    ctx.restore();
+
+    // ---- Output swatch ----
+    ctx.save();
+    ctx.shadowColor = `rgba(${outColor.r},${outColor.g},${outColor.b},${0.3 + outFlash * 0.6})`;
+    ctx.shadowBlur = 10 + outFlash * 18;
+    ctx.fillStyle = `rgb(${outColor.r},${outColor.g},${outColor.b})`;
+    ctx.fillRect(swX, swY, swW, swH);
+    ctx.restore();
+    ctx.strokeStyle = "rgba(0,0,0,0.2)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(swX, swY, swW, swH);
+    ctx.fillStyle = "rgba(80,80,85,0.85)";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("c = (R,G,B)", swX + swW / 2, swY + swH + 14);
+  }
+
+  return {
+    enter() {
+      resize();
+    },
+    tick(visible, dtScale) {
+      if (!visible) return;
+      if (W === 0) resize();
+      if (W === 0) return;
+      step(dtScale);
+      draw();
+    },
+  };
+}
