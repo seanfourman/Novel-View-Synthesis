@@ -3613,7 +3613,6 @@ code {
   font-weight: 700;
 }
 
-
 .srn-fn-domain2 {
   color: rgba(108, 92, 231, 0.9);
   font-weight: 700;
@@ -3900,7 +3899,7 @@ code {
 }
 
 .srn-flow-net {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 12px;
   font-weight: 700;
   color: var(--accent);
@@ -3937,9 +3936,15 @@ code {
   text-underline-offset: 2px;
 }
 
-.srn-video-label-1 { top: 5%; }
-.srn-video-label-2 { top: 32%; }
-.srn-video-label-3 { top: 66%; }
+.srn-video-label-1 {
+  top: 5%;
+}
+.srn-video-label-2 {
+  top: 33.75%;
+}
+.srn-video-label-3 {
+  top: 65.5%;
+}
 
 .srn-col-labels {
   display: grid;
@@ -3956,8 +3961,7 @@ code {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background:
-    radial-gradient(circle at 50% 50%, #fcfcfd 0%, #f3f3f5 100%);
+  background: radial-gradient(circle at 50% 50%, #fcfcfd 0%, #f3f3f5 100%);
   border-radius: 12px;
   box-shadow:
     0 6px 28px rgba(0, 0, 0, 0.12),
