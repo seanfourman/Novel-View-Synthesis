@@ -3915,6 +3915,32 @@ code {
   display: block;
 }
 
+.srn-video-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.srn-video-label {
+  position: absolute;
+  right: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  direction: rtl;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.srn-label-em {
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.srn-video-label-1 { top: 2%; }
+.srn-video-label-2 { top: 35%; }
+.srn-video-label-3 { top: 68%; }
+
 .srn-col-labels {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
