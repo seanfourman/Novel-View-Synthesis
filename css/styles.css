@@ -3472,69 +3472,95 @@ code {
   color: var(--ink);
 }
 
-.srn-io-diagram {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.75rem;
-  direction: ltr;
-  margin: 0.25rem 0;
-}
-
-.srn-io-group {
+.srn-tech-diagram {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  direction: ltr;
+  margin: 0.15rem 0;
 }
 
-.srn-io-chip {
+.srn-fn-sig {
+  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  font-size: clamp(0.88rem, 1.1vw, 1.05rem);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: baseline;
+}
+
+.srn-fn-f {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.srn-fn-f sub {
+  font-size: 0.65em;
+  color: var(--ink-soft);
+}
+
+.srn-fn-sep {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.srn-fn-domain {
+  color: rgba(108, 92, 231, 0.85);
+  font-weight: 600;
+}
+
+.srn-fn-domain sup {
+  font-size: 0.7em;
+}
+
+.srn-fn-range {
+  color: rgba(255, 90, 54, 0.85);
+  font-weight: 600;
+}
+
+.srn-fn-range sup {
+  font-size: 0.7em;
+}
+
+.srn-mlp-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  white-space: nowrap;
-  direction: rtl;
+  gap: 0.5rem;
 }
 
-.srn-io-in {
-  background: rgba(108, 92, 231, 0.09);
-  border: 1.5px solid rgba(108, 92, 231, 0.35);
-  color: var(--accent-2);
-}
-
-.srn-io-out {
-  background: rgba(255, 90, 54, 0.09);
-  border: 1.5px solid rgba(255, 90, 54, 0.35);
-  color: var(--accent);
-}
-
-.srn-io-icon {
-  font-size: 0.95rem;
-}
-
-.srn-io-net {
+.srn-mlp-labels-in,
+.srn-mlp-labels-out {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
   flex-shrink: 0;
 }
 
-.srn-io-net-label {
-  font-size: 0.68rem;
-  font-weight: 600;
+.srn-mlp-labels-in span,
+.srn-mlp-labels-out span {
+  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  font-size: clamp(0.66rem, 0.82vw, 0.78rem);
   color: var(--ink-soft);
-  direction: rtl;
   white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
-.srn-io-arrow-svg {
-  width: 3rem;
+.srn-mlp-labels-in span em {
+  font-style: italic;
+  font-weight: 700;
+  color: rgba(108, 92, 231, 0.85);
+}
+
+.srn-mlp-labels-out span em {
+  font-style: italic;
+  font-weight: 700;
+  color: rgba(255, 90, 54, 0.85);
+}
+
+.srn-mlp-svg {
+  flex: 1;
+  min-width: 0;
+  max-width: 200px;
   height: auto;
 }
 

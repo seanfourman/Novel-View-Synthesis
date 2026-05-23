@@ -755,27 +755,69 @@
               במקום לבנות מודל תלת-ממדי מפורש של הסביבה,
               <br>SRN לומדת ייצוג <em>רציף</em> של הסצנה - ישירות מהתמונות.
             </p>
-            <div class="srn-io-diagram">
-              <div class="srn-io-group">
-                <div class="srn-io-chip srn-io-in">
-                  <span class="srn-io-icon">📍</span>
-                  <span>מיקום במרחב</span>
-                </div>
-                <div class="srn-io-chip srn-io-in">
-                  <span class="srn-io-icon">👁</span>
-                  <span>זווית צפייה</span>
-                </div>
+            <div class="srn-tech-diagram">
+              <div class="srn-fn-sig">
+                <span class="srn-fn-f">F<sub>Θ</sub></span>
+                <span class="srn-fn-sep"> : </span>
+                <span class="srn-fn-domain">ℝ<sup>3</sup> × S<sup>2</sup></span>
+                <span class="srn-fn-sep"> → </span>
+                <span class="srn-fn-range">ℝ<sup>3</sup></span>
               </div>
-              <div class="srn-io-net">
-                <div class="srn-io-net-label">רשת נוירונים</div>
-                <svg class="srn-io-arrow-svg" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 12 L38 12 M30 4 L38 12 L30 20" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <div class="srn-mlp-row">
+                <div class="srn-mlp-labels-in">
+                  <span><em>p</em> = (x, y, z)</span>
+                  <span><em>d</em> = (θ, φ)</span>
+                </div>
+                <svg class="srn-mlp-svg" viewBox="0 0 224 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- connections: input → hidden-1 -->
+                  <line x1="14" y1="18" x2="62" y2="12" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="14" y1="18" x2="62" y2="36" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="14" y1="18" x2="62" y2="60" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="14" y1="54" x2="62" y2="12" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="14" y1="54" x2="62" y2="36" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="14" y1="54" x2="62" y2="60" stroke="#d0d0d0" stroke-width="1"/>
+                  <!-- dashed stubs: hidden-1 → dots -->
+                  <line x1="68" y1="12" x2="90" y2="30" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <line x1="68" y1="36" x2="90" y2="36" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <line x1="68" y1="60" x2="90" y2="42" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <!-- dashed stubs: dots → hidden-2 -->
+                  <line x1="134" y1="30" x2="156" y2="12" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <line x1="134" y1="36" x2="156" y2="36" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <line x1="134" y1="42" x2="156" y2="60" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
+                  <!-- connections: hidden-2 → output -->
+                  <line x1="162" y1="12" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="12" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="12" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="36" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="36" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="36" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="60" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="60" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
+                  <line x1="162" y1="60" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
+                  <!-- input nodes -->
+                  <circle cx="14" cy="18" r="7" fill="rgba(108,92,231,0.1)" stroke="rgba(108,92,231,0.65)" stroke-width="1.5"/>
+                  <circle cx="14" cy="54" r="7" fill="rgba(108,92,231,0.1)" stroke="rgba(108,92,231,0.65)" stroke-width="1.5"/>
+                  <!-- hidden layer 1 -->
+                  <circle cx="62" cy="12" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <circle cx="62" cy="36" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <circle cx="62" cy="60" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <!-- dots -->
+                  <text x="112" y="40" text-anchor="middle" fill="#aaa" font-size="14" font-family="sans-serif" letter-spacing="3">···</text>
+                  <!-- hidden layer 2 -->
+                  <circle cx="156" cy="12" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <circle cx="156" cy="36" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <circle cx="156" cy="60" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
+                  <!-- output nodes -->
+                  <circle cx="204" cy="18" r="7" fill="rgba(255,90,54,0.1)" stroke="rgba(255,90,54,0.7)" stroke-width="1.5"/>
+                  <circle cx="204" cy="36" r="7" fill="rgba(0,184,148,0.1)" stroke="rgba(0,184,148,0.7)" stroke-width="1.5"/>
+                  <circle cx="204" cy="54" r="7" fill="rgba(108,92,231,0.1)" stroke="rgba(108,92,231,0.65)" stroke-width="1.5"/>
+                  <!-- R G B labels inside output nodes -->
+                  <text x="204" y="22" text-anchor="middle" fill="rgba(220,60,30,0.9)" font-size="7.5" font-family="monospace" font-weight="700">R</text>
+                  <text x="204" y="40" text-anchor="middle" fill="rgba(0,160,120,0.9)" font-size="7.5" font-family="monospace" font-weight="700">G</text>
+                  <text x="204" y="58" text-anchor="middle" fill="rgba(80,60,200,0.9)" font-size="7.5" font-family="monospace" font-weight="700">B</text>
                 </svg>
-              </div>
-              <div class="srn-io-group">
-                <div class="srn-io-chip srn-io-out">
-                  <span class="srn-io-icon">🎨</span>
-                  <span>צבע הפיקסל</span>
+                <div class="srn-mlp-labels-out">
+                  <span><em>c</em> = (R, G, B)</span>
                 </div>
               </div>
             </div>
