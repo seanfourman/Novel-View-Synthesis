@@ -751,9 +751,10 @@
           <div class="srn-text">
             <div class="kicker">2019 - הצעד הראשון</div>
             <h2>Scene Representation<br /><span class="accent">Networks</span></h2>
-            <p class="lead small">
-              במקום לבנות מודל תלת-ממדי מפורש של הסביבה,
-              <br>SRN לומדת ייצוג <em>רציף</em> של הסצנה - ישירות מהתמונות.
+            <p class="lead small srn-intro-lead">
+              <span class="srn-intro-line srn-intro-nowrap srn-intro-line-1">SRN היה אחד הניסיונות הראשונים לייצג סצנה תלת-ממדית באמצעות רשת נוירונים.</span>
+              <span class="srn-intro-line">במקום לבנות מודל תלת-ממדי קשיח של הסביבה,</span>
+              <span class="srn-intro-line srn-intro-nowrap">הרעיון היה לאפשר לרשת ללמוד ייצוג רציף של הסצנה מתוך התמונות עצמן.</span>
             </p>
             <div class="srn-tech-diagram">
               <div class="srn-fn-header">
@@ -788,6 +789,9 @@
                   <bdi class="srn-words-out">צבע הפיקסל הנראה</bdi>
                 </p>
               </div>
+              <p class="srn-mlp-intro">
+                המידע מוזן לרשת נוירונים מסוג MLP - רשת המורכבת ממספר שכבות Fully Connected.
+              </p>
               <div class="srn-mlp-row">
                 <div class="srn-mlp-labels-in">
                   <span><em>p</em> = (x, y, z)</span>
@@ -846,33 +850,10 @@
                 </div>
               </div>
               <p class="srn-explain">
-                <span>לראשונה הוכח שרשת יכולה להחזיק גיאומטריה בלי ייצוג מפורש:</span>
-                <div class="srn-type-chips">
-                  <div class="srn-chip-wrap">
-                    <span class="srn-chip-without">בלי</span>
-                    <div class="srn-chip">
-                      <span class="srn-chip-label">mesh</span>
-                      <span class="srn-chip-desc">רשת משולשים</span>
-                    </div>
-                  </div>
-                  <div class="srn-chip-wrap">
-                    <span class="srn-chip-without">בלי</span>
-                    <div class="srn-chip">
-                      <span class="srn-chip-label">voxels</span>
-                      <span class="srn-chip-desc">קוביות תלת-ממדיות</span>
-                    </div>
-                  </div>
-                  <div class="srn-chip-wrap">
-                    <span class="srn-chip-without">בלי</span>
-                    <div class="srn-chip">
-                      <span class="srn-chip-label">point cloud</span>
-                      <span class="srn-chip-desc">ענן נקודות</span>
-                    </div>
-                  </div>
-                </div>
+                עבור כל נקודה במרחב הרשת חוזה איזה צבע אמור להופיע מאותה זווית צפייה, ומתוך התחזיות האלו נבנית תמונה חדשה של הסצנה.
               </p>
             </div>
-            <p class="srn-tagline">הצורה מוצפנת ישירות בתוך המשקלים.</p>
+            <p class="srn-tagline">לראשונה היה אפשר לייצג סצנה תלת-ממדית ישירות בתוך רשת נוירונים, מבלי לבנות מודל גיאומטרי מפורש של הסביבה.</p>
           </div>
           <div class="srn-visual">
             <div class="srn-flow-header">
