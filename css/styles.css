@@ -3687,6 +3687,23 @@ code {
 
 .srn-words-arrow {
   --srn-arrow-color: #1a1a1a;
+  inline-size: 1.1em;
+  block-size: 1em;
+  transform: translateY(0.1em);
+}
+
+.srn-words-arrow::before {
+  left: 0.06em;
+  right: 0.05em;
+  height: 0.11em;
+}
+
+.srn-words-arrow::after {
+  right: 0.06em;
+  inline-size: 0.4em;
+  block-size: 0.4em;
+  border-top-width: 0.13em;
+  border-right-width: 0.13em;
 }
 
 .srn-words-out {
