@@ -2395,7 +2395,7 @@ code {
 
 .cp-tag {
   position: absolute;
-  top: clamp(1rem, -8vh, 1rem);
+  top: -1.5rem;
   inset-inline-start: clamp(1rem, 3vw, 3rem);
   font-size: clamp(3.5rem, 6vw, 7rem);
   font-weight: 900;
