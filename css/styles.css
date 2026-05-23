@@ -3480,7 +3480,7 @@ code {
   position: absolute;
   left: clamp(0.5rem, 1.5vw, 2rem);
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(calc(-50% - 0.5vh));
   width: 44%;
   max-width: 580px;
   display: flex;
