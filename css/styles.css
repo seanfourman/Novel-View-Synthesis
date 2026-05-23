@@ -3438,7 +3438,7 @@ code {
    ============================================================ */
 .srn-slide {
   display: grid;
-  grid-template-columns: 2fr 3fr;
+  grid-template-columns: 2.3fr 3fr;
   align-items: center;
   height: 100%;
   width: 100%;
@@ -3761,7 +3761,7 @@ code {
   color: var(--ink-soft);
   direction: rtl;
   text-align: right;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.45;
 }
