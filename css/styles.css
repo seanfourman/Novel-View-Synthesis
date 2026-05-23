@@ -3472,7 +3472,7 @@ code {
 }
 
 .srn-slide-wide .srn-text {
-  padding-left: 42%;
+  padding-left: 37%;
   box-sizing: border-box;
 }
 
@@ -3481,8 +3481,8 @@ code {
   left: clamp(2rem, 4vw, 5rem);
   top: 50%;
   transform: translateY(-50%);
-  width: 36%;
-  max-width: 460px;
+  width: 31.8%;
+  max-width: 406px;
 }
 
 .srn-visual-caption {
