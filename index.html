@@ -857,69 +857,38 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 11: SRN NETWORK ANIMATION ============ -->
+      <!-- ============ SLIDE 11: WHAT SRN LEARNS (centered) ============ -->
       <section class="slide" data-id="11">
-        <div class="srn-slide">
-          <div class="srn-text">
-            <div class="kicker">המחשת תהליך - איך זה עובד</div>
-            <h2>Scene Representation<br /><span class="accent">Networks</span></h2>
-            <p class="lead small">
-              בהמחשה משמאל רואים את עיקרון הפעולה: לוקחים פיקסל בודד מהתמונה,
-              <br>שולחים את הקואורדינטות שלו דרך כל שכבות הרשת, ומקבלים בחזרה את הצבע שהמודל למד לאותה נקודה.
+        <div class="srn-learn-slide">
+          <div class="srn-learn-top">
+            <div class="kicker">2019 - SRN</div>
+            <h2>כיצד <span class="accent">SRN</span> מבין את הסצנה?</h2>
+            <p class="srn-learn-intro">
+              הרשת מקבלת תמונה של אובייקט מזווית מסוימת,<br>
+              ומנסה ללמוד כיצד האובייקט נראה גם מזוויות אחרות.
             </p>
-            <div class="srn-tech-diagram">
-              <div class="srn-fn-header">
-                <div class="srn-fn-top-row">
-                  <div class="srn-fn-sig">
-                    <span class="srn-fn-f">F<sub>Θ</sub></span>
-                    <span class="srn-fn-op">:</span>
-                    <span class="srn-fn-domain">ℝ³</span>
-                    <span class="srn-fn-op srn-fn-times">×</span>
-                    <span class="srn-fn-domain2">𝕊²</span>
-                    <span class="srn-fn-main-arrow">→</span>
-                    <span class="srn-fn-range">ℝ³</span>
-                  </div>
-                  <div class="srn-fn-map">
-                    <span class="srn-fn-map-input">(p, d)</span>
-                    <span class="srn-fn-map-arrow">→</span>
-                    <span class="srn-fn-map-output">c</span>
-                  </div>
-                </div>
-                <p class="srn-fn-words">
-                  <bdi class="srn-words-in">מיקום (x, y, z)</bdi>
-                  <span class="srn-words-plus">+</span>
-                  <span class="srn-words-dir">
-                    <bdi class="srn-words-in">כיוון (θ, φ)</bdi>
-                    <span class="srn-angle-defs">
-                      <span class="srn-angle-item"><span class="srn-angle-key">θ</span><bdi class="srn-angle-label">זווית אופקית</bdi></span>
-                      <span class="srn-angle-sep"></span>
-                      <span class="srn-angle-item"><span class="srn-angle-key">φ</span><bdi class="srn-angle-label">זווית אנכית</bdi></span>
-                    </span>
-                  </span>
-                  <span class="srn-words-arrow">→</span>
-                  <bdi class="srn-words-out">צבע הפיקסל הנראה</bdi>
-                </p>
-              </div>
-            </div>
-            <p class="srn-tagline">כל פיקסל בתמונה הוא שאילתה נפרדת לרשת.</p>
           </div>
-          <div class="srn-visual srn-net-visual">
-            <div class="srn-flow-header">
-              <span class="srn-flow-step">פיקסל מהתמונה</span>
-              <span class="srn-flow-sep">→</span>
-              <span class="srn-flow-net">F<sub>Θ</sub> - רשת נוירונים</span>
-              <span class="srn-flow-sep">→</span>
-              <span class="srn-flow-step">צבע פלט</span>
-            </div>
-            <div class="srn-net-canvas-wrap">
-              <canvas id="srn-net-canvas" aria-label="הדמיית רשת נוירונים שמעבדת פיקסל בודד"></canvas>
-            </div>
-            <div class="srn-col-labels srn-net-col-labels">
-              <span>תמונת RGB</span>
-              <span>שכבות חבויות (MLP)</span>
-              <span>צבע באותה נקודה</span>
-            </div>
+
+          <div class="srn-net-canvas-wrap srn-learn-net-wrap">
+            <canvas id="srn-net-canvas" aria-label="הדמיית רשת נוירונים שמעבדת פיקסל בודד"></canvas>
           </div>
+
+          <div class="srn-learn-bottom">
+            <p>
+              <strong>בשורה האמצעית</strong> ניתן לראות את המבטים החדשים שהרשת מייצרת מתוך תמונת הקלט.
+            </p>
+            <p>
+              למרות שהמודל חוזה רק צבעים, במהלך האימון הוא לומד באופן עקיף גם את המבנה התלת-ממדי של האובייקט.
+            </p>
+            <p>
+              <strong>בשורה התחתונה</strong> ניתן לראות את הייצוג הגיאומטרי שהרשת למדה בעצמה מתוך התמונות, ללא שימוש במודל 3D אמיתי או מידע עומק מפורש.
+            </p>
+          </div>
+
+          <p class="srn-learn-tagline">
+            SRN הראה לראשונה שרשת נוירונים יכולה ללמוד כיצד סצנה בנויה במרחב -<br>
+            ולייצר מבטים חדשים גם מזוויות שלא הופיעו בנתוני האימון.
+          </p>
         </div>
       </section>
 

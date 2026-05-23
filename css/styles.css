@@ -3975,6 +3975,94 @@ code {
   top: 65.5%;
 }
 
+/* ---- Slide 11: What SRN learns (centered layout, network animation in middle) ---- */
+.srn-learn-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  padding: clamp(1.2rem, 2.5vw, 2.5rem) clamp(2rem, 4vw, 5rem);
+  box-sizing: border-box;
+  direction: rtl;
+  gap: clamp(0.8rem, 1.5vh, 1.4rem);
+}
+
+.srn-learn-top {
+  text-align: center;
+  width: 100%;
+}
+
+.srn-learn-top .kicker {
+  margin-bottom: 0.4rem;
+}
+
+.srn-learn-top h2 {
+  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.srn-learn-intro {
+  font-size: clamp(0.95rem, 1.15vw, 1.15rem);
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+.srn-learn-net-wrap {
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 16 / 5;
+  background: radial-gradient(circle at 50% 50%, #fcfcfd 0%, #f3f3f5 100%);
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+.srn-learn-net-wrap #srn-net-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.srn-learn-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(1rem, 2vw, 2rem);
+  width: 100%;
+  max-width: 1100px;
+  font-size: clamp(0.85rem, 1vw, 0.98rem);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+.srn-learn-bottom p {
+  margin: 0;
+}
+
+.srn-learn-bottom strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.srn-learn-tagline {
+  font-size: clamp(0.95rem, 1.15vw, 1.1rem);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 80ch;
+}
+
 .srn-col-labels {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
