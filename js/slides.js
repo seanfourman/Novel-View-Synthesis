@@ -4661,7 +4661,7 @@ export function initSRNNetAnim() {
   const OUT_RGB = [
     { r: 235, g: 70, b: 50 },
     { r: 0, g: 178, b: 130 },
-    { r: 108, g: 92, b: 231 },
+    { r: 54, g: 130, b: 255 },
   ];
 
   // ---- Pulse state ----
