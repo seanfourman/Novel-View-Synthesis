@@ -3481,8 +3481,28 @@ code {
   left: clamp(2rem, 4vw, 5rem);
   top: 50%;
   transform: translateY(-50%);
-  width: 38%;
-  max-width: 480px;
+  width: 36%;
+  max-width: 460px;
+}
+
+.srn-visual-caption {
+  margin: 0.7rem 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  direction: rtl;
+  text-align: center;
+}
+
+.srn-visual-caption strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.srn-visual-caption em {
+  font-style: normal;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .srn-text .lead.small {
