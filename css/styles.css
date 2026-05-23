@@ -3462,6 +3462,29 @@ code {
   color: var(--ink);
 }
 
+.srn-text h2.srn-h2-oneline {
+  white-space: nowrap;
+}
+
+.srn-slide.srn-slide-wide {
+  grid-template-columns: 1fr;
+  position: relative;
+}
+
+.srn-slide-wide .srn-text {
+  padding-left: 42%;
+  box-sizing: border-box;
+}
+
+.srn-slide-wide .srn-visual {
+  position: absolute;
+  left: clamp(2rem, 4vw, 5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38%;
+  max-width: 480px;
+}
+
 .srn-text .lead.small {
   max-width: 44ch;
 }
