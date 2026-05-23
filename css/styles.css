@@ -3687,9 +3687,9 @@ code {
 
 .srn-words-arrow {
   --srn-arrow-color: #1a1a1a;
-  inline-size: 1.1em;
+  inline-size: calc(1.1em + 5px);
   block-size: 1em;
-  transform: translateY(0.1em);
+  transform: translateY(calc(0.1em + 2px));
 }
 
 .srn-words-arrow::before {
