@@ -3587,7 +3587,7 @@ code {
 
 .srn-fn-map {
   font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: clamp(0.95rem, 1.25vw, 1.18rem);
+  font-size: clamp(0.81rem, 1.06vw, 1rem);
   display: flex;
   align-items: center;
   gap: 0.26em;
@@ -3601,11 +3601,14 @@ code {
 
 .srn-fn-map-arrow {
   --srn-arrow-color: #1a1a1a;
+  font-size: 1.176em;
   font-weight: 600;
+  transform: translateY(0.08em);
 }
 
 .srn-fn-map-output {
   color: rgba(255, 90, 54, 0.85);
+  font-size: 1.176em;
   font-weight: 700;
   font-style: italic;
 }
