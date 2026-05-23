@@ -875,36 +875,22 @@
             <p class="srn-tagline">הצורה מוצפנת ישירות בתוך המשקלים.</p>
           </div>
           <div class="srn-visual">
+            <div class="srn-flow-header">
+              <span class="srn-flow-step">תמונות קלט + פוזה</span>
+              <span class="srn-flow-sep">→</span>
+              <span class="srn-flow-net">SRN</span>
+              <span class="srn-flow-sep">→</span>
+              <span class="srn-flow-step">פלט</span>
+            </div>
             <video
-              class="srn-hero-video"
-              id="srn-hero"
-              src="assets/srn/chair_interpolation.mp4"
-              muted
-              loop
-              playsinline
-              preload="auto"
+              class="srn-output-video"
+              src="assets/srn/camera_rotation.mp4"
+              muted loop playsinline autoplay
             ></video>
-            <div class="srn-thumbs" id="srn-thumbs">
-              <button class="srn-thumb active" data-src="assets/srn/chair_interpolation.mp4" title="כיסא">
-                <video src="assets/srn/chair_interpolation.mp4" muted playsinline preload="none"></video>
-                <span>כיסא</span>
-              </button>
-              <button class="srn-thumb" data-src="assets/srn/car_interpolation.mp4" title="מכונית">
-                <video src="assets/srn/car_interpolation.mp4" muted playsinline preload="none"></video>
-                <span>מכונית</span>
-              </button>
-              <button class="srn-thumb" data-src="assets/srn/camera_rotation.mp4" title="רוטציה">
-                <video src="assets/srn/camera_rotation.mp4" muted playsinline preload="none"></video>
-                <span>רוטציה</span>
-              </button>
-              <button class="srn-thumb" data-src="assets/srn/face_expressions.mp4" title="פנים">
-                <video src="assets/srn/face_expressions.mp4" muted playsinline preload="none"></video>
-                <span>פנים</span>
-              </button>
-              <button class="srn-thumb" data-src="assets/srn/minecraft.mp4" title="מיינקראפט">
-                <video src="assets/srn/minecraft.mp4" muted playsinline preload="none"></video>
-                <span>מיינקראפט</span>
-              </button>
+            <div class="srn-col-labels">
+              <span>מפת נורמלים</span>
+              <span>זווית חדשה</span>
+              <span>Ground Truth</span>
             </div>
           </div>
         </div>
