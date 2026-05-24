@@ -4170,7 +4170,7 @@ code {
   gap: 0.6rem;
   width: 100%;
   max-width: 900px;
-  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  font-size: 18px;
   line-height: 1.6;
   color: var(--ink-soft);
   text-align: center;
