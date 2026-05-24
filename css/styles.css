@@ -4017,13 +4017,14 @@ code {
 
 .srn-learn-net-wrap {
   width: 100%;
-  max-width: 760px;
+  max-width: 1000px;
   aspect-ratio: 16 / 5;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
   overflow: visible;
   position: relative;
+  align-self: flex-start;
 }
 
 .srn-learn-net-wrap #srn-net-canvas {

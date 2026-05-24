@@ -5022,7 +5022,7 @@ export function initSRNNetAnim() {
           const lbls = ["R", "G", "B"];
           const c = OUT_RGB[n];
           ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},0.95)`;
-          ctx.font = "bold 10px monospace";
+          ctx.font = "bold 16px monospace";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillText(lbls[n], cx, cy);
@@ -5030,14 +5030,17 @@ export function initSRNNetAnim() {
       }
     }
 
-    // ---- Input neuron labels ----
+    // ---- Input neuron labels (above first, below last) ----
     ctx.save();
-    ctx.fillStyle = "rgba(80,80,85,0.9)";
-    ctx.font = "italic 10px 'JetBrains Mono', monospace";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.fillText("(x, y, z)", layerXs[0] - 20, nodeY(0, 0));
-    ctx.fillText("(θ, φ)", layerXs[0] - 20, nodeY(0, 1));
+    ctx.fillStyle = "rgba(80,80,85,0.95)";
+    ctx.font = "italic 18px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    // (x, y, z) ABOVE the top input neuron
+    ctx.textBaseline = "bottom";
+    ctx.fillText("(x, y, z)", layerXs[0], nodeY(0, 0) - 18);
+    // (θ, φ) BELOW the bottom input neuron
+    ctx.textBaseline = "top";
+    ctx.fillText("(θ, φ)", layerXs[0], nodeY(0, 1) + 18);
     ctx.restore();
 
     // ---- Weights/parameters label above hidden layers (F with Θ subscript) ----
@@ -5048,19 +5051,19 @@ export function initSRNNetAnim() {
     const fxCenter = (layerXs[1] + layerXs[3]) / 2;
     const fxY = padTop - 14;
     // Draw "F" then "Θ" smaller and lower as a true subscript
-    ctx.font = "italic 16px 'Times New Roman', serif";
+    ctx.font = "italic 26px 'Times New Roman', serif";
     const fWidth = ctx.measureText("F").width;
     const subWidth = (() => {
-      ctx.font = "italic 14px 'Times New Roman', serif";
+      ctx.font = "italic 20px 'Times New Roman', serif";
       return ctx.measureText("Θ").width;
     })();
     const totalWidth = fWidth + subWidth;
     const startX = fxCenter - totalWidth / 2;
-    ctx.font = "italic 16px 'Times New Roman', serif";
+    ctx.font = "italic 26px 'Times New Roman', serif";
     ctx.textAlign = "left";
     ctx.fillText("F", startX, fxY);
-    ctx.font = "italic 14px 'Times New Roman', serif";
-    ctx.fillText("Θ", startX + fWidth, fxY + 4);
+    ctx.font = "italic 20px 'Times New Roman', serif";
+    ctx.fillText("Θ", startX + fWidth, fxY + 7);
     ctx.restore();
 
     // ---- Output swatch ----
@@ -5073,10 +5076,11 @@ export function initSRNNetAnim() {
     ctx.strokeStyle = "rgba(0,0,0,0.2)";
     ctx.lineWidth = 1;
     ctx.strokeRect(swX, swY, swW, swH);
-    ctx.fillStyle = "rgba(80,80,85,0.9)";
-    ctx.font = "italic 10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "rgba(80,80,85,0.95)";
+    ctx.font = "italic 18px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
-    ctx.fillText("c = (R, G, B)", swX + swW / 2, swY + swH + 16);
+    ctx.textBaseline = "top";
+    ctx.fillText("c = (R, G, B)", swX + swW / 2, swY + swH + 14);
   }
 
   return {
