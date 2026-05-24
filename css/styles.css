@@ -4193,7 +4193,12 @@ code {
   text-align: center;
   margin: 0;
   line-height: 1.55;
-  max-width: 80ch;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.srn-learn-slide .srn-learn-body + .srn-learn-tagline {
+  margin-top: -0.4rem;
 }
 
 .srn-col-labels {
