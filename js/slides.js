@@ -4714,6 +4714,7 @@ export function initSRNNetAnim() {
       }
       // Smoothly interpolate the swatch color during phase 6 (ease-in cubic so most
       // of the color change happens as the particles approach the swatch).
+      // Ramp outFlash up with the same curve so the shadow grows in gradually too.
       if (p.phase === 6) {
         const tt = Math.min(1, p.t);
         const eased = tt * tt * tt;
@@ -4722,6 +4723,7 @@ export function initSRNNetAnim() {
           g: outFromColor.g + (outToColor.g - outFromColor.g) * eased,
           b: outFromColor.b + (outToColor.b - outFromColor.b) * eased,
         };
+        outFlash = Math.max(outFlash, eased);
       }
     }
     if (outFlash > 0) outFlash = Math.max(0, outFlash - dtScale * 0.02);
