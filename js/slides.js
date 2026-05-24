@@ -5032,20 +5032,35 @@ export function initSRNNetAnim() {
 
     // ---- Input neuron labels ----
     ctx.save();
-    ctx.fillStyle = "rgba(80,80,85,0.85)";
+    ctx.fillStyle = "rgba(80,80,85,0.9)";
     ctx.font = "italic 10px 'JetBrains Mono', monospace";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillText("(x,y,z)", layerXs[0] - 18, nodeY(0, 0));
-    ctx.fillText("(θ,φ)", layerXs[0] - 18, nodeY(0, 1));
+    ctx.fillText("(x, y, z)", layerXs[0] - 20, nodeY(0, 0));
+    ctx.fillText("(θ, φ)", layerXs[0] - 20, nodeY(0, 1));
     ctx.restore();
 
-    // ---- F_Θ label above hidden layers ----
+    // ---- Weights/parameters label above hidden layers (F with Θ subscript) ----
     ctx.save();
-    ctx.fillStyle = "rgba(90,90,95,0.7)";
-    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "rgba(70,70,80,0.85)";
     ctx.textAlign = "center";
-    ctx.fillText("F_Θ", (layerXs[1] + layerXs[3]) / 2, padTop - 18);
+    ctx.textBaseline = "alphabetic";
+    const fxCenter = (layerXs[1] + layerXs[3]) / 2;
+    const fxY = padTop - 14;
+    // Draw "F" then "Θ" smaller and lower as a true subscript
+    ctx.font = "italic 16px 'Times New Roman', serif";
+    const fWidth = ctx.measureText("F").width;
+    const subWidth = (() => {
+      ctx.font = "italic 14px 'Times New Roman', serif";
+      return ctx.measureText("Θ").width;
+    })();
+    const totalWidth = fWidth + subWidth;
+    const startX = fxCenter - totalWidth / 2;
+    ctx.font = "italic 16px 'Times New Roman', serif";
+    ctx.textAlign = "left";
+    ctx.fillText("F", startX, fxY);
+    ctx.font = "italic 14px 'Times New Roman', serif";
+    ctx.fillText("Θ", startX + fWidth, fxY + 4);
     ctx.restore();
 
     // ---- Output swatch ----
@@ -5058,10 +5073,10 @@ export function initSRNNetAnim() {
     ctx.strokeStyle = "rgba(0,0,0,0.2)";
     ctx.lineWidth = 1;
     ctx.strokeRect(swX, swY, swW, swH);
-    ctx.fillStyle = "rgba(80,80,85,0.85)";
-    ctx.font = "10px sans-serif";
+    ctx.fillStyle = "rgba(80,80,85,0.9)";
+    ctx.font = "italic 10px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
-    ctx.fillText("c = (R,G,B)", swX + swW / 2, swY + swH + 14);
+    ctx.fillText("c = (R, G, B)", swX + swW / 2, swY + swH + 16);
   }
 
   return {
