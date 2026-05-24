@@ -4810,8 +4810,8 @@ export function initSRNNetAnim() {
     });
 
     // ---- Faint background connections ----
-    ctx.strokeStyle = "rgba(190,190,190,0.18)";
-    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = "rgba(130,130,140,0.45)";
+    ctx.lineWidth = 0.8;
     for (let l = 0; l < layerCounts.length - 1; l++) {
       for (let i = 0; i < layerCounts[l]; i++) {
         for (let j = 0; j < layerCounts[l + 1]; j++) {
@@ -4985,8 +4985,8 @@ export function initSRNNetAnim() {
             ctx.shadowColor = `rgb(${c.r},${c.g},${c.b})`;
             ctx.shadowBlur = active * 11;
           } else {
-            ctx.fillStyle = "#f3f3f5";
-            ctx.strokeStyle = "rgba(187,187,190,0.55)";
+            ctx.fillStyle = "#ffffff";
+            ctx.strokeStyle = "rgba(80,80,90,0.85)";
           }
         }
         ctx.lineWidth = 1.5 + active * 1.5;

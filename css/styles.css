@@ -4019,10 +4019,10 @@ code {
   width: 100%;
   max-width: 760px;
   aspect-ratio: 16 / 5;
-  background: radial-gradient(circle at 50% 50%, #fcfcfd 0%, #f3f3f5 100%);
-  border-radius: 12px;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
   position: relative;
 }
 
