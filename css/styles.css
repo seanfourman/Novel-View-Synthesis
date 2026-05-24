@@ -4043,11 +4043,34 @@ code {
   user-select: none;
 }
 
+.srn-zoom-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.2));
+}
+
+.srn-zoom-square {
+  position: absolute;
+  top: 27%;
+  left: 7%;
+  width: 3vmin;
+  height: 3vmin;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 6px rgba(0, 0, 0, 0.2);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .srn-learn-slide {
   position: relative;
 }
 
-.srn-learn-slide > *:not(.srn-zoom-bg) {
+.srn-learn-slide > *:not(.srn-zoom-bg):not(.srn-zoom-svg):not(.srn-zoom-square) {
   position: relative;
   z-index: 1;
 }

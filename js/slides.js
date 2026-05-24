@@ -4742,13 +4742,13 @@ export function initSRNNetAnim() {
     const swW = W * 0.085;
     const swH = H * 0.2;
 
-    // ---- Draw input image ----
+    // ---- Draw input image: white card with shadow ----
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.18)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 3;
+    ctx.shadowColor = "rgba(0,0,0,0.28)";
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 6;
     ctx.fillStyle = "#fff";
-    ctx.fillRect(imgX - 3, imgY - 3, imgW + 6, imgH + 6);
+    ctx.fillRect(imgX - 8, imgY - 8, imgW + 16, imgH + 16);
     ctx.restore();
 
     for (let y = 0; y < IMG_ROWS; y++) {
