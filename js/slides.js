@@ -4801,13 +4801,17 @@ export function initSRNNetAnim() {
       if (p.phase === 0) {
         const px = imgX + p.px * cellW;
         const py = imgY + p.py * cellH;
-        const alpha = Math.sin(p.t * Math.PI) * 0.95;
+        const alpha = Math.min(1, Math.sin(p.t * Math.PI) * 1.1);
         ctx.save();
-        ctx.strokeStyle = `rgba(255,220,80,${alpha})`;
-        ctx.lineWidth = 2.5;
+        // Strong yellow glow with a thin border
         ctx.shadowColor = `rgba(255,220,80,${alpha})`;
-        ctx.shadowBlur = 14;
-        ctx.strokeRect(px - 1, py - 1, cellW + 2, cellH + 2);
+        ctx.shadowBlur = 42;
+        ctx.strokeStyle = `rgba(255,220,80,${alpha})`;
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(px - 0.5, py - 0.5, cellW + 1, cellH + 1);
+        // Second pass for extra glow without thickening the line
+        ctx.shadowBlur = 24;
+        ctx.strokeRect(px - 0.5, py - 0.5, cellW + 1, cellH + 1);
         ctx.restore();
       } else if (p.phase >= 1) {
         // fading marker
@@ -4817,7 +4821,7 @@ export function initSRNNetAnim() {
           const py = imgY + p.py * cellH;
           ctx.save();
           ctx.strokeStyle = `rgba(255,220,80,${fade})`;
-          ctx.lineWidth = 1.4;
+          ctx.lineWidth = 1;
           ctx.strokeRect(px - 0.5, py - 0.5, cellW + 1, cellH + 1);
           ctx.restore();
         }
