@@ -4660,6 +4660,8 @@ export function initSRNNetAnim() {
   const pulses = [];
   let spawnTimer = 130; // spawn first pulse quickly
   let outColor = { r: 220, g: 220, b: 220 };
+  let outFromColor = { r: 220, g: 220, b: 220 };
+  let outToColor = { r: 220, g: 220, b: 220 };
   let outFlash = 0;
 
   // Phase durations in ticks (60fps reference)
@@ -4681,10 +4683,13 @@ export function initSRNNetAnim() {
   }
 
   function step(dtScale) {
-    spawnTimer += dtScale;
-    if (spawnTimer > 140) {
-      spawnPulse();
-      spawnTimer = 0;
+    // Only spawn a new pulse when the previous one has finished
+    if (pulses.length === 0) {
+      spawnTimer += dtScale;
+      if (spawnTimer > 40) {
+        spawnPulse();
+        spawnTimer = 0;
+      }
     }
     for (let i = pulses.length - 1; i >= 0; i--) {
       const p = pulses[i];
@@ -4694,10 +4699,29 @@ export function initSRNNetAnim() {
         p.t = 0;
         p.phase++;
         if (p.phase === 6) {
-          outColor = p.color;
-          outFlash = 1;
+          // Save current swatch color as the "from" and the pulse color as the "to";
+          // the swatch will smoothly fade between them during phase 6 so it lands at
+          // the new color exactly when the particles arrive.
+          outFromColor = { r: outColor.r, g: outColor.g, b: outColor.b };
+          outToColor = { r: p.color.r, g: p.color.g, b: p.color.b };
         }
-        if (p.phase > 6) pulses.splice(i, 1);
+        if (p.phase > 6) {
+          // Particles have arrived: lock in the final color and trigger the flash.
+          outColor = { r: outToColor.r, g: outToColor.g, b: outToColor.b };
+          outFlash = 1;
+          pulses.splice(i, 1);
+        }
+      }
+      // Smoothly interpolate the swatch color during phase 6 (ease-in cubic so most
+      // of the color change happens as the particles approach the swatch).
+      if (p.phase === 6) {
+        const tt = Math.min(1, p.t);
+        const eased = tt * tt * tt;
+        outColor = {
+          r: outFromColor.r + (outToColor.r - outFromColor.r) * eased,
+          g: outFromColor.g + (outToColor.g - outFromColor.g) * eased,
+          b: outFromColor.b + (outToColor.b - outFromColor.b) * eased,
+        };
       }
     }
     if (outFlash > 0) outFlash = Math.max(0, outFlash - dtScale * 0.02);
