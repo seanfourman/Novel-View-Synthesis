@@ -4054,6 +4054,11 @@ code {
   margin-inline: auto;
 }
 
+.srn-learn-intro strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .srn-learn-net-wrap {
   width: 100%;
   max-width: 1000px;
