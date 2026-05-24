@@ -4618,8 +4618,8 @@ export function initSRNNetAnim() {
     new ResizeObserver(resize).observe(canvas);
   }
 
-  // ---- Generate input scene image ----
-  const IMG_COLS = 10, IMG_ROWS = 7;
+  // ---- Generate input scene image (mountains palette, square grid) ----
+  const IMG_COLS = 10, IMG_ROWS = 10;
   function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
   function rand(a, b) { return a + Math.random() * (b - a); }
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -4629,27 +4629,28 @@ export function initSRNNetAnim() {
       const ny = y / IMG_ROWS;
       const nx = x / IMG_COLS;
       let r, g, b;
-      if (ny < 0.4) {
-        const t = ny / 0.4;
-        r = lerp(165, 215, t) + rand(-10, 10);
-        g = lerp(195, 230, t) + rand(-10, 10);
-        b = lerp(235, 248, t) + rand(-8, 8);
-      } else if (ny < 0.6) {
-        r = 95 + rand(0, 50);
-        g = 105 + rand(0, 50);
-        b = 130 + rand(0, 50);
+      if (ny < 0.32) {
+        // Top: soft cream/pink/lavender sky
+        const t = ny / 0.32;
+        r = lerp(238, 220, t) + rand(-6, 6);
+        g = lerp(228, 215, t) + rand(-6, 6);
+        b = lerp(220, 222, t) + rand(-6, 6);
+        // subtle pink tint on the right side (warm sky)
+        const pinkBoost = Math.max(0, nx - 0.4) * 0.5;
+        r += pinkBoost * 8;
+        b -= pinkBoost * 4;
+      } else if (ny < 0.62) {
+        // Middle: soft lavender-blue distant mountains
+        const t = (ny - 0.32) / 0.3;
+        r = lerp(180, 150, t) + rand(-8, 8);
+        g = lerp(190, 165, t) + rand(-8, 8);
+        b = lerp(215, 200, t) + rand(-6, 6);
       } else {
-        r = 75 + rand(0, 60);
-        g = 115 + rand(-10, 50);
-        b = 60 + rand(-10, 30);
-      }
-      // sun glow upper-right
-      const dx = nx - 0.78, dy = ny - 0.15;
-      const sd = Math.sqrt(dx * dx + dy * dy);
-      if (sd < 0.1) { r = 252; g = 235; b = 175; }
-      else if (sd < 0.18) {
-        const t = (sd - 0.1) / 0.08;
-        r = lerp(252, r, t); g = lerp(235, g, t); b = lerp(175, b, t);
+        // Bottom: deeper blue/teal foreground mountains
+        const t = (ny - 0.62) / 0.38;
+        r = lerp(110, 80, t) + rand(-10, 10);
+        g = lerp(135, 110, t) + rand(-10, 10);
+        b = lerp(170, 150, t) + rand(-8, 8);
       }
       imgPixels.push({ r: clamp255(r), g: clamp255(g), b: clamp255(b) });
     }
@@ -4715,10 +4716,11 @@ export function initSRNNetAnim() {
     ctx.clearRect(0, 0, W, H);
 
     // ---- Layout ----
+    const imgSize = Math.min(W * 0.18, H * 0.78);
     const imgX = W * 0.025;
-    const imgY = H * 0.18;
-    const imgW = W * 0.16;
-    const imgH = H * 0.64;
+    const imgY = (H - imgSize) / 2;
+    const imgW = imgSize;
+    const imgH = imgSize;
     const cellW = imgW / IMG_COLS;
     const cellH = imgH / IMG_ROWS;
 
