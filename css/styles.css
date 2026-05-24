@@ -3451,7 +3451,7 @@ code {
 .srn-text {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.8rem, 1.2vh, 1.2rem);
+  gap: clamp(1.4rem, 2.2vh, 2rem);
 }
 
 .srn-text h2 {
@@ -3460,6 +3460,7 @@ code {
   line-height: 1.15;
   margin: 0;
   color: var(--ink);
+  margin-top: calc(-1 * clamp(1rem, 1.6vh, 1.4rem));
 }
 
 .srn-text h2.srn-h2-oneline {
@@ -3821,6 +3822,44 @@ code {
   height: auto;
 }
 
+.srn-concept-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.7rem;
+  margin: 0.6rem 0 0.4rem;
+  direction: rtl;
+}
+
+.srn-concept-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.srn-concept-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.srn-explain.srn-explain-after {
+  white-space: nowrap;
+}
+
 .srn-explain {
   display: flex;
   flex-direction: column;
@@ -3829,9 +3868,9 @@ code {
   color: var(--ink-soft);
   direction: rtl;
   text-align: right;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 1.45;
+  font-size: clamp(1rem, 1.15vw, 1.1rem);
+  font-weight: 400;
+  line-height: 1.55;
 }
 
 .srn-mlp-intro {
@@ -3999,11 +4038,11 @@ code {
 }
 
 .srn-learn-top h2 {
-  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+  font-size: clamp(2.2rem, 3.5vw, 3.4rem);
   font-weight: 800;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.8rem;
   color: var(--ink);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .srn-learn-intro {
@@ -4116,6 +4155,28 @@ code {
 }
 
 .srn-learn-bottom strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.srn-learn-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 900px;
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 0 auto;
+}
+
+.srn-learn-body p {
+  margin: 0;
+}
+
+.srn-learn-body strong {
   color: var(--ink);
   font-weight: 700;
 }

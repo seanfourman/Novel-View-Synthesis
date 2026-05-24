@@ -749,95 +749,51 @@
       <section class="slide" data-id="10">
         <div class="srn-slide srn-slide-wide">
           <div class="srn-text">
-            <div class="kicker">2019 - הצעד הראשון</div>
+            <div class="kicker">2019 - ייצוג סצנה בתוך רשת נוירונים</div>
             <h2 class="srn-h2-oneline"><span class="accent">SRN</span> - <span class="accent">S</span>cene <span class="accent">R</span>epresentation <span class="accent">N</span>etworks</h2>
             <p class="lead small srn-intro-lead">
               <span class="srn-intro-line srn-intro-nowrap srn-intro-line-1"><em>SRN</em> היה אחד הניסיונות הראשונים לייצג סצנה תלת-ממדית באמצעות רשת נוירונים.</span>
               <span class="srn-intro-line">במקום לבנות מודל תלת-ממדי קשיח של הסביבה,</span>
-              <span class="srn-intro-line srn-intro-nowrap">הרעיון היה לאפשר לרשת ללמוד ייצוג רציף של הסצנה מתוך התמונות עצמן.</span>
+              <span class="srn-intro-line srn-intro-nowrap"><em>SRN</em> מנסה לדחוס את הידע על הסצנה לתוך משקלי רשת נוירונים.</span>
             </p>
-            <div class="srn-tech-diagram">
-              <div class="srn-fn-header">
-                <p class="srn-fn-words">
-                  <bdi class="srn-words-in">מיקום במרחב (x, y, z)</bdi>
-                  <span class="srn-words-plus">+</span>
-                  <span class="srn-words-dir">
-                    <bdi class="srn-words-in">זווית צפייה (θ, φ)</bdi>
-                    <span class="srn-angle-defs">
-                      <span class="srn-angle-item"><span class="srn-angle-key">θ</span><bdi class="srn-angle-label">זווית אופקית</bdi></span>
-                      <span class="srn-angle-sep"></span>
-                      <span class="srn-angle-item"><span class="srn-angle-key">φ</span><bdi class="srn-angle-label">זווית אנכית</bdi></span>
-                    </span>
-                  </span>
-                  <span class="srn-words-arrow">→</span>
-                  <bdi class="srn-words-out">צבע הפיקסל הנראה</bdi>
-                </p>
-              </div>
-              <p class="srn-mlp-intro">
-                המידע מוזן לרשת נוירונים מסוג MLP - רשת המורכבת ממספר שכבות Fully Connected.
-              </p>
-              <div class="srn-mlp-row">
-                <div class="srn-mlp-labels-in">
-                  <span><em>p</em> = (x, y, z)</span>
-                  <span><em>d</em> = (θ, φ)</span>
-                </div>
-                <svg class="srn-mlp-svg" viewBox="0 0 224 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <!-- connections: input → hidden-1 -->
-                  <line x1="14" y1="18" x2="62" y2="12" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="14" y1="18" x2="62" y2="36" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="14" y1="18" x2="62" y2="60" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="14" y1="54" x2="62" y2="12" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="14" y1="54" x2="62" y2="36" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="14" y1="54" x2="62" y2="60" stroke="#d0d0d0" stroke-width="1"/>
-                  <!-- dashed stubs: hidden-1 → dots -->
-                  <line x1="68" y1="12" x2="90" y2="30" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <line x1="68" y1="36" x2="90" y2="36" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <line x1="68" y1="60" x2="90" y2="42" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <!-- dashed stubs: dots → hidden-2 -->
-                  <line x1="134" y1="30" x2="156" y2="12" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <line x1="134" y1="36" x2="156" y2="36" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <line x1="134" y1="42" x2="156" y2="60" stroke="#d8d8d8" stroke-width="0.8" stroke-dasharray="3,3"/>
-                  <!-- connections: hidden-2 → output -->
-                  <line x1="162" y1="12" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="12" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="12" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="36" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="36" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="36" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="60" x2="204" y2="18" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="60" x2="204" y2="36" stroke="#d0d0d0" stroke-width="1"/>
-                  <line x1="162" y1="60" x2="204" y2="54" stroke="#d0d0d0" stroke-width="1"/>
-                  <!-- input nodes -->
-                  <circle cx="14" cy="18" r="7" fill="rgba(108,92,231,0.1)" stroke="rgba(108,92,231,0.65)" stroke-width="1.5"/>
-                  <circle cx="14" cy="54" r="7" fill="rgba(108,92,231,0.1)" stroke="rgba(108,92,231,0.65)" stroke-width="1.5"/>
-                  <!-- hidden layer 1 -->
-                  <circle cx="62" cy="12" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <circle cx="62" cy="36" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <circle cx="62" cy="60" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <!-- dots -->
-                  <text x="112" y="40" text-anchor="middle" fill="#aaa" font-size="14" font-family="sans-serif" letter-spacing="3">···</text>
-                  <!-- hidden layer 2 -->
-                  <circle cx="156" cy="12" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <circle cx="156" cy="36" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <circle cx="156" cy="60" r="5.5" fill="#f2f2f2" stroke="#bbb" stroke-width="1.5"/>
-                  <!-- output nodes -->
-                  <circle cx="204" cy="18" r="7" fill="rgba(255,90,54,0.1)" stroke="rgba(255,90,54,0.7)" stroke-width="1.5"/>
-                  <circle cx="204" cy="36" r="7" fill="rgba(0,184,148,0.1)" stroke="rgba(0,184,148,0.7)" stroke-width="1.5"/>
-                  <circle cx="204" cy="54" r="7" fill="rgba(54,130,255,0.12)" stroke="rgba(54,130,255,0.75)" stroke-width="1.5"/>
-                  <!-- R G B labels inside output nodes -->
-                  <text x="204" y="22" text-anchor="middle" fill="rgba(220,60,30,0.9)" font-size="7.5" font-family="monospace" font-weight="700">R</text>
-                  <text x="204" y="40" text-anchor="middle" fill="rgba(0,160,120,0.9)" font-size="7.5" font-family="monospace" font-weight="700">G</text>
-                  <text x="204" y="58" text-anchor="middle" fill="rgba(30,90,220,0.95)" font-size="7.5" font-family="monospace" font-weight="700">B</text>
+            <p class="srn-explain">
+              הרשת נחשפת לתמונות של אותו אובייקט מזוויות שונות,<br>
+              ולומדת קשר בין מיקום במרחב, כיוון צפייה והמראה שמתקבל בתמונה.
+            </p>
+            <p class="srn-explain srn-concept-intro">
+              המראה של הסצנה תלוי בשלושה גורמים עיקריים שהרשת לומדת יחד:
+            </p>
+            <div class="srn-concept-row">
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
+                  <circle cx="12" cy="9" r="2.5"/>
                 </svg>
-                <div class="srn-mlp-labels-out">
-                  <span><em>c</em> = (R, G, B)</span>
-                </div>
+                <span>מיקום במרחב</span>
               </div>
-              <p class="srn-explain">
-                עבור כל נקודה במרחב הרשת חוזה איזה צבע אמור להופיע מאותה זווית צפייה,<br>ומתוך התחזיות האלו נבנית תמונה חדשה של הסצנה.
-              </p>
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>כיוון צפייה</span>
+              </div>
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="14" rx="2"/>
+                  <circle cx="8.5" cy="9.5" r="1.5"/>
+                  <path d="m3 16 5-5 4 4 3-3 6 6"/>
+                </svg>
+                <span>המראה של הסצנה</span>
+              </div>
             </div>
-            <p class="srn-tagline">ב-SRN הייצוג של העולם אינו נשמר כאובייקטים או משטחים,<br>אלא כמידע שנלמד בתוך משקלי הרשת.</p>
+            <p class="srn-explain srn-explain-after">
+              כך ניתן להתחיל לייצר מבטים חדשים - גם מזוויות שלא הופיעו בתמונות האימון.
+            </p>
+            <p class="srn-tagline">
+              לראשונה, הסצנה עצמה יוצגה בתוך משקלי רשת נוירונים -<br>
+              ולא באמצעות מודל תלת-ממדי מפורש.
+            </p>
           </div>
           <div class="srn-visual">
             <div class="srn-video-wrap">
@@ -878,11 +834,11 @@
                   stroke-dasharray="0.6,0.4" />
           </svg>
           <div class="srn-learn-top">
-            <div class="kicker">2019 - SRN</div>
-            <h2>כיצד <span class="accent">SRN</span> מבין את הסצנה?</h2>
+            <div class="kicker">ייצוג מרחבי באמצעות רשת נוירונים</div>
+            <h2>כיצד <span class="accent">SRN</span> לומד סצנה?</h2>
             <p class="srn-learn-intro">
               הרשת מקבלת תמונה של אובייקט מזווית מסוימת,<br>
-              ומנסה ללמוד כיצד האובייקט נראה גם מזוויות אחרות.
+              ומנסה להבין כיצד הוא ייראה גם מזוויות אחרות.
             </p>
           </div>
 
@@ -890,21 +846,38 @@
             <canvas id="srn-net-canvas" aria-label="הדמיית רשת נוירונים שמעבדת פיקסל בודד"></canvas>
           </div>
 
-          <div class="srn-learn-bottom">
+          <div class="srn-fn-header srn-learn-fn-header">
+            <p class="srn-fn-words">
+              <bdi class="srn-words-in">מיקום במרחב (x, y, z)</bdi>
+              <span class="srn-words-plus">+</span>
+              <span class="srn-words-dir">
+                <bdi class="srn-words-in">זווית צפייה (θ, φ)</bdi>
+                <span class="srn-angle-defs">
+                  <span class="srn-angle-item"><span class="srn-angle-key">θ</span><bdi class="srn-angle-label">זווית אופקית</bdi></span>
+                  <span class="srn-angle-sep"></span>
+                  <span class="srn-angle-item"><span class="srn-angle-key">φ</span><bdi class="srn-angle-label">זווית אנכית</bdi></span>
+                </span>
+              </span>
+              <span class="srn-words-arrow">→</span>
+              <bdi class="srn-words-out">צבע הפיקסל הנראה</bdi>
+            </p>
+          </div>
+          <p class="srn-mlp-intro srn-learn-mlp-intro">
+            המידע מוזן לרשת נוירונים מסוג MLP - רשת המורכבת ממספר שכבות Fully Connected.
+          </p>
+
+          <div class="srn-learn-body">
             <p>
-              <strong>בשורה האמצעית</strong> ניתן לראות את המבטים החדשים שהרשת מייצרת מתוך תמונת הקלט.
+              בכל פעם שמזינים לרשת <strong>מיקום במרחב</strong> ו<strong>זווית צפייה</strong>, היא מחזירה את צבע הפיקסל שאמור להופיע מאותה נקודת מבט.
             </p>
             <p>
-              למרות שהמודל חוזה רק צבעים, במהלך האימון הוא לומד באופן עקיף גם את המבנה התלת-ממדי של האובייקט.
-            </p>
-            <p>
-              <strong>בשורה התחתונה</strong> ניתן לראות את הייצוג הגיאומטרי שהרשת למדה בעצמה מתוך התמונות, ללא שימוש במודל 3D אמיתי או מידע עומק מפורש.
+              עם הזמן, מתוך אלפי חיזויים כאלה, הרשת מתחילה ללמוד את המבנה המרחבי של האובייקט עצמו.
             </p>
           </div>
 
           <p class="srn-learn-tagline">
-            SRN הראה לראשונה שרשת נוירונים יכולה ללמוד כיצד סצנה בנויה במרחב -<br>
-            ולייצר מבטים חדשים גם מזוויות שלא הופיעו בנתוני האימון.
+            ב־SRN הסצנה אינה נשמרת כאובייקטים או משטחים -<br>
+            אלא כמידע שנלמד בתוך משקלי רשת הנוירונים.
           </p>
         </div>
       </section>
