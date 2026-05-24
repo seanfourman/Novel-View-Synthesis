@@ -4748,7 +4748,7 @@ export function initSRNNetAnim() {
     ctx.shadowBlur = 22;
     ctx.shadowOffsetY = 6;
     ctx.fillStyle = "#fff";
-    ctx.fillRect(imgX - 8, imgY - 8, imgW + 16, imgH + 16);
+    ctx.fillRect(imgX - 3, imgY - 3, imgW + 6, imgH + 6);
     ctx.restore();
 
     for (let y = 0; y < IMG_ROWS; y++) {
