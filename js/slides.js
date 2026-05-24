@@ -4619,7 +4619,7 @@ export function initSRNNetAnim() {
   }
 
   // ---- Input scene image (sampled from pixelated.png) ----
-  const IMG_COLS = 10, IMG_ROWS = 10;
+  const IMG_COLS = 20, IMG_ROWS = 20;
   function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
   const imgPixels = [];
   // pre-fill with neutral grey so pulses have a color before the image loads
