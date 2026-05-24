@@ -4618,43 +4618,34 @@ export function initSRNNetAnim() {
     new ResizeObserver(resize).observe(canvas);
   }
 
-  // ---- Generate input scene image (mountains palette, square grid) ----
+  // ---- Input scene image (sampled from pixelated.png) ----
   const IMG_COLS = 10, IMG_ROWS = 10;
   function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
-  function rand(a, b) { return a + Math.random() * (b - a); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
   const imgPixels = [];
-  for (let y = 0; y < IMG_ROWS; y++) {
-    for (let x = 0; x < IMG_COLS; x++) {
-      const ny = y / IMG_ROWS;
-      const nx = x / IMG_COLS;
-      let r, g, b;
-      if (ny < 0.32) {
-        // Top: soft cream/pink/lavender sky
-        const t = ny / 0.32;
-        r = lerp(238, 220, t) + rand(-6, 6);
-        g = lerp(228, 215, t) + rand(-6, 6);
-        b = lerp(220, 222, t) + rand(-6, 6);
-        // subtle pink tint on the right side (warm sky)
-        const pinkBoost = Math.max(0, nx - 0.4) * 0.5;
-        r += pinkBoost * 8;
-        b -= pinkBoost * 4;
-      } else if (ny < 0.62) {
-        // Middle: soft lavender-blue distant mountains
-        const t = (ny - 0.32) / 0.3;
-        r = lerp(180, 150, t) + rand(-8, 8);
-        g = lerp(190, 165, t) + rand(-8, 8);
-        b = lerp(215, 200, t) + rand(-6, 6);
-      } else {
-        // Bottom: deeper blue/teal foreground mountains
-        const t = (ny - 0.62) / 0.38;
-        r = lerp(110, 80, t) + rand(-10, 10);
-        g = lerp(135, 110, t) + rand(-10, 10);
-        b = lerp(170, 150, t) + rand(-8, 8);
-      }
-      imgPixels.push({ r: clamp255(r), g: clamp255(g), b: clamp255(b) });
-    }
+  // pre-fill with neutral grey so pulses have a color before the image loads
+  for (let i = 0; i < IMG_COLS * IMG_ROWS; i++) {
+    imgPixels.push({ r: 180, g: 180, b: 185 });
   }
+
+  const sourceImage = new Image();
+  sourceImage.crossOrigin = "anonymous";
+  sourceImage.onload = () => {
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = IMG_COLS;
+    sampleCanvas.height = IMG_ROWS;
+    const sctx = sampleCanvas.getContext("2d");
+    sctx.imageSmoothingEnabled = true;
+    sctx.drawImage(sourceImage, 0, 0, IMG_COLS, IMG_ROWS);
+    const data = sctx.getImageData(0, 0, IMG_COLS, IMG_ROWS).data;
+    for (let i = 0; i < IMG_COLS * IMG_ROWS; i++) {
+      imgPixels[i] = {
+        r: clamp255(data[i * 4]),
+        g: clamp255(data[i * 4 + 1]),
+        b: clamp255(data[i * 4 + 2]),
+      };
+    }
+  };
+  sourceImage.src = "assets/srn/pixelated.png";
 
   // ---- Network architecture ----
   // input (x,y,z + θ,φ) → 3 hidden layers → RGB output
