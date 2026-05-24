@@ -4645,7 +4645,7 @@ export function initSRNNetAnim() {
       };
     }
   };
-  sourceImage.src = "assets/srn/pixelated.png";
+  sourceImage.src = "assets/srn/nn-photo-2.png";
 
   // ---- Network architecture ----
   // input (x,y,z + θ,φ) → 3 hidden layers → RGB output
