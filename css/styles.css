@@ -4275,26 +4275,29 @@ code {
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0.6rem clamp(1rem, 3vw, 2.6rem) 2.4rem;
+  padding: 0.4rem clamp(1rem, 3vw, 2.6rem) 2.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1.4rem, 2.6vh, 2.4rem);
+  gap: clamp(2.2rem, 4.5vh, 4rem);
   direction: rtl;
   isolation: isolate;
+  overflow: visible;
 }
 
-/* Soft glowing aura behind the whole stage */
+/* Soft glowing auras — green on right (pros), orange on left (cons) */
 .srn-verdict-bg {
   position: absolute;
-  inset: 0;
+  top: -5%;
+  bottom: -5%;
+  left: -10%;
+  right: -10%;
   z-index: -1;
-  border-radius: 24px;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 45% 55% at 22% 55%, rgba(0, 184, 148, 0.18), transparent 70%),
-    radial-gradient(ellipse 45% 55% at 78% 55%, rgba(255, 90, 54, 0.18), transparent 70%);
-  filter: blur(2px);
+    radial-gradient(ellipse 30% 38% at 75% 50%, rgba(0, 184, 148, 0.12), transparent 78%),
+    radial-gradient(ellipse 30% 38% at 25% 50%, rgba(255, 90, 54, 0.12), transparent 78%);
+  filter: blur(8px);
 }
 
 .srn-verdict-header {
@@ -4310,57 +4313,40 @@ code {
   letter-spacing: -0.015em;
 }
 
-/* ---- Stage layout ---- */
+/* ---- Stage layout (no cards, just floating content) ---- */
 .srn-verdict-stage {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  align-items: stretch;
-  gap: clamp(1.2rem, 2.5vw, 2.2rem);
+  align-items: start;
+  gap: clamp(2rem, 5vw, 4.5rem);
   width: 100%;
+  padding: 0.4rem clamp(0.5rem, 2vw, 1.5rem);
 }
 
-/* ---- Panels ---- */
-.verdict-panel {
+.verdict-side {
   position: relative;
-  border-radius: 18px;
-  padding: 1.4rem 1.6rem 1.5rem;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  overflow: hidden;
+  gap: 1.1rem;
 }
 
-.verdict-pros {
-  box-shadow:
-    0 22px 60px -28px rgba(0, 184, 148, 0.65),
-    0 8px 24px rgba(0, 0, 0, 0.07);
-}
-
-.verdict-cons {
-  box-shadow:
-    0 22px 60px -28px rgba(255, 90, 54, 0.65),
-    0 8px 24px rgba(0, 0, 0, 0.07);
-}
-
-/* ---- Big faded +/- mark in panel background ---- */
+/* ---- Big floating +/- behind each column ---- */
 .verdict-mark {
   position: absolute;
-  bottom: -0.8rem;
-  left: -0.6rem;
-  width: clamp(6rem, 10vw, 9rem);
-  height: clamp(6rem, 10vw, 9rem);
-  opacity: 0.09;
+  top: 55%;
+  width: clamp(4rem, 7vw, 6.5rem);
+  height: clamp(4rem, 7vw, 6.5rem);
+  transform: translateY(-50%);
+  opacity: 0.07;
   pointer-events: none;
   z-index: 0;
 }
 
-.verdict-pros .verdict-mark {
-  --mark-thick: clamp(0.85rem, 1vw, 1.2rem);
+.verdict-mark-pros {
+  --mark-thick: clamp(0.8rem, 1vw, 1.15rem);
+  right: 36%;
   background: var(--accent-3);
   mask:
     linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat,
@@ -4370,34 +4356,50 @@ code {
     linear-gradient(#000 0 0) center / var(--mark-thick) 100% no-repeat;
 }
 
-.verdict-cons .verdict-mark {
-  --mark-thick: clamp(0.85rem, 1vw, 1.2rem);
+.verdict-mark-cons {
+  --mark-thick: clamp(0.8rem, 1vw, 1.15rem);
+  left: 8%;
   background: var(--accent);
   mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
   -webkit-mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
 }
 
-/* ---- Panel header ---- */
-.verdict-panel-head {
+/* ---- Side title with soft underline ---- */
+.verdict-side-title {
   position: relative;
-  z-index: 1;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
-}
-
-.verdict-panel-head h3 {
   margin: 0;
-  font-size: 1.45rem;
+  padding-bottom: 0.55rem;
+  font-size: clamp(1.3rem, 1.8vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.01em;
+  text-align: center;
 }
 
-.verdict-pros .verdict-panel-head h3 {
+.verdict-side-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 50%;
+  transform: translateX(50%);
+  width: 2.6rem;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.verdict-pros .verdict-side-title {
   color: var(--accent-3);
 }
 
-.verdict-cons .verdict-panel-head h3 {
+.verdict-pros .verdict-side-title::after {
+  background: var(--accent-3);
+}
+
+.verdict-cons .verdict-side-title {
   color: var(--accent);
+}
+
+.verdict-cons .verdict-side-title::after {
+  background: var(--accent);
 }
 
 /* ---- Items list ---- */
@@ -4415,28 +4417,26 @@ code {
 .verdict-list li {
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
-  font-size: 1rem;
-  line-height: 1.5;
+  gap: 0.7rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
   color: var(--ink);
 }
 
 .verdict-bullet {
   flex-shrink: 0;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-top: 0.55em;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.6em;
   border-radius: 50%;
 }
 
 .verdict-pros .verdict-bullet {
   background: var(--accent-3);
-  box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.18);
 }
 
 .verdict-cons .verdict-bullet {
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.18);
 }
 
 /* ---- Bottom tagline (simple, like other slides) ---- */
