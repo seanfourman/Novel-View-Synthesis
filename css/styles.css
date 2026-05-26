@@ -4269,142 +4269,195 @@ code {
   }
 }
 
-/* ============ SLIDE 12: SRN PROS & CONS ============ */
-.srn-proscons-slide {
+/* ============ SLIDE 12: SRN VERDICT (PROS & CONS) ============ */
+.srn-verdict-slide {
+  position: relative;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
+  padding: 0.6rem clamp(1rem, 3vw, 2.6rem) 2.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.4rem;
+  gap: clamp(1.4rem, 2.6vh, 2.4rem);
   direction: rtl;
+  isolation: isolate;
+}
+
+/* Soft glowing aura behind the whole stage */
+.srn-verdict-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 24px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 55% at 22% 55%, rgba(0, 184, 148, 0.18), transparent 70%),
+    radial-gradient(ellipse 45% 55% at 78% 55%, rgba(255, 90, 54, 0.18), transparent 70%);
+  filter: blur(2px);
+}
+
+.srn-verdict-header {
   text-align: center;
 }
 
-.srn-proscons-slide .kicker {
-  margin: 0;
-}
-
-.srn-proscons-slide h2 {
+.srn-verdict-header h2 {
   margin: 0;
   font-size: clamp(2rem, 3.4vw, 3rem);
   font-weight: 700;
   color: var(--ink);
   line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
-.proscons-grid {
+/* ---- Stage layout ---- */
+.srn-verdict-stage {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  align-items: stretch;
+  gap: clamp(1.2rem, 2.5vw, 2.2rem);
   width: 100%;
-  margin-top: 0.4rem;
 }
 
-.proscons-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 1.4rem 1.6rem;
-  box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.08),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-  text-align: right;
-  direction: rtl;
+/* ---- Panels ---- */
+.verdict-panel {
+  position: relative;
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem 1.5rem;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.9rem;
+  overflow: hidden;
 }
 
-.proscons-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+.verdict-pros {
+  box-shadow:
+    0 22px 60px -28px rgba(0, 184, 148, 0.65),
+    0 8px 24px rgba(0, 0, 0, 0.07);
 }
 
-.proscons-card-header h3 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--ink);
+.verdict-cons {
+  box-shadow:
+    0 22px 60px -28px rgba(255, 90, 54, 0.65),
+    0 8px 24px rgba(0, 0, 0, 0.07);
 }
 
-.proscons-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1;
-  color: #fff;
-  font-family: "Inter", sans-serif;
+/* ---- Big faded +/- mark in panel background ---- */
+.verdict-mark {
+  position: absolute;
+  bottom: -0.8rem;
+  left: -0.6rem;
+  width: clamp(6rem, 10vw, 9rem);
+  height: clamp(6rem, 10vw, 9rem);
+  opacity: 0.09;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.proscons-pros .proscons-icon {
+.verdict-pros .verdict-mark {
+  --mark-thick: clamp(0.85rem, 1vw, 1.2rem);
   background: var(--accent-3);
+  mask:
+    linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat,
+    linear-gradient(#000 0 0) center / var(--mark-thick) 100% no-repeat;
+  -webkit-mask:
+    linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat,
+    linear-gradient(#000 0 0) center / var(--mark-thick) 100% no-repeat;
 }
 
-.proscons-cons .proscons-icon {
+.verdict-cons .verdict-mark {
+  --mark-thick: clamp(0.85rem, 1vw, 1.2rem);
   background: var(--accent);
+  mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
+  -webkit-mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
 }
 
-.proscons-list {
+/* ---- Panel header ---- */
+.verdict-panel-head {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.verdict-panel-head h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.verdict-pros .verdict-panel-head h3 {
+  color: var(--accent-3);
+}
+
+.verdict-cons .verdict-panel-head h3 {
+  color: var(--accent);
+}
+
+/* ---- Items list ---- */
+.verdict-list {
+  position: relative;
+  z-index: 1;
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.7rem;
 }
 
-.proscons-list li {
-  position: relative;
-  padding-right: 1.1rem;
-  font-size: 0.98rem;
+.verdict-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--ink);
 }
 
-.proscons-list li::before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 0.65em;
-  width: 6px;
-  height: 6px;
+.verdict-bullet {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.55em;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
 }
 
-.proscons-pros .proscons-list li::before {
+.verdict-pros .verdict-bullet {
   background: var(--accent-3);
+  box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.18);
 }
 
-.proscons-cons .proscons-list li::before {
+.verdict-cons .verdict-bullet {
   background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.18);
 }
 
-.proscons-tagline {
+/* ---- Bottom tagline (simple, like other slides) ---- */
+.verdict-tagline {
   font-size: clamp(0.95rem, 1.15vw, 1.1rem);
   color: var(--accent);
   font-weight: 600;
-  margin: 0.4rem 0 0;
+  text-align: center;
+  margin: 1.2rem 0 0;
   line-height: 1.55;
 }
 
-.proscons-tagline em {
+.verdict-tagline em {
   font-style: normal;
   font-weight: 700;
 }
 
+/* ---- Responsive ---- */
 @media (max-width: 900px) {
-  .proscons-grid {
+  .srn-verdict-stage {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }

@@ -887,44 +887,47 @@
 
       <!-- ============ SLIDE 12: SRN PROS & CONS ============ -->
       <section class="slide" data-id="12">
-        <div class="srn-proscons-slide">
-          <div class="kicker">סיכום: מה SRN הביא לעולם</div>
-          <h2>היתרונות והחסרונות של <span class="accent">SRN</span></h2>
+        <div class="srn-verdict-slide">
+          <div class="srn-verdict-bg" aria-hidden="true"></div>
 
-          <div class="proscons-grid">
-            <div class="proscons-card proscons-pros">
-              <div class="proscons-card-header">
-                <span class="proscons-icon" aria-hidden="true">✓</span>
-                <h3>יתרונות</h3>
-              </div>
-              <ul class="proscons-list">
-                <li>מאפשר לייצג סצנה תלת-ממדית בתוך רשת נוירונים</li>
-                <li>לא דורש בנייה ידנית של מודל 3D</li>
-                <li>לומד ייצוג רציף של הסצנה מתוך תמונות</li>
-                <li>יכול לייצר מבטים חדשים מזוויות שלא צולמו</li>
-                <li>לומד באופן עקיף גם את המבנה המרחבי של האובייקט</li>
-                <li>מהווה בסיס חשוב להתפתחות של NeRF/NVS מתקדם יותר</li>
-              </ul>
-            </div>
-
-            <div class="proscons-card proscons-cons">
-              <div class="proscons-card-header">
-                <span class="proscons-icon" aria-hidden="true">✕</span>
-                <h3>חסרונות</h3>
-              </div>
-              <ul class="proscons-list">
-                <li>דורש אימון מקדים ותלוי בדוגמאות שראה</li>
-                <li>לא באמת "מבין" סצנה חדשה מתמונה אחת ללא ידע קודם</li>
-                <li>הפלטים עדיין מטושטשים יחסית</li>
-                <li>מתקשה בפרטים קטנים ובמרקמים מורכבים</li>
-                <li>הגיאומטריה שנלמדת אינה תמיד מדויקת</li>
-                <li>תהליך יצירת התמונה איטי יחסית לשיטות מתקדמות יותר</li>
-              </ul>
-            </div>
+          <div class="srn-verdict-header">
+            <h2>היתרונות והחסרונות של <span class="accent">SRN</span></h2>
           </div>
 
-          <p class="proscons-tagline">
-            למרות המגבלות, <em>SRN</em> סימן את המעבר הראשון מגישות גיאומטריות קלאסיות<br>
+          <div class="srn-verdict-stage">
+            <article class="verdict-panel verdict-pros">
+              <span class="verdict-mark" aria-hidden="true"></span>
+              <header class="verdict-panel-head">
+                <h3>יתרונות</h3>
+              </header>
+              <ul class="verdict-list">
+                <li><span class="verdict-bullet" aria-hidden="true"></span>מאפשר לייצג סצנה תלת-ממדית בתוך רשת נוירונים</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>לא דורש בנייה ידנית של מודל 3D</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>לומד ייצוג רציף של הסצנה מתוך תמונות</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>יכול לייצר מבטים חדשים מזוויות שלא צולמו</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>לומד באופן עקיף גם את המבנה המרחבי של האובייקט</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>מהווה בסיס חשוב להתפתחות של NeRF/NVS מתקדם יותר</li>
+              </ul>
+            </article>
+
+            <article class="verdict-panel verdict-cons">
+              <span class="verdict-mark" aria-hidden="true"></span>
+              <header class="verdict-panel-head">
+                <h3>חסרונות</h3>
+              </header>
+              <ul class="verdict-list">
+                <li><span class="verdict-bullet" aria-hidden="true"></span>דורש אימון מקדים ותלוי בדוגמאות שראה</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>לא באמת "מבין" סצנה חדשה מתמונה אחת ללא ידע קודם</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>הפלטים עדיין מטושטשים יחסית</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>מתקשה בפרטים קטנים ובמרקמים מורכבים</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>הגיאומטריה שנלמדת אינה תמיד מדויקת</li>
+                <li><span class="verdict-bullet" aria-hidden="true"></span>תהליך יצירת התמונה איטי יחסית לשיטות מתקדמות יותר</li>
+              </ul>
+            </article>
+          </div>
+
+          <p class="verdict-tagline">
+            למרות החסרונות, <em>SRN</em> סימן את המעבר הראשון מגישות גיאומטריות קלאסיות<br>
             לייצוג סצנות באמצעות רשתות נוירונים.
           </p>
         </div>
