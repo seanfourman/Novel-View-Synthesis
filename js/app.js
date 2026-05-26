@@ -5,15 +5,7 @@ import {
   initProblemVis,
   initStaticToSpatial,
   initDepthBasedNVS,
-  initApplications,
-  initWhyHard,
   initClassic,
-  initOldApproaches,
-  initRotatable,
-  initRayDemo,
-  initTraining,
-  initClickableViews,
-  initOrbitScrubber,
   initEndBg,
   initSfMLiDAR,
   initLimits,
@@ -149,15 +141,7 @@ const sceneRegistry = {
   10: initSRNNetAnim, // slide 11 (SRN network animation)
   // slide 12 (SRN pros & cons) - no canvas
   12: initDepthBasedNVS, // slide 13
-  13: initApplications, // slide 14
-  14: initWhyHard, // slide 15
-  // slide 16 (NeRF intro) - no canvas
-  16: initRotatable, // slide 17
-  18: initRayDemo, // slide 19
-  19: initTraining, // slide 20
-  20: initClickableViews, // slide 21
-  21: initOrbitScrubber, // slide 22
-  24: initEndBg, // slide 25
+  13: initEndBg, // slide 14 (final recap)
 };
 
 const sceneInstances = {};
