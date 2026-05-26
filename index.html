@@ -885,8 +885,53 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 12: MODEL PROCESS ============ -->
+      <!-- ============ SLIDE 12: SRN PROS & CONS ============ -->
       <section class="slide" data-id="12">
+        <div class="srn-proscons-slide">
+          <div class="kicker">סיכום: מה SRN הביא לעולם</div>
+          <h2>היתרונות והמגבלות של <span class="accent">SRN</span></h2>
+
+          <div class="proscons-grid">
+            <div class="proscons-card proscons-pros">
+              <div class="proscons-card-header">
+                <span class="proscons-icon" aria-hidden="true">✓</span>
+                <h3>יתרונות</h3>
+              </div>
+              <ul class="proscons-list">
+                <li>מאפשר לייצג סצנה תלת-ממדית בתוך רשת נוירונים</li>
+                <li>לא דורש בנייה ידנית של מודל 3D</li>
+                <li>לומד ייצוג רציף של הסצנה מתוך תמונות</li>
+                <li>יכול לייצר מבטים חדשים מזוויות שלא צולמו</li>
+                <li>לומד באופן עקיף גם את המבנה המרחבי של האובייקט</li>
+                <li>מהווה בסיס חשוב להתפתחות של NeRF/NVS מתקדם יותר</li>
+              </ul>
+            </div>
+
+            <div class="proscons-card proscons-cons">
+              <div class="proscons-card-header">
+                <span class="proscons-icon" aria-hidden="true">✕</span>
+                <h3>חסרונות</h3>
+              </div>
+              <ul class="proscons-list">
+                <li>דורש אימון מקדים ותלוי בדוגמאות שראה</li>
+                <li>לא באמת "מבין" סצנה חדשה מתמונה אחת ללא ידע קודם</li>
+                <li>הפלטים עדיין מטושטשים יחסית</li>
+                <li>מתקשה בפרטים קטנים ובמרקמים מורכבים</li>
+                <li>הגיאומטריה שנלמדת אינה תמיד מדויקת</li>
+                <li>תהליך יצירת התמונה איטי יחסית לשיטות מתקדמות יותר</li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="proscons-tagline">
+            למרות המגבלות, <em>SRN</em> סימן את המעבר הראשון מגישות גיאומטריות קלאסיות<br>
+            לייצוג סצנות באמצעות רשתות נוירונים.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 13: MODEL PROCESS ============ -->
+      <section class="slide" data-id="13">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -917,8 +962,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 13: APPLICATIONS (visual) ============ -->
-      <section class="slide" data-id="13">
+      <!-- ============ SLIDE 14: APPLICATIONS (visual) ============ -->
+      <section class="slide" data-id="14">
         <div class="centered wide">
           <div class="kicker">איפה משתמשים בזה?</div>
           <h2>ארבעה שימושים אמיתיים - עם <em>דוגמאות שונות</em></h2>
@@ -993,8 +1038,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 14: WHY HARD (visual) ============ -->
-      <section class="slide" data-id="14">
+      <!-- ============ SLIDE 15: WHY HARD (visual) ============ -->
+      <section class="slide" data-id="15">
         <div class="centered wide">
           <div class="kicker">למה זה קשה?</div>
           <h2>ארבעה דברים שמודל <em>חייב</em> לפתור</h2>
@@ -1066,8 +1111,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 15: NERF INTRO ============ -->
-      <section class="slide" data-id="15">
+      <!-- ============ SLIDE 16: NERF INTRO ============ -->
+      <section class="slide" data-id="16">
         <div class="centered">
           <div class="kicker">2020 · פריצת דרך</div>
           <h1 class="big-title small"><span class="accent">NeRF</span></h1>
@@ -1083,7 +1128,7 @@
 
       <!-- ============ SLIDES 8-16 ============ -->
 
-      <section class="slide" data-id="16">
+      <section class="slide" data-id="17">
         <div class="split">
           <div class="split-right">
             <div class="kicker">הסצנה, אחרי שלמדנו אותה</div>
@@ -1111,7 +1156,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="17">
+      <section class="slide" data-id="18">
         <div class="centered wide">
           <div class="kicker">איך NeRF חושב</div>
           <h2>קלטים ופלטים</h2>
@@ -1158,7 +1203,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="18">
+      <section class="slide" data-id="19">
         <div class="split">
           <div class="split-right">
             <div class="kicker">איך נוצר פיקסל</div>
@@ -1184,7 +1229,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="19">
+      <section class="slide" data-id="20">
         <div class="centered wide">
           <div class="kicker">איך זה לומד</div>
           <h2>אימון, בתמונה אחת</h2>
@@ -1230,7 +1275,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="20">
+      <section class="slide" data-id="21">
         <div class="split">
           <div class="split-right">
             <div class="kicker">מבטים חדשים, לפי דרישה</div>
@@ -1258,7 +1303,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="21">
+      <section class="slide" data-id="22">
         <div class="centered wide">
           <div class="kicker">אינטרפולציה חלקה</div>
           <h2>או החליקו דרך כל זווית באמצע.</h2>
@@ -1294,7 +1339,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="22">
+      <section class="slide" data-id="23">
         <div class="centered wide">
           <div class="kicker">הערכה כנה</div>
           <h2>מגבלות</h2>
@@ -1323,7 +1368,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="23">
+      <section class="slide" data-id="24">
         <div class="centered wide">
           <div class="kicker">התחום היום</div>
           <h2>מה בא אחרי</h2>
@@ -1354,7 +1399,7 @@
         </div>
       </section>
 
-      <section class="slide" data-id="24">
+      <section class="slide" data-id="25">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

@@ -147,16 +147,17 @@ const sceneRegistry = {
   8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
   9: initSRN, // slide 10 (SRN)
   10: initSRNNetAnim, // slide 11 (SRN network animation)
-  11: initDepthBasedNVS, // slide 12
-  12: initApplications, // slide 13
-  13: initWhyHard, // slide 14
-  // slide 15 (NeRF intro) - no canvas
-  15: initRotatable, // slide 16
-  17: initRayDemo, // slide 18
-  18: initTraining, // slide 19
-  19: initClickableViews, // slide 20
-  20: initOrbitScrubber, // slide 21
-  23: initEndBg, // slide 24
+  // slide 12 (SRN pros & cons) - no canvas
+  12: initDepthBasedNVS, // slide 13
+  13: initApplications, // slide 14
+  14: initWhyHard, // slide 15
+  // slide 16 (NeRF intro) - no canvas
+  16: initRotatable, // slide 17
+  18: initRayDemo, // slide 19
+  19: initTraining, // slide 20
+  20: initClickableViews, // slide 21
+  21: initOrbitScrubber, // slide 22
+  24: initEndBg, // slide 25
 };
 
 const sceneInstances = {};
