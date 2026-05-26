@@ -4622,10 +4622,11 @@ export function initSRNNetAnim() {
   const IMG_COLS = 20, IMG_ROWS = 20;
   function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
   const imgPixels = [];
-  // pre-fill with neutral grey so pulses have a color before the image loads
+  // pre-fill with neutral grey so the grid renders before the image loads
   for (let i = 0; i < IMG_COLS * IMG_ROWS; i++) {
     imgPixels.push({ r: 180, g: 180, b: 185 });
   }
+  let imageLoaded = false;
 
   const sourceImage = new Image();
   sourceImage.crossOrigin = "anonymous";
@@ -4644,6 +4645,7 @@ export function initSRNNetAnim() {
         b: clamp255(data[i * 4 + 2]),
       };
     }
+    imageLoaded = true;
   };
   sourceImage.src = "assets/srn/nn-photo-2.png";
 
@@ -4683,8 +4685,10 @@ export function initSRNNetAnim() {
   }
 
   function step(dtScale) {
-    // Only spawn a new pulse when the previous one has finished
-    if (pulses.length === 0) {
+    // Only spawn a new pulse when the previous one has finished, and only once
+    // the source image has been sampled — otherwise the first pulse would lock
+    // in the neutral-grey pre-fill color.
+    if (pulses.length === 0 && imageLoaded) {
       spawnTimer += dtScale;
       if (spawnTimer > 40) {
         spawnPulse();
