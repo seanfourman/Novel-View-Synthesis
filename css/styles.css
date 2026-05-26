@@ -4441,12 +4441,13 @@ code {
 
 /* ---- Bottom tagline (simple, like other slides) ---- */
 .verdict-tagline {
-  font-size: clamp(1rem, 1.21vw, 1.16rem);
+  font-size: clamp(1.1rem, 1.35vw, 1.3rem);
   color: var(--accent);
   font-weight: 600;
   text-align: center;
   margin: 1.26rem 0 0;
   line-height: 1.55;
+  white-space: nowrap;
 }
 
 .verdict-tagline em {
