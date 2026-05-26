@@ -3515,6 +3515,18 @@ code {
   font-weight: 700;
 }
 
+.srn-visual-note {
+  margin: 0.35rem 0 0;
+  width: 100%;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  opacity: 0.75;
+  direction: rtl;
+  text-align: center;
+  font-style: italic;
+}
+
 .srn-text .lead.small {
   max-width: 44ch;
 }
