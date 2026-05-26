@@ -4273,13 +4273,13 @@ code {
 .srn-verdict-slide {
   position: relative;
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0.4rem clamp(1rem, 3vw, 2.6rem) 2.4rem;
+  padding: 0.42rem clamp(1.05rem, 3.15vw, 2.73rem) 2.52rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(2.2rem, 4.5vh, 4rem);
+  gap: clamp(2.31rem, 4.73vh, 4.2rem);
   direction: rtl;
   isolation: isolate;
   overflow: visible;
@@ -4306,7 +4306,7 @@ code {
 
 .srn-verdict-header h2 {
   margin: 0;
-  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-size: clamp(2.1rem, 3.57vw, 3.15rem);
   font-weight: 700;
   color: var(--ink);
   line-height: 1.15;
@@ -4319,9 +4319,9 @@ code {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: start;
-  gap: clamp(2rem, 5vw, 4.5rem);
+  gap: clamp(2.1rem, 5.25vw, 4.73rem);
   width: 100%;
-  padding: 0.4rem clamp(0.5rem, 2vw, 1.5rem);
+  padding: 0.42rem clamp(0.53rem, 2.1vw, 1.58rem);
 }
 
 .verdict-side {
@@ -4329,15 +4329,15 @@ code {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.15rem;
 }
 
 /* ---- Big floating +/- behind each column ---- */
 .verdict-mark {
   position: absolute;
   top: 55%;
-  width: clamp(4rem, 7vw, 6.5rem);
-  height: clamp(4rem, 7vw, 6.5rem);
+  width: clamp(4.2rem, 7.35vw, 6.83rem);
+  height: clamp(4.2rem, 7.35vw, 6.83rem);
   transform: translateY(-50%);
   opacity: 0.07;
   pointer-events: none;
@@ -4345,7 +4345,7 @@ code {
 }
 
 .verdict-mark-pros {
-  --mark-thick: clamp(0.8rem, 1vw, 1.15rem);
+  --mark-thick: clamp(0.84rem, 1.05vw, 1.21rem);
   right: 36%;
   background: var(--accent-3);
   mask:
@@ -4357,7 +4357,7 @@ code {
 }
 
 .verdict-mark-cons {
-  --mark-thick: clamp(0.8rem, 1vw, 1.15rem);
+  --mark-thick: clamp(0.84rem, 1.05vw, 1.21rem);
   left: 8%;
   background: var(--accent);
   mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
@@ -4368,8 +4368,8 @@ code {
 .verdict-side-title {
   position: relative;
   margin: 0;
-  padding-bottom: 0.55rem;
-  font-size: clamp(1.3rem, 1.8vw, 1.65rem);
+  padding-bottom: 0.58rem;
+  font-size: clamp(1.37rem, 1.89vw, 1.73rem);
   font-weight: 700;
   letter-spacing: -0.01em;
   text-align: center;
@@ -4381,7 +4381,7 @@ code {
   bottom: 0;
   right: 50%;
   transform: translateX(50%);
-  width: 2.6rem;
+  width: 2.73rem;
   height: 2px;
   border-radius: 2px;
 }
@@ -4411,22 +4411,22 @@ code {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.74rem;
 }
 
 .verdict-list li {
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  font-size: 1.02rem;
+  gap: 0.74rem;
+  font-size: 1.07rem;
   line-height: 1.55;
   color: var(--ink);
 }
 
 .verdict-bullet {
   flex-shrink: 0;
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.47rem;
+  height: 0.47rem;
   margin-top: 0.6em;
   border-radius: 50%;
 }
@@ -4441,11 +4441,11 @@ code {
 
 /* ---- Bottom tagline (simple, like other slides) ---- */
 .verdict-tagline {
-  font-size: clamp(0.95rem, 1.15vw, 1.1rem);
+  font-size: clamp(1rem, 1.21vw, 1.16rem);
   color: var(--accent);
   font-weight: 600;
   text-align: center;
-  margin: 1.2rem 0 0;
+  margin: 1.26rem 0 0;
   line-height: 1.55;
 }
 
