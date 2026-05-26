@@ -4296,7 +4296,7 @@ code {
   pointer-events: none;
   background:
     radial-gradient(ellipse 30% 38% at 75% 50%, rgba(0, 184, 148, 0.12), transparent 78%),
-    radial-gradient(ellipse 30% 38% at 32% 50%, rgba(255, 90, 54, 0.12), transparent 78%);
+    radial-gradient(ellipse 30% 38% at 38% 50%, rgba(255, 90, 54, 0.12), transparent 78%);
   filter: blur(8px);
 }
 
