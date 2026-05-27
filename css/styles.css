@@ -461,26 +461,8 @@ code {
 }
 
 .spatial-slide h2 {
-  position: relative;
   font-size: clamp(2rem, 3.4vw, 3rem);
   margin-top: clamp(1rem, 0.8vh, 1rem);
-}
-.spatial-slide h2::after {
-  content: "";
-  position: absolute;
-  bottom: -0.5rem;
-  right: 50%;
-  transform: translateX(50%);
-  height: 3px;
-  width: 0;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  border-radius: 3px;
-  animation: spatial-underline-grow 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s forwards;
-}
-
-@keyframes spatial-underline-grow {
-  from { width: 0; opacity: 0; }
-  to { width: 6rem; opacity: 1; }
 }
 
 .spatial-lead {
