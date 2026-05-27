@@ -547,24 +547,115 @@ code {
   color: var(--accent);
   stroke: var(--accent);
   transition: filter 0.3s ease, transform 0.3s ease;
-  animation: spatial-icon-pulse 4.2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(255, 90, 54, 0.18));
 }
-.domain-card:nth-child(1) .domain-icon { animation-delay: 0s; }
-.domain-card:nth-child(2) .domain-icon { animation-delay: 0.7s; }
-.domain-card:nth-child(3) .domain-icon { animation-delay: 1.4s; }
-.domain-card:nth-child(4) .domain-icon { animation-delay: 2.1s; }
-.domain-card:nth-child(5) .domain-icon { animation-delay: 2.8s; }
-.domain-card:nth-child(6) .domain-icon { animation-delay: 3.5s; }
 
-@keyframes spatial-icon-pulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 0 rgba(255, 90, 54, 0));
-    transform: translateY(0);
-  }
-  50% {
-    filter: drop-shadow(0 3px 8px rgba(255, 90, 54, 0.28));
-    transform: translateY(-2px);
-  }
+/* ===== Per-icon contextual animations ===== */
+
+/* VR ו-AR — stereo eye blink: alternating fill flash on each lens */
+.icon-vr .vr-eye {
+  fill: var(--accent);
+  fill-opacity: 0;
+  animation: vr-eye-blink 2.6s ease-in-out infinite;
+}
+.icon-vr .vr-eye-l { animation-delay: 0s; }
+.icon-vr .vr-eye-r { animation-delay: 1.3s; }
+@keyframes vr-eye-blink {
+  0%, 70%, 100% { fill-opacity: 0; }
+  30%, 55%      { fill-opacity: 0.55; }
+}
+
+/* Games — gentle controller "rumble" wiggle */
+.icon-game {
+  animation: game-rumble 4s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes game-rumble {
+  0%, 88%, 100% { transform: translate(0, 0) rotate(0); }
+  90%           { transform: translate(-0.6px, 0) rotate(-1.2deg); }
+  92%           { transform: translate(0.6px, 0) rotate(1.2deg); }
+  94%           { transform: translate(-0.6px, 0) rotate(-1deg); }
+  96%           { transform: translate(0.6px, 0) rotate(0.8deg); }
+  98%           { transform: translate(0, 0) rotate(0); }
+}
+.icon-game .game-btn {
+  animation: game-btn-press 1.6s ease-in-out infinite;
+}
+.icon-game .game-btn-1 { animation-delay: 0s; }
+.icon-game .game-btn-2 { animation-delay: 0.8s; }
+@keyframes game-btn-press {
+  0%, 80%, 100% { stroke-width: 1.5; opacity: 0.8; }
+  40%, 60%      { stroke-width: 2.8; opacity: 1; }
+}
+
+/* Robot — head bobs, eyes blink */
+.icon-robot .robot-head-group {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: robot-bob 2.4s ease-in-out infinite;
+}
+@keyframes robot-bob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25%      { transform: translateY(-0.4px) rotate(-2deg); }
+  75%      { transform: translateY(-0.4px) rotate(2deg); }
+}
+.icon-robot .robot-eye {
+  animation: robot-eye-blink 3.2s ease-in-out infinite;
+}
+.icon-robot .robot-eye-r { animation-delay: 0.05s; }
+@keyframes robot-eye-blink {
+  0%, 92%, 100% { stroke-width: 1.5; }
+  94%, 96%      { stroke-width: 0.1; }
+}
+
+/* Car — wheels spin (dashed stroke makes the rotation visible), radar pulses overhead */
+.icon-car .car-wheel {
+  stroke-dasharray: 1.4 1.6;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: car-wheel-spin 1.6s linear infinite;
+}
+@keyframes car-wheel-spin {
+  to { transform: rotate(360deg); }
+}
+.icon-car .car-radar {
+  animation: car-radar-pulse 2.2s ease-out infinite;
+}
+.icon-car .car-radar-2 { animation-delay: 0.7s; }
+@keyframes car-radar-pulse {
+  0%   { opacity: 0; transform: translateY(2px); }
+  30%  { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-2px); }
+}
+
+/* Digital Twins — data flows back and forth between the screens */
+.icon-twins .twins-flow {
+  stroke-dashoffset: 7;
+  animation: twins-flow-anim 1.4s linear infinite;
+}
+.icon-twins .twins-flow:nth-of-type(2) { animation-delay: -0.5s; }
+.icon-twins .twins-flow:nth-of-type(3) { animation-delay: -1s; }
+@keyframes twins-flow-anim {
+  to { stroke-dashoffset: 0; }
+}
+.icon-twins .twins-screen {
+  animation: twins-sync-pulse 2.8s ease-in-out infinite;
+}
+.icon-twins .twins-screen-r { animation-delay: 0.4s; }
+@keyframes twins-sync-pulse {
+  0%, 100% { stroke-opacity: 0.55; }
+  50%      { stroke-opacity: 1; }
+}
+
+/* Spatial Computing — cube gently tilts side-to-side */
+.icon-spatial .spatial-cube {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spatial-cube-tilt 5s ease-in-out infinite;
+}
+@keyframes spatial-cube-tilt {
+  0%, 100% { transform: rotate(-10deg) scale(0.96); }
+  50%      { transform: rotate(10deg)  scale(1.02); }
 }
 
 .domain-label {
