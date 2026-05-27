@@ -3687,17 +3687,18 @@ export function initSfMLiDAR() {
     spriteSheet.src = BASE + "sprite_sheet.png";
 
     // Photo positions: (x, y, rotation_rad) - scattered 3×3 grid on left zone
-    // Canvas is now 520×340: photos on left ~x:15-155, orbit on right ~x:310-500
+    // Canvas is 520×340: photos on left ~x:50-180, orbit on right ~x:310-500.
+    // Min x must account for PW/2 + rotation extent (~46px at max angle) to avoid left-edge clipping.
     const photos = [
-      [46, 78, -0.28],
-      [94, 58, 0.16],
-      [142, 80, -0.1],
-      [22, 158, 0.13],
-      [76, 155, -0.22],
-      [134, 157, 0.19],
-      [46, 236, -0.07],
-      [96, 226, 0.23],
-      [142, 238, -0.16],
+      [76, 78, -0.28],
+      [124, 58, 0.16],
+      [172, 80, -0.1],
+      [52, 158, 0.13],
+      [106, 155, -0.22],
+      [164, 157, 0.19],
+      [76, 236, -0.07],
+      [126, 226, 0.23],
+      [172, 238, -0.16],
     ];
 
     const PW = 72,
