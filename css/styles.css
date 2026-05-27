@@ -646,15 +646,19 @@ code {
   50%      { stroke-opacity: 1; }
 }
 
-/* Spatial Computing — cube gently tilts side-to-side */
-.icon-spatial .spatial-cube {
+/* Spatial Computing — floating UI panels in 3D, with parallax shift */
+.icon-spatial .spatial-panel {
   transform-box: fill-box;
   transform-origin: center;
-  animation: spatial-cube-tilt 5s ease-in-out infinite;
+  animation: spatial-panel-drift 4.4s ease-in-out infinite;
 }
-@keyframes spatial-cube-tilt {
-  0%, 100% { transform: rotate(-10deg) scale(0.96); }
-  50%      { transform: rotate(10deg)  scale(1.02); }
+.icon-spatial .spatial-panel-back  { stroke-opacity: 0.4;  animation-delay: 0s;    }
+.icon-spatial .spatial-panel-mid   { stroke-opacity: 0.7;  animation-delay: -0.6s; }
+.icon-spatial .spatial-panel-front { stroke-opacity: 1;    animation-delay: -1.2s; }
+
+@keyframes spatial-panel-drift {
+  0%, 100% { transform: translate(-0.8px, 0.4px); }
+  50%      { transform: translate(0.8px, -0.4px); }
 }
 
 .domain-label {
