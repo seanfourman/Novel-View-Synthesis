@@ -5100,3 +5100,157 @@ export function initSRNNetAnim() {
     },
   };
 }
+
+/* =========================================================
+   Slide 2: Spatial transition — animated horizon grid + particles
+   ========================================================= */
+export function initSpatialTransition() {
+  const slide = document.querySelector('.slide[data-id="2"]');
+  if (!slide) return { tick() {} };
+  const canvas = slide.querySelector("#spatial-bg");
+  if (!canvas) return { tick() {} };
+  const ctx = canvas.getContext("2d");
+
+  const dpr = window.devicePixelRatio || 1;
+  let W = 0, H = 0;
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = rect.width;
+    H = rect.height;
+  }
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(resize).observe(canvas);
+  }
+
+  let time = 0;
+
+  // Perspective grid params
+  const COLS = 24;
+  const ROWS = 14;
+  const CELL = 1.0;
+
+  // Project 3D world point (x: side, y: up, z: depth) to screen
+  function project(x, y, z) {
+    const camDist = 4.5;
+    const focal = 520;
+    const wz = z + camDist;
+    if (wz <= 0.1) return null;
+    const sx = W / 2 + (x * focal) / wz;
+    const sy = H * 0.7 + ((-y + 1) * focal) / wz;
+    return { sx, sy, depth: wz };
+  }
+
+  // Floating particles (drift upward)
+  const PARTICLE_COUNT = 26;
+  const particles = [];
+  function spawnParticle(initial = false) {
+    return {
+      x: Math.random() * W,
+      y: initial ? Math.random() * H : H + 10 + Math.random() * 40,
+      vy: 0.18 + Math.random() * 0.35,
+      vx: (Math.random() - 0.5) * 0.06,
+      size: 1 + Math.random() * 1.8,
+      hue: Math.random() < 0.5 ? "accent" : "accent2",
+      opacityBase: 0.18 + Math.random() * 0.25,
+    };
+  }
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(spawnParticle(true));
+
+  function step(dtScale) {
+    time += dtScale * 0.014;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.y -= p.vy * dtScale;
+      p.x += p.vx * dtScale;
+      if (p.y < -20 || p.x < -20 || p.x > W + 20) {
+        particles[i] = spawnParticle(false);
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Compute grid points
+    const points = [];
+    for (let r = 0; r < ROWS; r++) {
+      const row = [];
+      for (let c = 0; c < COLS; c++) {
+        const x = (c - COLS / 2) * CELL;
+        const z = r * CELL;
+        const wave =
+          Math.sin(x * 0.5 + time * 1.2) * 0.18 +
+          Math.cos(z * 0.45 + time * 0.9) * 0.18;
+        row.push(project(x, wave, z));
+      }
+      points.push(row);
+    }
+
+    // Draw grid lines (rows + cols)
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const p = points[r][c];
+        if (!p) continue;
+        // Depth-based fade — farther = fainter
+        const depthFactor = Math.max(0, Math.min(1, 1 - (p.depth - 4.5) / 12));
+        const alpha = 0.22 * depthFactor;
+        if (alpha < 0.02) continue;
+        ctx.strokeStyle = `rgba(255, 90, 54, ${alpha})`;
+        ctx.lineWidth = 0.9;
+        // Line to right neighbor
+        if (c < COLS - 1) {
+          const pr = points[r][c + 1];
+          if (pr) {
+            ctx.beginPath();
+            ctx.moveTo(p.sx, p.sy);
+            ctx.lineTo(pr.sx, pr.sy);
+            ctx.stroke();
+          }
+        }
+        // Line to back neighbor
+        if (r < ROWS - 1) {
+          const pb = points[r + 1][c];
+          if (pb) {
+            ctx.beginPath();
+            ctx.moveTo(p.sx, p.sy);
+            ctx.lineTo(pb.sx, pb.sy);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // Draw floating particles
+    for (const p of particles) {
+      const dist01 = Math.max(0, Math.min(1, (p.y - H * 0.2) / (H * 0.8)));
+      const alpha = p.opacityBase * dist01;
+      if (alpha < 0.02) continue;
+      const color =
+        p.hue === "accent"
+          ? `rgba(255, 90, 54, ${alpha})`
+          : `rgba(108, 92, 231, ${alpha})`;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  return {
+    enter() {
+      resize();
+    },
+    tick(visible, dtScale) {
+      if (!visible) return;
+      if (W === 0) resize();
+      if (W === 0) return;
+      step(dtScale);
+      draw();
+    },
+  };
+}

@@ -2,6 +2,7 @@
 
 import {
   initTitleBg,
+  initSpatialTransition,
   initProblemVis,
   initStaticToSpatial,
   initDepthBasedNVS,
@@ -129,7 +130,7 @@ function updateChrome() {
 /* ===================== Scene instantiation ===================== */
 const sceneRegistry = {
   0: initTitleBg, // slide 1
-  // slide 2 (spatial domains) - no canvas
+  1: initSpatialTransition, // slide 2 (animated horizon grid)
   2: initProblemVis, // slide 3
   3: initStaticToSpatial, // slide 4
   // slide 5 (live room tour) - iframes only
@@ -162,6 +163,7 @@ function ensureSlideInit(idx) {
 }
 
 ensureSlideInit(0);
+ensureSlideInit(1);
 ensureSlideInit(2);
 ensureSlideInit(3);
 
