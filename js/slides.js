@@ -2583,8 +2583,12 @@ export function initRayDemo() {
   // lighting + camera
   scene.add(new THREE.HemisphereLight(0xffffff, 0xc8d8e8, 0.7));
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(5.5, 3.5, 6.5);
-  camera.lookAt(0.5, 0.5, 0);
+  const viewTarget = new THREE.Vector3(0.5, 0.5, 0);
+  const viewOffset = new THREE.Vector3(5.5, 3.5, 6.5)
+    .sub(viewTarget)
+    .applyAxisAngle(new THREE.Vector3(0, 1, 0), -THREE.MathUtils.degToRad(40));
+  camera.position.copy(viewTarget).add(viewOffset);
+  camera.lookAt(viewTarget);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
