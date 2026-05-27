@@ -940,8 +940,148 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 13: MODEL PROCESS ============ -->
-      <section class="slide" data-id="13">
+      <!-- ============ SLIDE 13: NERF ============ -->
+      <section class="slide" data-id="13" id="nerf">
+        <div class="nerf-slide srn-slide srn-slide-wide">
+          <div class="srn-text nerf-text">
+            <div class="kicker">2020 - Neural Radiance Fields</div>
+            <h2 class="srn-h2-oneline"><span class="accent">NeRF</span> - <span class="accent">N</span>eural <span class="accent">R</span>adiance <span class="accent">F</span>ields</h2>
+            <p class="lead small srn-intro-lead">
+              <span class="srn-intro-line srn-intro-nowrap srn-intro-line-1"><em>NeRF</em> לקח את הרעיון של ייצוג סצנה ברשת נוירונים והפך אותו ליותר פיזיקלי.</span>
+              <span class="srn-intro-line">במקום לחזות ישירות צבע של פיקסל,</span>
+              <span class="srn-intro-line srn-intro-nowrap">המודל לומד שדה רציף שאומר מה יש בכל נקודה במרחב ואיך היא נראית מכל כיוון.</span>
+            </p>
+            <p class="srn-explain">
+              הקלט הוא נקודה תלת-ממדית וכיוון צפייה,<br>
+              והפלט הוא שני דברים: צבע הנקודה והצפיפות שלה בתוך הסצנה.
+            </p>
+            <p class="srn-explain srn-concept-intro">
+              לכן NeRF מפריד בין ארבעה רכיבים מרכזיים:
+            </p>
+            <div class="srn-concept-row nerf-concept-row">
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
+                  <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                <span>נקודה במרחב</span>
+              </div>
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>כיוון צפייה</span>
+              </div>
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="8"/>
+                  <path d="M8 12h8M12 8v8"/>
+                </svg>
+                <span>צפיפות σ</span>
+              </div>
+              <div class="srn-concept-item">
+                <svg class="srn-concept-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="14" rx="2"/>
+                  <circle cx="8.5" cy="9.5" r="1.5"/>
+                  <path d="m3 16 5-5 4 4 3-3 6 6"/>
+                </svg>
+                <span>צבע c</span>
+              </div>
+            </div>
+            <p class="srn-explain srn-explain-after">
+              כשמרכיבים הרבה דגימות לאורך כל קרן מצלמה, מתקבל פיקסל בתמונה החדשה.
+            </p>
+            <p class="srn-tagline">
+              NeRF מייצג את הסצנה כשדה נפחי רציף -<br>
+              לא רק כקשר ישיר בין מצלמה לפיקסלים.
+            </p>
+          </div>
+          <div class="srn-visual nerf-visual">
+            <div class="srn-video-wrap nerf-video-wrap">
+              <video
+                class="srn-output-video"
+                src="assets/videos/website_360.mp4"
+                poster="assets/images/website_360.jpg"
+                muted loop playsinline autoplay
+              ></video>
+              <span class="srn-video-label srn-video-label-1">תמונות אימון מזוויות שונות</span>
+              <span class="srn-video-label srn-video-label-2">שדה רציף בתוך הרשת</span>
+              <span class="srn-video-label srn-video-label-3">מבטים חדשים בתנועה חלקה</span>
+            </div>
+            <p class="srn-visual-caption">
+              אחרי האימון, ניתן להזיז מצלמה וירטואלית בסצנה ולקבל מבטים חדשים כאילו קיים מודל תלת-ממדי רציף.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 14: HOW NERF WORKS ============ -->
+      <section class="slide" data-id="14" id="nerf-work">
+        <div class="nerf-work-slide">
+          <div class="nerf-work-head">
+            <div class="kicker">עקרון הפעולה של NeRF</div>
+            <h2>כיצד <span class="accent">NeRF</span> מצייר פיקסל?</h2>
+            <p class="lead small">
+              לכל פיקסל במצלמה החדשה שולחים קרן לתוך הסצנה, דוגמים עליה נקודות, והרשת מחזירה לכל נקודה צבע וצפיפות.
+            </p>
+          </div>
+
+          <div class="nerf-work-grid">
+            <div class="nerf-ray-panel">
+              <div id="ray-stage" class="nerf-ray-stage" aria-label="הדמיית קרן NeRF ודגימות בתוך שדה נפחי"></div>
+              <div class="nerf-ray-stats">
+                <div class="nerf-stat">
+                  <span>דגימות פעילות</span>
+                  <strong id="rd-samples">0</strong>
+                </div>
+                <div class="nerf-stat nerf-color-stat">
+                  <span>צבע הפיקסל</span>
+                  <span id="rd-color" class="nerf-color-chip"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="nerf-flow">
+              <div class="nerf-flow-step">
+                <span class="nerf-flow-num">1</span>
+                <div>
+                  <h3>שולחים קרן</h3>
+                  <p>מהמצלמה, דרך פיקסל אחד במסך, אל תוך הסצנה.</p>
+                </div>
+              </div>
+              <div class="nerf-flow-step">
+                <span class="nerf-flow-num">2</span>
+                <div>
+                  <h3>דוגמים נקודות</h3>
+                  <p>לאורך הקרן בודקים הרבה מיקומים: <code dir="ltr">(x, y, z)</code>.</p>
+                </div>
+              </div>
+              <div class="nerf-flow-step">
+                <span class="nerf-flow-num">3</span>
+                <div>
+                  <h3>מריצים MLP</h3>
+                  <p>הרשת מחזירה לכל נקודה <code dir="ltr">(color, density)</code>.</p>
+                </div>
+              </div>
+              <div class="nerf-flow-step">
+                <span class="nerf-flow-num">4</span>
+                <div>
+                  <h3>מחברים לאורך הקרן</h3>
+                  <p>נקודות צפופות מסתירות נקודות מאחוריהן, והצבע המצטבר הופך לפיקסל.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="nerf-work-tagline">
+            זה ההבדל המרכזי מ-SRN: NeRF לא שואל רק "איזה צבע יש לפיקסל", אלא "מה נמצא לאורך הקרן שמייצרת אותו".
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 15: MODEL PROCESS ============ -->
+      <section class="slide" data-id="15">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -972,8 +1112,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 14: FINAL RECAP ============ -->
-      <section class="slide" data-id="14">
+      <!-- ============ SLIDE 16: FINAL RECAP ============ -->
+      <section class="slide" data-id="16">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

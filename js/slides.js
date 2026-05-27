@@ -2573,7 +2573,7 @@ export function initRotatable() {
 }
 
 /* =========================================================
-   Slide 10: Ray demo - KEEP procedural (pedagogical)
+   NeRF ray demo - procedural pedagogical volume rendering
    ========================================================= */
 export function initRayDemo() {
   const container = document.getElementById("ray-stage");
@@ -4449,6 +4449,10 @@ export function initSRN() {
       }
     },
   };
+}
+
+export function initNeRFIntro() {
+  return controlVideos(document.querySelectorAll('.slide[data-id="13"] video'));
 }
 
 export function initNvsIntro() {

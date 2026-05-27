@@ -13,6 +13,8 @@ import {
   initNvsIntro,
   initSRN,
   initSRNNetAnim,
+  initNeRFIntro,
+  initRayDemo,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -141,8 +143,10 @@ const sceneRegistry = {
   9: initSRN, // slide 10 (SRN)
   10: initSRNNetAnim, // slide 11 (SRN network animation)
   // slide 12 (SRN pros & cons) - no canvas
-  12: initDepthBasedNVS, // slide 13
-  13: initEndBg, // slide 14 (final recap)
+  12: initNeRFIntro, // slide 13 (NeRF)
+  13: initRayDemo, // slide 14 (NeRF ray sampling)
+  14: initDepthBasedNVS, // slide 15
+  15: initEndBg, // slide 16 (final recap)
 };
 
 const sceneInstances = {};
@@ -166,6 +170,15 @@ ensureSlideInit(0);
 ensureSlideInit(1);
 ensureSlideInit(2);
 ensureSlideInit(3);
+
+const initialHashTarget = window.location.hash
+  ? document.getElementById(decodeURIComponent(window.location.hash.slice(1)))
+  : null;
+if (initialHashTarget && initialHashTarget.classList.contains("slide")) {
+  requestAnimationFrame(() => {
+    initialHashTarget.scrollIntoView({ behavior: "auto", block: "start" });
+  });
+}
 
 /* ===================== Render loop ===================== */
 // dtScale normalizes frame-based animations across devices: 1.0 at 60Hz,
