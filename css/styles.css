@@ -588,16 +588,15 @@ code {
   40%, 60%      { stroke-width: 2.8; opacity: 1; }
 }
 
-/* Robot — head bobs, eyes blink */
+/* Robot — head bobs, antenna sways, eyes blink */
 .icon-robot .robot-head-group {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: robot-bob 2.4s ease-in-out infinite;
+  animation: robot-bob 2s ease-in-out infinite;
 }
 @keyframes robot-bob {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  25%      { transform: translateY(-0.4px) rotate(-2deg); }
-  75%      { transform: translateY(-0.4px) rotate(2deg); }
+  0%, 100% { transform: translateY(0)    rotate(-10deg); }
+  50%      { transform: translateY(-1px) rotate(10deg); }
 }
 .icon-robot .robot-eye {
   animation: robot-eye-blink 3.2s ease-in-out infinite;
