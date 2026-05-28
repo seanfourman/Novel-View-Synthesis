@@ -991,11 +991,11 @@
               <span class="srn-intro-line srn-intro-nowrap">המודל לומד שדה רציף שאומר מה יש בכל נקודה במרחב ואיך היא נראית מכל כיוון.</span>
             </p>
             <p class="srn-explain">
-              הקלט הוא נקודה תלת-ממדית וכיוון צפייה,<br>
-              והפלט הוא שני דברים: צבע הנקודה והצפיפות שלה בתוך הסצנה.
+              <strong>הצפיפות</strong> בנקודה קבועה, אבל <strong>הצבע</strong> משתנה לפי זווית הצפייה - השתקפויות וברק תלויים בכיוון.<br>
+              לכן NeRF מפריד את הצבע משאר הרכיבים, בניגוד ל-SRN שנתן לכל נקודה צבע אחד קבוע.
             </p>
             <p class="srn-explain srn-concept-intro">
-              לכן NeRF מפריד בין ארבעה רכיבים מרכזיים:
+              ארבעת הרכיבים:
             </p>
             <div class="srn-concept-row nerf-concept-row">
               <div class="srn-concept-item">

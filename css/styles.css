@@ -4698,6 +4698,10 @@ code {
   text-align: center;
 }
 
+.nerf-body .srn-explain {
+  display: block;
+}
+
 .nerf-body .srn-explain.srn-explain-after {
   white-space: normal;
 }
@@ -4711,6 +4715,11 @@ code {
 
 .nerf-body .lead.small em {
   font-style: normal;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.nerf-body .srn-explain strong {
   font-weight: 700;
   color: var(--ink);
 }
