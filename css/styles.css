@@ -4663,6 +4663,10 @@ code {
   text-align: center;
 }
 
+.nerf-slide > .nerf-carousel {
+  margin-block: clamp(1.4rem, 3.2vh, 2.6rem);
+}
+
 .nerf-head {
   display: flex;
   flex-direction: column;
@@ -4740,10 +4744,6 @@ code {
   will-change: transform;
 }
 
-.nerf-carousel:hover .nerf-carousel-track {
-  animation-play-state: paused;
-}
-
 .nerf-carousel-item {
   flex: 0 0 auto;
   aspect-ratio: 4 / 3;
@@ -4757,7 +4757,7 @@ code {
 .nerf-carousel-item img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
