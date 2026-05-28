@@ -4456,7 +4456,62 @@ export function initSRN() {
 }
 
 export function initNeRFIntro() {
-  return controlVideos(document.querySelectorAll('.slide[data-id="13"] video'));
+  const slide = document.querySelector('.slide[data-id="13"]');
+  if (!slide) return { tick() {}, enter() {} };
+
+  const carousel = slide.querySelector(".nerf-carousel");
+  const videos = Array.from(slide.querySelectorAll("video"));
+  videos.forEach((v) => {
+    v.muted = true;
+    v.playsInline = true;
+    v.loop = true;
+  });
+
+  let slideVisible = false;
+  let frameCount = 0;
+
+  function pauseAll() {
+    for (const v of videos) {
+      if (!v.paused) v.pause();
+    }
+  }
+
+  function updatePlayback() {
+    if (!carousel) return;
+    const cRect = carousel.getBoundingClientRect();
+    for (const v of videos) {
+      const r = v.getBoundingClientRect();
+      const inView =
+        slideVisible && r.right > cRect.left - 80 && r.left < cRect.right + 80;
+      if (inView) {
+        if (v.readyState === 0) v.load();
+        if (v.paused) v.play().catch(() => {});
+      } else if (!v.paused) {
+        v.pause();
+      }
+    }
+  }
+
+  return {
+    enter() {
+      slideVisible = true;
+      updatePlayback();
+    },
+    tick(visible) {
+      if (visible) {
+        if (!slideVisible) {
+          slideVisible = true;
+          updatePlayback();
+          frameCount = 0;
+        } else if (frameCount++ % 6 === 0) {
+          updatePlayback();
+        }
+      } else if (slideVisible) {
+        slideVisible = false;
+        pauseAll();
+      }
+    },
+  };
 }
 
 export function initNvsIntro() {
