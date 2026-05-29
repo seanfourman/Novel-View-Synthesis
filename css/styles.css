@@ -3252,7 +3252,6 @@ code {
 .limits-row {
   display: flex;
   align-items: center;
-  gap: clamp(2rem, 5vw, 6rem);
   flex: 1;
   min-height: 0;
 }
@@ -3336,9 +3335,10 @@ code {
 
 .limits-conclusion {
   font-size: 21px;
-  color: var(--ink);
+  color: var(--accent);
+  font-weight: 700;
   line-height: 1.6;
-  margin: 0;
+  margin: -1.5rem 0 0 0;
   text-align: center;
   list-style: none;
 }
