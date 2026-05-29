@@ -3911,185 +3911,208 @@ export function initSfMLiDAR() {
     };
   })();
 
-  // ── Light Fields panel canvas: all 6 pipeline stages live simultaneously ──
+  // ── Light Fields panel canvas: captured-view dome → synthesised novel view ──
   const lfVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-lf");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
     const W = cv.width,
-      H = cv.height; // 400 × 340
+      H = cv.height; // 500 × 700
 
-    const BASE = "assets/generated/bunny_pipeline/";
-    const mk = (s) => {
-      const i = new Image();
-      i.src = BASE + s;
-      return i;
-    };
-    const imgRGB = mk("01_input_rgb.png");
-    const imgDepth = mk("03_depth_colormap.png");
-    const imgHoles = mk("07_left_view_holes_overlay.png");
-    const imgLeft = mk("08_left_view_inpainted.png");
-    const imgRight = mk("12_right_view_inpainted.png");
+    // ── Genuine multi-angle captures of the Stanford bunny (orbital views) ──
+    const BASE_RENDERS = "assets/generated/bunny_renders/";
+    const polaroids = [];
+    for (let i = 0; i < 9; i++) {
+      const img = new Image();
+      img.src = BASE_RENDERS + `polaroid_0${i}.png`;
+      polaroids.push(img);
+    }
+    const POL_AR = 290 / 260; // height / width
 
-    // Grid: 2 columns × 3 rows
-    const COLS = 2,
-      ROWS = 3,
-      GAP = 4,
-      LABEL_H = 16;
-    const CW = Math.floor((W - GAP * (COLS - 1)) / COLS); // ~198
-    const CH = Math.floor((H - GAP * (ROWS - 1)) / ROWS); // ~110
-    const IMG_H = CH - LABEL_H; // image area height
+    // ── Captured-view dome (top region) ─────────────────────────────────────
+    // 3 × 3 of "photo cards" with a slight spherical curve so the array reads
+    // as the inside of a capture dome (per Broxton et al.).
+    const COLS = 3,
+      ROWS = 3;
+    const TOP_CY = 188;
+    const SPREAD_X = 155;
+    const SPREAD_Y = 95;
+    const TILE_BASE_W = 110;
 
-    const LABELS = [
-      "קלט RGB",
-      "מפת עומק",
-      "פרוקסי 3D",
-      "הזזה + חורים",
-      "מבט ימין",
-      "מבט שמאל",
-    ];
+    // Snake assignment: as the sweep walks row-by-row in boustrophedon order,
+    // the polaroid index advances 0 → 8, so the captured orbit reads as a
+    // continuous rotation around the bunny.
+    const tileToPolaroid = new Array(COLS * ROWS);
+    {
+      let p = 0;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const col = r % 2 === 0 ? c : COLS - 1 - c;
+          tileToPolaroid[r * COLS + col] = p++;
+        }
+      }
+    }
 
-    // Cell positions [cx, cy]
-    const cells = [
-      [0, 0], // 0: RGB
-      [CW + GAP, 0], // 1: Depth
-      [0, CH + GAP], // 2: Particles
-      [CW + GAP, CH + GAP], // 3: Warp
-      [0, 2 * (CH + GAP)], // 4: Left novel view
-      [CW + GAP, 2 * (CH + GAP)], // 5: Right novel view
-    ];
+    const tiles = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const u = (c - (COLS - 1) / 2) / ((COLS - 1) / 2);
+        const v = (r - (ROWS - 1) / 2) / ((ROWS - 1) / 2);
+        const d = Math.sqrt(u * u + v * v) / Math.SQRT2;
+        const depthScale = 1 - d * 0.18;
+        const tw = TILE_BASE_W * depthScale;
+        const th = tw * POL_AR;
+        const cx = W / 2 + u * SPREAD_X + Math.sign(u) * d * 6;
+        const cy = TOP_CY + v * SPREAD_Y - (1 - d) * 4;
+        const tilt = u * 0.16 + v * 0.04;
+        const idx = r * COLS + c;
+        const img = polaroids[tileToPolaroid[idx]];
+        tiles.push({ cx, cy, tw, th, tilt, depthScale, img, u, v });
+      }
+    }
+    // Render order: bottom row first → top row last, so the top row sits on top
+    const tileOrder = tiles
+      .map((_, i) => i)
+      .sort((a, b) => tiles[b].v - tiles[a].v);
 
-    // Pixel buffer for the particle cell (dirty-rect update, transparent background)
-    const pixBuf = ctx.createImageData(W, H);
-    const pd = pixBuf.data;
+    // ── Synthesised novel view (bottom region) ─────────────────────────────
+    const OUT_W = 285;
+    const OUT_H = OUT_W * POL_AR;
+    const OUT_CX = W / 2;
+    const OUT_CY = H - OUT_H / 2 - 18;
 
-    let particles = null;
-    fetch(BASE + "particles.json")
-      .then((r) => r.json())
-      .then((d) => {
-        particles = d;
-      });
-
-    // ── helpers ─────────────────────────────────────────────────────────────
-
-    // Draw an image contained + centred inside a cell's image area (above label)
-    function drawCell(img, ci, alpha = 1, zoom = 1) {
+    function drawImageInRect(img, x, y, w, h, alpha = 1) {
       if (!img.complete || !img.naturalWidth) return;
-      const [cx, cy] = cells[ci];
       ctx.save();
       ctx.beginPath();
-      ctx.rect(cx, cy, CW, IMG_H);
+      ctx.rect(x, y, w, h);
       ctx.clip();
       ctx.globalAlpha = alpha;
-      const iw = img.naturalWidth,
-        ih = img.naturalHeight;
-      const s = Math.min(CW / iw, IMG_H / ih) * zoom;
-      const dw = iw * s,
-        dh = ih * s;
-      ctx.drawImage(img, cx + (CW - dw) / 2, cy + (IMG_H - dh) / 2, dw, dh);
-      ctx.globalAlpha = 1;
+      const iAR = img.naturalHeight / img.naturalWidth;
+      const drawH = w * iAR;
+      ctx.drawImage(img, x, y - (drawH - h) / 2, w, drawH);
       ctx.restore();
     }
 
-    // Draw label text below the image area (no background bar)
-    function drawLabel(ci) {
-      const [cx, cy] = cells[ci];
-      ctx.fillStyle = "#6b6560";
-      ctx.font = "500 10px 'Heebo', 'Inter', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(LABELS[ci], cx + CW / 2, cy + IMG_H + LABEL_H / 2);
-      ctx.textBaseline = "alphabetic";
+    function drawTile(tile, highlight) {
+      const { cx, cy, tw, th, tilt, img } = tile;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(tilt);
+      // Card shadow
+      ctx.shadowColor = "rgba(40, 30, 20, 0.22)";
+      ctx.shadowBlur = 7;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-tw / 2 - 3, -th / 2 - 3, tw + 6, th + 6);
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      // Photo content
+      ctx.translate(-tw / 2, -th / 2);
+      drawImageInRect(img, 0, 0, tw, th, 1);
+      ctx.restore();
+
+      // Active glow + border
+      if (highlight > 0.02) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(tilt);
+        ctx.strokeStyle = `rgba(255, 120, 60, ${0.5 + highlight * 0.5})`;
+        ctx.lineWidth = 2 + highlight * 1.5;
+        ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
+        if (highlight > 0.4) {
+          ctx.shadowColor = "rgba(255, 130, 70, 0.85)";
+          ctx.shadowBlur = 16 * highlight;
+          ctx.strokeStyle = `rgba(255, 170, 110, ${0.5 * highlight})`;
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
+        }
+        ctx.restore();
+      }
     }
 
-    // Render particles into the pixel buffer for cell 2 (image area only)
-    function drawParticleCell(t) {
-      if (!particles) return;
-      const [cx, cy] = cells[2];
-      const IH = IMG_H;
-      // Clear image area to transparent so panel background shows through
-      for (let y = cy; y < cy + IH; y++) {
-        for (let x = cx; x < cx + CW; x++) {
-          const i = (y * W + x) * 4;
-          pd[i] = 0;
-          pd[i + 1] = 0;
-          pd[i + 2] = 0;
-          pd[i + 3] = 0;
-        }
-      }
-      const tilt = Math.min(t / 120, 1);
-      const CX = cx + CW / 2,
-        CY = cy + IH / 2;
-      const SX = CW * 0.82,
-        SY = IH * 0.86;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const nx = p[0],
-          ny = p[1],
-          nz = p[2],
-          r = p[3],
-          g = p[4],
-          b = p[5];
-        const phase = (i * 2.3999) % 6.2832;
-        const wz = nz + tilt * Math.sin(t * 0.045 + phase) * 0.048;
-        const fx = cx + (nx + 0.5) * CW;
-        const fy = cy + (ny + 0.5) * IH;
-        const px3 = CX + (nx + 0.3 * wz) * SX;
-        const py3 = CY + (ny - 0.18 * wz) * SY;
-        const px = Math.round(fx + tilt * (px3 - fx));
-        const py = Math.round(fy + tilt * (py3 - fy));
-        if (px < cx || px >= cx + CW - 1 || py < cy || py >= cy + IH - 1)
-          continue;
-        const idx = (py * W + px) * 4;
-        pd[idx] = r;
-        pd[idx + 1] = g;
-        pd[idx + 2] = b;
-        pd[idx + 3] = 255;
-        pd[idx + 4] = r;
-        pd[idx + 5] = g;
-        pd[idx + 6] = b;
-        pd[idx + 7] = 255;
-        const idx2 = ((py + 1) * W + px) * 4;
-        pd[idx2] = r;
-        pd[idx2 + 1] = g;
-        pd[idx2 + 2] = b;
-        pd[idx2 + 3] = 255;
-      }
-      ctx.putImageData(pixBuf, 0, 0, cx, cy, CW, IH);
+    function drawOutputFrame(curIdx, nxtIdx, blend) {
+      const x = OUT_CX - OUT_W / 2;
+      const y = OUT_CY - OUT_H / 2;
+      const fromImg = polaroids[curIdx];
+      const toImg = polaroids[nxtIdx];
+      if (blend < 1) drawImageInRect(fromImg, x, y, OUT_W, OUT_H, 1 - blend);
+      if (blend > 0) drawImageInRect(toImg, x, y, OUT_W, OUT_H, blend);
     }
+
+    function drawConnector(sourceTile) {
+      const fromX = sourceTile.cx;
+      const fromY = sourceTile.cy + sourceTile.th / 2 + 2;
+      const toX = OUT_CX;
+      const toY = OUT_CY - OUT_H / 2 - 6;
+      const midY = (fromY + toY) / 2;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 120, 60, 0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.bezierCurveTo(fromX, midY, toX, midY, toX, toY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Arrowhead
+      ctx.fillStyle = "rgba(255, 120, 60, 0.85)";
+      ctx.beginPath();
+      ctx.moveTo(toX, toY + 4);
+      ctx.lineTo(toX - 5, toY - 4);
+      ctx.lineTo(toX + 5, toY - 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Snake sweep through the dome — one tile at a time, in row-major snake order
+    const sweepOrder = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const col = r % 2 === 0 ? c : COLS - 1 - c;
+        sweepOrder.push(r * COLS + col);
+      }
+    }
+    const STEP_FRAMES = 75; // ~1.25 s per tile at 60 fps
 
     let t = 0;
-
     return (dtScale = 1) => {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
 
-      // Cell 0 - Input RGB (slow Ken Burns)
-      const zoom = 1 + 0.04 * Math.abs(Math.sin(t * 0.003));
-      drawCell(imgRGB, 0, 1, zoom);
-      drawLabel(0);
+      const totalFrames = STEP_FRAMES * sweepOrder.length;
+      const phase = ((t % totalFrames) + totalFrames) % totalFrames;
+      const stepIdx = Math.floor(phase / STEP_FRAMES);
+      const subT = (phase - stepIdx * STEP_FRAMES) / STEP_FRAMES;
 
-      // Cell 1 - Depth colormap
-      drawCell(imgDepth, 1);
-      drawLabel(1);
+      const curTileIdx = sweepOrder[stepIdx];
+      const nxtTileIdx = sweepOrder[(stepIdx + 1) % sweepOrder.length];
 
-      // Cell 2 - 3D particle proxy (fly-in + dance)
-      drawParticleCell(t);
-      drawLabel(2);
+      // Dwell on the tile for ~70 % of the step, then crossfade output to next
+      const moveStart = 0.72;
+      const e = subT < moveStart ? 0 : (subT - moveStart) / (1 - moveStart);
+      const blend = e * e * (3 - 2 * e); // smoothstep
 
-      // Cell 3 - Camera shift: oscillate normal ↔ holes
-      const osc = (1 - Math.cos(t * 0.055)) / 2;
-      drawCell(imgRGB, 3, 1);
-      drawCell(imgHoles, 3, osc);
-      drawLabel(3);
+      // Highlight: exactly one tile orange — fades out just before next step starts
+      const fadeStart = 0.85;
+      const curH = subT < fadeStart ? 1 : 1 - (subT - fadeStart) / (1 - fadeStart);
+      tiles.forEach((tile, i) => {
+        tile.highlight = i === curTileIdx ? curH : 0;
+      });
 
-      // Cell 4 - Left novel view
-      drawCell(imgLeft, 4);
-      drawLabel(4);
+      tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
 
-      // Cell 5 - Right novel view
-      drawCell(imgRight, 5);
-      drawLabel(5);
+      drawConnector(tiles[curTileIdx]);
+
+      drawOutputFrame(
+        tileToPolaroid[curTileIdx],
+        tileToPolaroid[nxtTileIdx],
+        blend,
+      );
     };
   })();
 

@@ -3127,8 +3127,8 @@ code {
   left: clamp(1.2rem, 3vw, 3.2rem);
   right: auto;
   transform: translateY(-50%);
-  width: clamp(330px, 40vw, 540px);
-  height: auto;
+  width: 500px;
+  height: 700px;
   opacity: 1;
   z-index: 2;
   pointer-events: auto;
@@ -3138,7 +3138,7 @@ code {
   min-width: 0;
   width: auto;
   max-width: none;
-  padding-left: clamp(330px, 40vw, 540px);
+  padding-left: 540px;
 }
 
 .slide[data-id="7"] {
