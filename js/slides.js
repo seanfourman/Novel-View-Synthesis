@@ -3917,7 +3917,7 @@ export function initSfMLiDAR() {
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
     const W = cv.width,
-      H = cv.height; // 500 × 700
+      H = cv.height; // 500 × 600
 
     // ── Genuine multi-angle captures of the Stanford bunny (orbital views) ──
     const BASE_RENDERS = "assets/generated/bunny_renders/";
@@ -3934,10 +3934,10 @@ export function initSfMLiDAR() {
     // as the inside of a capture dome (per Broxton et al.).
     const COLS = 3,
       ROWS = 3;
-    const TOP_CY = 188;
-    const SPREAD_X = 155;
-    const SPREAD_Y = 95;
-    const TILE_BASE_W = 110;
+    const TOP_CY = 140;
+    const SPREAD_X = 130;
+    const SPREAD_Y = 68;
+    const TILE_BASE_W = 80;
 
     // Snake assignment: as the sweep walks row-by-row in boustrophedon order,
     // the polaroid index advances 0 → 8, so the captured orbit reads as a
@@ -3976,7 +3976,7 @@ export function initSfMLiDAR() {
       .sort((a, b) => tiles[b].v - tiles[a].v);
 
     // ── Synthesised novel view (bottom region) ─────────────────────────────
-    const OUT_W = 285;
+    const OUT_W = 245;
     const OUT_H = OUT_W * POL_AR;
     const OUT_CX = W / 2;
     const OUT_CY = H - OUT_H / 2 - 18;
