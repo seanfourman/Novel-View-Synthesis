@@ -2927,7 +2927,7 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar .cp-content {
   width: min(100%, 760px);
   max-width: 760px;
-  gap: clamp(1rem, 1.6vh, 1.25rem);
+  gap: clamp(1.45rem, 2.4vh, 1.9rem);
   transform: none;
 }
 
