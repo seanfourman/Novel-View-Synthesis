@@ -6542,11 +6542,11 @@ export function initNeRFVideo() {
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      // Camera turns right toward the centre of the scene (origin) — the
-      // direction the hero frustum points. Hero stays dead-centre because
-      // view.center == HERO.
-      extraYaw = -0.55 * heroFocus;
-      extraPitch = 0.16 * heroFocus;
+      // Camera turns right and tilts down toward the centre of the scene
+      // (origin) — the direction the hero frustum points. Hero stays
+      // dead-centre because view.center == HERO.
+      extraYaw = -0.8 * heroFocus;
+      extraPitch = -0.2 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
       extraZoom = lerp(1, lerp(7.5, 1.7, pullBack), heroFocus * closeIn);
