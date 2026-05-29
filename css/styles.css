@@ -2727,7 +2727,7 @@ code {
 }
 
 .cp-desc {
-  font-size: clamp(1rem, 1.15vw, 1.18rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.62;
   margin: 0;
@@ -2737,10 +2737,10 @@ code {
   margin: 0.1rem 0 0;
 }
 .cp-results-label {
-  font-size: clamp(1rem, 1.05vw, 1.08rem);
+  font-size: 21px;
   font-weight: 800;
   color: var(--muted);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.75rem;
 }
 .cp-results ul {
   margin: 0;
@@ -2755,7 +2755,7 @@ code {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  font-size: clamp(1rem, 1.08vw, 1.08rem);
+  font-size: 21px;
   font-weight: 600;
   color: var(--ink);
   line-height: 1.35;
@@ -2825,9 +2825,9 @@ code {
   background: #c0392b;
 }
 .cp-col-title {
-  font-size: clamp(1rem, 1.05vw, 1.08rem);
+  font-size: 21px;
   font-weight: 700;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.85rem;
 }
 .cp-pros .cp-col-title {
   color: #2a7a4b;
@@ -2840,10 +2840,10 @@ code {
   padding-right: 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.55rem;
 }
 .cp-col li {
-  font-size: clamp(1rem, 1vw, 1.02rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.38;
 }
@@ -2927,7 +2927,7 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar .cp-content {
   width: min(100%, 760px);
   max-width: 760px;
-  gap: clamp(1rem, 1.6vh, 1.25rem);
+  gap: clamp(1.4rem, 2.2vh, 1.9rem);
   transform: none;
 }
 
