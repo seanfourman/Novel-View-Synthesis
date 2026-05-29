@@ -3266,7 +3266,7 @@ code {
 }
 
 .limits-title {
-  font-size: clamp(1.9rem, 3vw, 3.4rem);
+  font-size: 52px;
   font-weight: 800;
   color: var(--ink);
   margin: 0;
@@ -3274,7 +3274,7 @@ code {
 }
 
 .limits-body {
-  font-size: clamp(1rem, 1.05vw, 1.08rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
@@ -3328,14 +3328,14 @@ code {
 }
 
 .limit-text {
-  font-size: clamp(1rem, 1.1vw, 1.12rem);
+  font-size: 21px;
   font-weight: 600;
   color: var(--ink);
   font-family: "Heebo", sans-serif;
 }
 
 .limits-conclusion {
-  font-size: clamp(1rem, 1.2vw, 1.2rem);
+  font-size: 21px;
   color: var(--ink);
   line-height: 1.6;
   margin: 0;
