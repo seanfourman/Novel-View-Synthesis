@@ -3928,6 +3928,16 @@ export function initSfMLiDAR() {
       polaroids.push(img);
     }
     const POL_AR = 290 / 260; // height / width
+    const spriteSheet = new Image();
+    spriteSheet.src = BASE_RENDERS + "sprite_sheet.png";
+    const SPRITE_COLS = 6;
+    const SPRITE_ROWS = 6;
+    const SPRITE_TOTAL = SPRITE_COLS * SPRITE_ROWS;
+    const SPRITE_TINTS = {
+      left: { r: 235, g: 62, b: 77 },
+      right: { r: 54, g: 116, b: 235 },
+    };
+    const spriteFrameCache = new Map();
 
     // ── Captured-view dome (top region) ─────────────────────────────────────
     // 3 × 3 of "photo cards" with a slight spherical curve so the array reads
@@ -3988,6 +3998,74 @@ export function initSfMLiDAR() {
       const iAR = img.naturalHeight / img.naturalWidth;
       const drawH = w * iAR;
       ctx.drawImage(img, x, y - (drawH - h) / 2, w, drawH);
+      ctx.restore();
+    }
+
+    function spriteFrameForPolaroid(polaroidIdx) {
+      return Math.round((polaroidIdx / (polaroids.length - 1)) * (SPRITE_TOTAL - 1));
+    }
+
+    function midpointSpriteFrame(a, b) {
+      const half = SPRITE_TOTAL / 2;
+      const diff = ((b - a + SPRITE_TOTAL + half) % SPRITE_TOTAL) - half;
+      return (Math.round(a + diff * 0.5) + SPRITE_TOTAL) % SPRITE_TOTAL;
+    }
+
+    function getSpriteFrame(frameIdx, tintName = "raw") {
+      if (!spriteSheet.complete || !spriteSheet.naturalWidth) return null;
+      const idx = ((frameIdx % SPRITE_TOTAL) + SPRITE_TOTAL) % SPRITE_TOTAL;
+      const cacheKey = `${idx}:${tintName}`;
+      if (spriteFrameCache.has(cacheKey)) return spriteFrameCache.get(cacheKey);
+
+      const cellW = Math.floor(spriteSheet.naturalWidth / SPRITE_COLS);
+      const cellH = Math.floor(spriteSheet.naturalHeight / SPRITE_ROWS);
+      const sx = (idx % SPRITE_COLS) * cellW;
+      const sy = Math.floor(idx / SPRITE_COLS) * cellH;
+      const frame = document.createElement("canvas");
+      frame.width = cellW;
+      frame.height = cellH;
+      const fctx = frame.getContext("2d", { willReadFrequently: true });
+      fctx.drawImage(spriteSheet, sx, sy, cellW, cellH, 0, 0, cellW, cellH);
+
+      const imgData = fctx.getImageData(0, 0, cellW, cellH);
+      const data = imgData.data;
+      const tint = SPRITE_TINTS[tintName];
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const lum = r * 0.2126 + g * 0.7152 + b * 0.0722;
+        if (lum < 10) {
+          data[i + 3] = 0;
+          continue;
+        }
+        if (lum < 42) {
+          data[i + 3] = Math.round(data[i + 3] * ((lum - 10) / 32));
+        }
+        if (tint) {
+          const shade = Math.min(1.15, Math.max(0.25, lum / 176));
+          data[i] = Math.min(255, tint.r * shade);
+          data[i + 1] = Math.min(255, tint.g * shade);
+          data[i + 2] = Math.min(255, tint.b * shade);
+        }
+      }
+      fctx.putImageData(imgData, 0, 0);
+      spriteFrameCache.set(cacheKey, frame);
+      return frame;
+    }
+
+    function drawSpriteFrame(frameIdx, cx, cy, boxW, boxH, alpha = 1, tintName = "raw") {
+      const frame = getSpriteFrame(frameIdx, tintName);
+      if (!frame) return;
+      const frameAR = frame.height / frame.width;
+      const boxAR = boxH / boxW;
+      let drawW = boxW;
+      let drawH = boxH;
+      if (frameAR > boxAR) drawW = drawH / frameAR;
+      else drawH = drawW * frameAR;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(frame, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
       ctx.restore();
     }
 
@@ -4055,44 +4133,47 @@ export function initSfMLiDAR() {
       if (label) drawTinyLabel(label, cx, cy - 18, color);
     }
 
-    function drawOverlayImage(leftImg, rightImg, cx, cy, w, h, pulse) {
+    function drawBunnySynthesis(frameA, frameB, frameMid, cx, cy, w, h, pulse) {
       const x = cx - w / 2;
       const y = cy - h / 2;
-      const leftOffset = -8 + Math.sin(pulse * 0.035) * 2;
-      const rightOffset = 8 + Math.cos(pulse * 0.033) * 2;
+      const leftOffset = -18 + Math.sin(pulse * 0.035) * 2.2;
+      const rightOffset = 18 + Math.cos(pulse * 0.033) * 2.2;
 
       ctx.save();
       ctx.shadowColor = "rgba(40, 30, 20, 0.2)";
       ctx.shadowBlur = 14;
       ctx.shadowOffsetY = 5;
       ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
-      ctx.fillRect(x - 10, y - 10, w + 20, h + 20);
+      roundRectPath(x - 10, y - 10, w + 20, h + 20, 7);
+      ctx.fill();
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
 
-      ctx.beginPath();
-      ctx.rect(x, y, w, h);
+      roundRectPath(x, y, w, h, 5);
+      ctx.fillStyle = "rgba(252, 251, 247, 0.92)";
+      ctx.fill();
       ctx.clip();
-      drawImageInRect(leftImg, x + leftOffset, y, w, h, 0.62);
-      ctx.globalAlpha = 0.2;
-      ctx.fillStyle = "rgb(118, 118, 118)";
-      ctx.fillRect(x, y, w, h);
-      drawImageInRect(rightImg, x + rightOffset, y, w, h, 0.62);
-      ctx.globalAlpha = 0.2;
-      ctx.fillStyle = "rgb(178, 178, 178)";
-      ctx.fillRect(x, y, w, h);
+
+      const bunnyW = w * 0.82;
+      const bunnyH = h * 0.88;
+      drawSpriteFrame(frameA, cx + leftOffset, cy + 4, bunnyW, bunnyH, 0.6, "left");
+      drawSpriteFrame(frameB, cx + rightOffset, cy + 4, bunnyW, bunnyH, 0.6, "right");
+      drawSpriteFrame(frameMid, cx, cy + 2, bunnyW * 0.95, bunnyH * 0.95, 0.96, "raw");
       ctx.restore();
 
       ctx.save();
-      ctx.strokeStyle = "rgba(92, 92, 92, 0.74)";
+      ctx.strokeStyle = "rgba(235, 62, 77, 0.62)";
       ctx.lineWidth = 1.8;
-      ctx.strokeRect(x + leftOffset - 4, y - 4, w + 8, h + 8);
-      ctx.strokeStyle = "rgba(164, 164, 164, 0.78)";
-      ctx.strokeRect(x + rightOffset - 4, y - 4, w + 8, h + 8);
-      ctx.strokeStyle = "rgba(255, 120, 60, 0.84)";
+      roundRectPath(x + leftOffset - 4, y - 4, w + 8, h + 8, 5);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(54, 116, 235, 0.64)";
+      roundRectPath(x + rightOffset - 4, y - 4, w + 8, h + 8, 5);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(145, 145, 145, 0.84)";
       ctx.lineWidth = 2.3;
-      ctx.strokeRect(x - 10, y - 10, w + 20, h + 20);
+      roundRectPath(x - 10, y - 10, w + 20, h + 20, 7);
+      ctx.stroke();
       ctx.restore();
 
     }
@@ -4113,7 +4194,7 @@ export function initSfMLiDAR() {
       ctx.restore();
     }
 
-    function drawTwoCameraOverlayDiagram(tileA, tileB, imgA, imgB, pulse) {
+    function drawTwoCameraOverlayDiagram(tileA, tileB, frameA, frameB, frameMid, pulse) {
       const overlay = { x: OUT_CX, y: 450, w: 164, h: 148 };
       const cameraY = 562;
       const camA = { x: tileA.cx, y: cameraY };
@@ -4122,13 +4203,13 @@ export function initSfMLiDAR() {
         x: camA.x + (camB.x - camA.x) * 0.5,
         y: cameraY - 26,
       };
-      const leftColor = "rgba(92, 92, 92, 0.78)";
-      const rightColor = "rgba(164, 164, 164, 0.82)";
-      const newColor = "rgba(255, 120, 60, 0.94)";
+      const leftColor = "rgba(235, 62, 77, 0.76)";
+      const rightColor = "rgba(54, 116, 235, 0.78)";
+      const newColor = "rgba(145, 145, 145, 0.94)";
       const imageX = overlay.x - overlay.w / 2;
       const imageY = overlay.y - overlay.h / 2;
-      const leftOffset = -8 + Math.sin(pulse * 0.035) * 2;
-      const rightOffset = 8 + Math.cos(pulse * 0.033) * 2;
+      const leftOffset = -18 + Math.sin(pulse * 0.035) * 2.2;
+      const rightOffset = 18 + Math.cos(pulse * 0.033) * 2.2;
       const pairSpread = Math.min(
         1.45,
         Math.abs(tileB.u - tileA.u) + Math.abs(tileB.v - tileA.v) * 0.55,
@@ -4173,18 +4254,18 @@ export function initSfMLiDAR() {
       drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
       drawGuideFromTile(tileB, camB.x, camB.y - 15, rightColor);
 
-      drawOverlayImage(imgA, imgB, overlay.x, overlay.y, overlay.w, overlay.h, pulse);
+      drawBunnySynthesis(frameA, frameB, frameMid, overlay.x, overlay.y, overlay.w, overlay.h, pulse);
 
       targetPoints.forEach((pt, i) => {
         const alpha = pt === activePoint ? 0.88 : 0.34;
         const width = pt === activePoint ? 2.4 : 1.15;
-        drawLightRay(camA.x, camA.y, pt.left.x, pt.left.y, "rgba(92, 92, 92, 0.62)", alpha, width);
+        drawLightRay(camA.x, camA.y, pt.left.x, pt.left.y, "rgba(235, 62, 77, 0.64)", alpha, width);
         drawLightRay(
           camB.x,
           camB.y,
           pt.right.x,
           pt.right.y,
-          "rgba(164, 164, 164, 0.66)",
+          "rgba(54, 116, 235, 0.66)",
           alpha,
           width,
         );
@@ -4299,7 +4380,7 @@ export function initSfMLiDAR() {
       const tileA = tiles[tileAIdx];
       const tileB = tiles[tileBIdx];
 
-      // Highlight: exactly one tile orange — fades in at step start, out at step end
+      // Highlight the two sampled tiles as the pair changes.
       const fadeIn = 0.18;
       const fadeOut = 0.82;
       let curH;
@@ -4310,16 +4391,19 @@ export function initSfMLiDAR() {
       tiles.forEach((tile, i) => {
         tile.highlight = i === tileAIdx || i === tileBIdx ? curH : 0;
         tile.highlightColor =
-          i === tileAIdx ? "92, 92, 92" : i === tileBIdx ? "164, 164, 164" : null;
+          i === tileAIdx ? "235, 62, 77" : i === tileBIdx ? "54, 116, 235" : null;
       });
 
       tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
 
+      const frameA = spriteFrameForPolaroid(tileToPolaroid[tileAIdx]);
+      const frameB = spriteFrameForPolaroid(tileToPolaroid[tileBIdx]);
       drawTwoCameraOverlayDiagram(
         tileA,
         tileB,
-        polaroids[tileToPolaroid[tileAIdx]],
-        polaroids[tileToPolaroid[tileBIdx]],
+        frameA,
+        frameB,
+        midpointSpriteFrame(frameA, frameB),
         t,
       );
     };
