@@ -3382,11 +3382,11 @@ code {
 
 .nvs-intro-slide > .kicker {
   text-align: center;
-  margin-top: clamp(3.5rem, 10vh, 7rem);
+  margin-top: 1rem;
 }
 
 .nvs-intro-title {
-  font-size: clamp(1.9rem, 3vw, 3.2rem);
+  font-size: 52px;
   font-weight: 800;
   color: var(--ink);
   line-height: 1.15;
@@ -3404,7 +3404,7 @@ code {
 }
 
 .nvs-intro-body p {
-  font-size: clamp(1rem, 1.05vw, 1.12rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.65;
   margin: 0;
@@ -3447,7 +3447,7 @@ code {
   border-radius: 8px;
   color: var(--ink);
   display: flex;
-  font-size: clamp(1rem, 1.05vw, 1.12rem);
+  font-size: 21px;
   font-weight: 600;
   line-height: 1.25;
   min-height: 2.1rem;
@@ -3464,7 +3464,7 @@ code {
 
 /* Redesigned emphasis: no right border; a centred accent bar above */
 .nvs-intro-emphasis {
-  font-size: clamp(1rem, 1.05vw, 1.12rem) !important;
+  font-size: 21px !important;
   color: var(--ink) !important;
   font-weight: 400;
   margin-top: 0.6rem;
@@ -3488,7 +3488,6 @@ code {
 
 /* ---------- Timeline (full-bleed, edge-to-edge) ---------- */
 .nvs-tl-wrap {
-  margin-top: auto;
   /* Cancel BOTH layers of padding: the outer .slide's --slide-pad-x
      AND this slide's inner --nvs-pad-x. Without this the line stops short. */
   margin-left: calc(-1 * (var(--nvs-pad-x) + var(--slide-pad-x)));
@@ -3742,23 +3741,24 @@ code {
 }
 
 .nvs-tl-detail-name {
-  font-size: 1.2rem;
+  font-size: 21px;
   font-weight: 700;
   color: var(--ink);
 }
 
 .nvs-tl-detail-fullname {
-  font-size: 1rem;
+  font-size: 21px;
   font-weight: 500;
   color: var(--muted);
   font-family: "Inter", "Heebo", sans-serif;
 }
 
 .nvs-tl-detail-desc {
-  font-size: 1rem;
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.5;
   max-width: 64ch;
+  text-align: center;
 }
 
 /* ============================================================
