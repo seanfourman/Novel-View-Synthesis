@@ -6370,30 +6370,34 @@ export function initNeRFVideo() {
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
-      // Pan the focal centre onto HERO so the zoom actually targets the
-      // hero frustum (no extra rotation — the orbit is the only swing).
+      // Pan the focal centre onto HERO (with a tiny leftward nudge so the
+      // hero frustum sits slightly off-centre toward the right of frame).
       let aimD = 0.0;
       if (t > P.heroEnd) {
         const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
         aimD = lerp(0.0, 4.0, easeInOut(k));
       }
+      const leftNudge = 0.45;
       const aim = {
-        x: HERO.x + heroDir.x * aimD,
+        x: HERO.x + heroDir.x * aimD - leftNudge,
         y: HERO.y + heroDir.y * aimD,
         z: HERO.z + heroDir.z * aimD,
       };
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
+      // Tiny extra yaw so the angle on the hero frustum reads as a 3/4 view
+      // rather than dead-on.
+      extraYaw = -0.1 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(4.0, 1.5, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(5.5, 1.6, pullBack), heroFocus * closeIn);
     }
 
     // Dampen the orbit hard while zoomed in so the tight close-up on the
     // hero frustum stays stable (driftYaw/Pitch add a faint breathing motion).
-    const finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw;
-    const finalPitch = orbitPitch * (1 - heroFocus * 0.88) + driftPitch;
+    const finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw + extraYaw;
+    const finalPitch = orbitPitch * (1 - heroFocus * 0.88) + driftPitch + extraPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
