@@ -4076,21 +4076,21 @@ export function initSfMLiDAR() {
       ctx.clip();
       drawImageInRect(leftImg, x + leftOffset, y, w, h, 0.62);
       ctx.globalAlpha = 0.2;
-      ctx.fillStyle = "rgb(255, 120, 60)";
+      ctx.fillStyle = "rgb(118, 118, 118)";
       ctx.fillRect(x, y, w, h);
       drawImageInRect(rightImg, x + rightOffset, y, w, h, 0.62);
       ctx.globalAlpha = 0.2;
-      ctx.fillStyle = "rgb(44, 142, 176)";
+      ctx.fillStyle = "rgb(178, 178, 178)";
       ctx.fillRect(x, y, w, h);
       ctx.restore();
 
       ctx.save();
-      ctx.strokeStyle = "rgba(255, 120, 60, 0.72)";
+      ctx.strokeStyle = "rgba(92, 92, 92, 0.74)";
       ctx.lineWidth = 1.8;
       ctx.strokeRect(x + leftOffset - 4, y - 4, w + 8, h + 8);
-      ctx.strokeStyle = "rgba(44, 142, 176, 0.72)";
+      ctx.strokeStyle = "rgba(164, 164, 164, 0.78)";
       ctx.strokeRect(x + rightOffset - 4, y - 4, w + 8, h + 8);
-      ctx.strokeStyle = "rgba(70, 168, 104, 0.82)";
+      ctx.strokeStyle = "rgba(255, 120, 60, 0.84)";
       ctx.lineWidth = 2.3;
       ctx.strokeRect(x - 10, y - 10, w + 20, h + 20);
       ctx.restore();
@@ -4122,9 +4122,9 @@ export function initSfMLiDAR() {
         x: camA.x + (camB.x - camA.x) * 0.5,
         y: cameraY - 26,
       };
-      const leftColor = "rgba(255, 120, 60, 0.82)";
-      const rightColor = "rgba(44, 142, 176, 0.78)";
-      const newColor = "rgba(70, 168, 104, 0.92)";
+      const leftColor = "rgba(92, 92, 92, 0.78)";
+      const rightColor = "rgba(164, 164, 164, 0.82)";
+      const newColor = "rgba(255, 120, 60, 0.94)";
       const imageX = overlay.x - overlay.w / 2;
       const imageY = overlay.y - overlay.h / 2;
       const targetPoints = [
@@ -4137,22 +4137,13 @@ export function initSfMLiDAR() {
       drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
       drawGuideFromTile(tileB, camB.x, camB.y - 15, rightColor);
 
-      ctx.save();
-      ctx.strokeStyle = "rgba(78, 60, 50, 0.22)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(Math.min(camA.x, camB.x) - 30, cameraY + 12);
-      ctx.lineTo(Math.max(camA.x, camB.x) + 30, cameraY + 12);
-      ctx.stroke();
-      ctx.restore();
-
       drawOverlayImage(imgA, imgB, overlay.x, overlay.y, overlay.w, overlay.h, pulse);
 
       targetPoints.forEach((pt, i) => {
         const alpha = pt === activePoint ? 0.88 : 0.34;
         const width = pt === activePoint ? 2.4 : 1.15;
-        drawLightRay(camA.x, camA.y, pt.x, pt.y, "rgba(255, 120, 60, 0.72)", alpha, width);
-        drawLightRay(camB.x, camB.y, pt.x, pt.y, "rgba(44, 142, 176, 0.66)", alpha, width);
+        drawLightRay(camA.x, camA.y, pt.x, pt.y, "rgba(92, 92, 92, 0.62)", alpha, width);
+        drawLightRay(camB.x, camB.y, pt.x, pt.y, "rgba(164, 164, 164, 0.66)", alpha, width);
         if (i === 1) drawLightRay(virtualCam.x, virtualCam.y, pt.x, pt.y, newColor, 0.86, 2.8);
       });
 
@@ -4194,7 +4185,7 @@ export function initSfMLiDAR() {
 
       // Active glow + border
       if (highlight > 0.02) {
-        const accent = tile.highlightColor || "255, 120, 60";
+        const accent = tile.highlightColor || "118, 118, 118";
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(tilt);
@@ -4273,7 +4264,7 @@ export function initSfMLiDAR() {
       tiles.forEach((tile, i) => {
         tile.highlight = i === tileAIdx || i === tileBIdx ? curH : 0;
         tile.highlightColor =
-          i === tileAIdx ? "255, 120, 60" : i === tileBIdx ? "44, 142, 176" : null;
+          i === tileAIdx ? "92, 92, 92" : i === tileBIdx ? "164, 164, 164" : null;
       });
 
       tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
