@@ -981,18 +981,15 @@
 
           <div class="nerf-body">
             <p class="lead small nerf-intro-lead">
-              <span class="nerf-intro-line nerf-intro-nowrap nerf-intro-line-1"><em>NeRF</em> לקח את הרעיון של ייצוג סצנה ברשת נוירונים והפך אותו ליותר פיזיקלי.</span>
-              <span class="nerf-intro-line">במקום לחזות ישירות <strong class="accent">צבע של פיקסל</strong>,</span>
-              <span class="nerf-intro-line nerf-intro-nowrap">המודל לומד שדה רציף שאומר מה יש בכל נקודה במרחב ואיך היא נראית מכל כיוון.</span>
+              <span class="nerf-intro-line"><em>NeRF</em> ממשיך את הרעיון של <em>SRN</em>,</span>
+              <span class="nerf-intro-line">אבל במקום לחזות רק צבע - הוא לומד גם צפיפות.</span>
             </p>
             <p class="nerf-explain">
-              <strong>הצפיפות</strong> בנקודה קבועה, אבל <strong>הצבע</strong> משתנה לפי זווית הצפייה - השתקפויות וברק תלויים בכיוון.
-            </p>
-            <p class="nerf-insight">
-              לכן <strong>NeRF</strong> מפריד את הצבע משאר הרכיבים, בניגוד ל-<strong>SRN</strong> שנתן לכל נקודה צבע אחד קבוע.
+              הצפיפות אומרת כמה הנקודה במרחב באמת תורמת למה שהמצלמה רואה.<br>
+              נקודות צפופות יותר משפיעות יותר על הצבע הסופי של הפיקסל.
             </p>
             <p class="nerf-explain nerf-concept-intro">
-              ארבעת הרכיבים:
+              המודל עובד עם ארבעה רכיבים:
             </p>
             <div class="nerf-concept-row">
               <div class="nerf-concept-item">
@@ -1026,11 +1023,11 @@
               </div>
             </div>
             <p class="nerf-explain nerf-explain-after">
-              כשמרכיבים הרבה דגימות לאורך כל קרן מצלמה, מתקבל פיקסל בתמונה החדשה.
+              כאשר דוגמים נקודות רבות לאורך קרן מצלמה,<br>
+              הצבע והצפיפות שלהן מתחברים לפיקסל אחד בתמונה החדשה.
             </p>
             <p class="nerf-tagline">
-              NeRF מייצג את הסצנה כשדה נפחי רציף -<br>
-              לא רק כקשר ישיר בין מצלמה לפיקסלים.
+              NeRF מייצג את הסצנה כשדה רציף של צבע וצפיפות - לא רק כקשר ישיר בין מצלמה לפיקסלים.
             </p>
           </div>
         </div>
