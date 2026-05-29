@@ -4793,7 +4793,7 @@ code {
 
 /* ---- Bottom tagline (simple, like other slides) ---- */
 .verdict-tagline {
-  font-size: 21px;
+  font-size: 23px;
   color: var(--accent);
   font-weight: 600;
   text-align: center;
