@@ -410,7 +410,7 @@ code {
 .tour-notes p:first-child {
   color: var(--ink);
   font-weight: 700;
-  font-size: clamp(1.15rem, 1.35vw, 1.35rem);
+  font-size: 21px;
   line-height: 1.35;
   padding-bottom: 0.52rem;
   margin-bottom: 0.55rem;
@@ -1801,6 +1801,7 @@ code {
   margin: 0;
   max-width: 210px;
   line-height: 1.4;
+  text-align: center;
 }
 .classic-approaches {
   width: 100%;
