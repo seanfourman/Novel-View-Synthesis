@@ -4769,9 +4769,10 @@ code {
   display: flex;
   align-items: flex-start;
   gap: 0.74rem;
-  font-size: 1.07rem;
+  font-size: 21px;
   line-height: 1.55;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .verdict-bullet {
@@ -4792,7 +4793,7 @@ code {
 
 /* ---- Bottom tagline (simple, like other slides) ---- */
 .verdict-tagline {
-  font-size: clamp(1.1rem, 1.35vw, 1.3rem);
+  font-size: 21px;
   color: var(--accent);
   font-weight: 600;
   text-align: center;
