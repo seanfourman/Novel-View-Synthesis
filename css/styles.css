@@ -4859,7 +4859,7 @@ code {
   flex-direction: column;
   align-items: center;
   gap: clamp(0.55rem, 1.1vh, 0.95rem);
-  max-width: 78ch;
+  max-width: 90ch;
   width: 100%;
 }
 
@@ -4875,7 +4875,7 @@ code {
   margin: 0.55rem 0 0;
   text-align: center;
   color: var(--ink);
-  font-size: 1.12em;
+  font-size: 21px;
   line-height: 1.5;
 }
 
@@ -4888,6 +4888,8 @@ code {
 .nerf-intro-lead {
   margin: 0;
   text-align: center;
+  font-size: 21px;
+  line-height: 1.55;
 }
 
 .nerf-intro-line {
@@ -4957,6 +4959,10 @@ code {
   flex-shrink: 0;
 }
 
+.nerf-concept-item span {
+  font-size: 21px;
+}
+
 .nerf-tagline {
   font-size: 21px;
   color: var(--accent);
@@ -4967,6 +4973,10 @@ code {
   text-align: center;
   display: inline-block;
   align-self: center;
+}
+
+.slide[data-id="13"] :is(p, p span, p strong, p em, .nerf-concept-item, .nerf-concept-item span, .nerf-carousel-caption) {
+  font-size: 21px !important;
 }
 
 /* ---- Slide 13: small infinite-scroll carousel (mp4 / gif ribbon) ---- */
