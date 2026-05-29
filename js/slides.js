@@ -3677,8 +3677,8 @@ export function initSfMLiDAR() {
     const SPRITE_COLS = 6;
     const SPRITE_FW = 300,
       SPRITE_FH = 300;
-    // Frame used as the still bunny render. Row 2, col 4 — a moderate top-down 3/4 view.
-    const STILL_FRAME = 16;
+    // Frame used as the still bunny render. Row 0, col 1 — top-down view of the bunny's front.
+    const STILL_FRAME = 1;
 
     // Real bunny polaroid images (9 angles) shown on the left
     const polaroidImgs = Array.from({ length: 9 }, (_, i) => {
