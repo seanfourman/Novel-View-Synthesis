@@ -14,6 +14,7 @@ import {
   initSRN,
   initSRNNetAnim,
   initNeRFIntro,
+  initNeRFVideo,
   initRayDemo,
 } from "./slides.js";
 
@@ -144,9 +145,10 @@ const sceneRegistry = {
   10: initSRNNetAnim, // slide 11 (SRN network animation)
   // slide 12 (SRN pros & cons) - no canvas
   12: initNeRFIntro, // slide 13 (NeRF)
-  13: initRayDemo, // slide 14 (NeRF ray sampling)
-  14: initDepthBasedNVS, // slide 15
-  15: initEndBg, // slide 16 (final recap)
+  13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
+  14: initRayDemo, // slide 15 (NeRF ray sampling)
+  15: initDepthBasedNVS, // slide 16
+  16: initEndBg, // slide 17 (final recap)
 };
 
 const sceneInstances = {};

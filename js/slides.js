@@ -5671,3 +5671,661 @@ export function initSpatialTransition() {
     },
   };
 }
+
+/* =========================================================
+   Slide 14: NeRF pipeline canvas (recreation of the Matthew
+   Tancik NeRF explainer video, redrawn on a white background)
+
+   Phases over one ~30s loop:
+     A. wild cameras drift in 3D
+     B. cameras converge to a sphere around the scene
+     C. one hero camera fires a ray
+     D. samples pop in along the ray
+     E. (x,y,z,θ,φ) → F_Θ → (RGBσ) network box fades in
+     F. samples are queried one-by-one and colored
+     G. remaining samples fill with colors
+     H. samples integrate into one pixel color
+     I. hold, fade, loop
+   ========================================================= */
+export function initNeRFVideo() {
+  const slide = document.querySelector('.slide[data-id="14"]');
+  if (!slide) return { tick() {}, enter() {} };
+
+  const canvas = document.getElementById("nerf-pipeline-canvas");
+  const captionEl = document.getElementById("nerf-pipeline-caption");
+  if (!canvas) return { tick() {}, enter() {} };
+  const ctx = canvas.getContext("2d");
+
+  let W = 0;
+  let H = 0;
+  let dpr = 1;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = slide.clientWidth | 0;
+    H = slide.clientHeight | 0;
+    if (W === 0 || H === 0) return;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  new ResizeObserver(resize).observe(slide);
+
+  const NUM_CAMERAS = 38;
+  const NUM_SAMPLES = 22;
+  const CYCLE = 30.0;
+  const CAM_DIST = 9.0;
+  const HERO = { x: -3.8, y: 1.8, z: -1.8 };
+
+  const P = {
+    introEnd: 3.2,
+    convergeEnd: 4.7,
+    heroEnd: 5.5,
+    rayEnd: 6.8,
+    samplesEnd: 9.5,
+    mlpEnd: 11.0,
+    queryEnd: 20.5,
+    fillEnd: 22.5,
+    pixelEnd: 25.5,
+    holdEnd: 27.5,
+  };
+
+  let _seed = 0xc0ffee;
+  function rand() {
+    _seed = (_seed * 1664525 + 1013904223) >>> 0;
+    return _seed / 0x100000000;
+  }
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const easeInOut = (k) =>
+    k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  const easeOut = (k) => 1 - Math.pow(1 - k, 3);
+
+  function normalize3(v) {
+    const m = Math.hypot(v.x, v.y, v.z) || 1;
+    return { x: v.x / m, y: v.y / m, z: v.z / m };
+  }
+  function cross3(a, b) {
+    return {
+      x: a.y * b.z - a.z * b.y,
+      y: a.z * b.x - a.x * b.z,
+      z: a.x * b.y - a.y * b.x,
+    };
+  }
+
+  function project(x, y, z) {
+    const f = Math.min(W, H) * 0.95;
+    const denom = z + CAM_DIST;
+    return {
+      x: W / 2 + (f * x) / denom,
+      y: H / 2 - (f * y) / denom,
+      depth: denom,
+      scale: f / denom,
+    };
+  }
+
+  const targets = [];
+  for (let i = 0; i < NUM_CAMERAS; i++) {
+    const k = i + 0.5;
+    const phi = Math.acos(1 - (2 * k) / NUM_CAMERAS);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * k;
+    const r = 3.8;
+    const sx = r * Math.sin(phi) * Math.cos(theta);
+    const sy = r * Math.cos(phi) * 0.6;
+    const sz = r * Math.sin(phi) * Math.sin(theta);
+    targets.push({ x: sx, y: sy, z: sz });
+  }
+
+  const wild = [];
+  for (let i = 0; i < NUM_CAMERAS; i++) {
+    wild.push({
+      x: (rand() - 0.5) * 11,
+      y: (rand() - 0.5) * 6.5,
+      z: (rand() - 0.5) * 9 + 0.5,
+      yaw: rand() * Math.PI * 2,
+      pitch: rand() * Math.PI * 2,
+      yawSpeed: (rand() - 0.5) * 0.8,
+      pitchSpeed: (rand() - 0.5) * 0.6,
+    });
+  }
+
+  const heroDir = normalize3({ x: -HERO.x, y: -HERO.y, z: -HERO.z });
+
+  const sampleDists = [];
+  {
+    const minD = 1.3;
+    const maxD = 9.5;
+    for (let i = 0; i < NUM_SAMPLES; i++) {
+      sampleDists.push(lerp(minD, maxD, i / (NUM_SAMPLES - 1)));
+    }
+  }
+  function samplePos(i) {
+    const d = sampleDists[i];
+    return {
+      x: HERO.x + heroDir.x * d,
+      y: HERO.y + heroDir.y * d,
+      z: HERO.z + heroDir.z * d,
+    };
+  }
+
+  // Per-sample queried color + density (alpha) for the post-MLP look.
+  const samplePalette = [
+    [240, 240, 240, 0.25],
+    [240, 240, 240, 0.3],
+    [250, 200, 60, 0.7],
+    [255, 175, 40, 0.85],
+    [70, 60, 50, 0.95],
+    [255, 165, 30, 0.9],
+    [250, 210, 70, 0.85],
+    [60, 55, 50, 0.95],
+    [255, 175, 40, 0.9],
+    [255, 200, 60, 0.85],
+    [250, 220, 80, 0.8],
+    [255, 200, 80, 0.7],
+    [250, 200, 90, 0.6],
+    [255, 210, 100, 0.5],
+    [240, 220, 110, 0.4],
+    [230, 220, 130, 0.32],
+    [220, 215, 140, 0.25],
+    [220, 220, 200, 0.2],
+    [220, 220, 220, 0.15],
+    [220, 220, 220, 0.12],
+    [220, 220, 220, 0.1],
+    [220, 220, 220, 0.08],
+  ];
+
+  function captionForTime(tt) {
+    if (tt < P.convergeEnd) return "מצלמות תופסות את אותה סצנה מזוויות רבות";
+    if (tt < P.rayEnd) return "מכל פיקסל שולחים קרן אל תוך הסצנה";
+    if (tt < P.mlpEnd) return "דוגמים נקודות לאורך הקרן";
+    if (tt < P.queryEnd)
+      return "כל נקודה (x,y,z) עם כיוון הצפייה (θ,φ) עוברת דרך הרשת F_Θ";
+    if (tt < P.fillEnd) return "הרשת מחזירה לכל נקודה צבע (RGB) וצפיפות σ";
+    if (tt < P.holdEnd) return "כל הדגימות מצטרפות לצבע אחד של פיקסל בתמונה החדשה";
+    return "";
+  }
+  let lastCaption = "";
+  function updateCaption(tt) {
+    if (!captionEl) return;
+    const next = captionForTime(tt);
+    if (next !== lastCaption) {
+      lastCaption = next;
+      captionEl.textContent = next;
+      captionEl.classList.toggle("visible", next !== "");
+    }
+  }
+
+  function strokeLine3(a, b, color, width) {
+    const pa = project(a.x, a.y, a.z);
+    const pb = project(b.x, b.y, b.z);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
+  }
+
+  function drawFrustum(pos, dir, alpha, highlight = false) {
+    if (alpha <= 0.01) return;
+    const f = normalize3(dir);
+    const worldUp = { x: 0, y: 1, z: 0 };
+    let right = normalize3(cross3(f, worldUp));
+    if (!isFinite(right.x)) right = { x: 1, y: 0, z: 0 };
+    const up = normalize3(cross3(right, f));
+
+    const depthLen = 0.55;
+    const halfW = 0.32;
+    const halfH = 0.24;
+    const bc = {
+      x: pos.x + f.x * depthLen,
+      y: pos.y + f.y * depthLen,
+      z: pos.z + f.z * depthLen,
+    };
+    const corners = [
+      [+1, +1],
+      [-1, +1],
+      [-1, -1],
+      [+1, -1],
+    ].map(([sx, sy]) => ({
+      x: bc.x + right.x * halfW * sx + up.x * halfH * sy,
+      y: bc.y + right.y * halfW * sx + up.y * halfH * sy,
+      z: bc.z + right.z * halfW * sx + up.z * halfH * sy,
+    }));
+
+    const apex = project(pos.x, pos.y, pos.z);
+    const depthFade = clamp01(1.4 - apex.depth / 14);
+    const baseAlpha =
+      (highlight ? 0.95 : 0.55) * alpha * (0.35 + depthFade * 0.65);
+    const color = highlight
+      ? `rgba(20,20,24,${baseAlpha.toFixed(3)})`
+      : `rgba(60,64,72,${baseAlpha.toFixed(3)})`;
+    const width = highlight ? 2.2 : 1.0;
+
+    for (const c of corners) strokeLine3(pos, c, color, width);
+    for (let i = 0; i < 4; i++) {
+      strokeLine3(corners[i], corners[(i + 1) % 4], color, width);
+    }
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(apex.x, apex.y, highlight ? 3.4 : 2.0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCenterObject(alpha) {
+    if (alpha <= 0.01) return;
+    const s = 0.55;
+    const verts = [];
+    for (const sx of [-s, s])
+      for (const sy of [-s, s])
+        for (const sz of [-s, s]) verts.push({ x: sx, y: sy, z: sz });
+    const edges = [
+      [0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6],
+      [3, 7], [4, 5], [4, 6], [5, 7], [6, 7],
+    ];
+    const col = `rgba(40,44,52,${(0.55 * alpha).toFixed(3)})`;
+    for (const [a, b] of edges) {
+      strokeLine3(verts[a], verts[b], col, 1.25);
+    }
+  }
+
+  function drawRay(progress) {
+    if (progress <= 0) return;
+    const maxD = sampleDists[NUM_SAMPLES - 1] + 0.6;
+    const d = lerp(0.4, maxD, easeOut(progress));
+    const end = {
+      x: HERO.x + heroDir.x * d,
+      y: HERO.y + heroDir.y * d,
+      z: HERO.z + heroDir.z * d,
+    };
+    strokeLine3(HERO, end, "rgba(255,90,42,0.95)", 2.6);
+  }
+
+  function drawSamples(appearT, colorMix, queriedIdx, queryFlash) {
+    for (let i = 0; i < NUM_SAMPLES; i++) {
+      const threshold = i / NUM_SAMPLES;
+      const local = clamp01(
+        (appearT - threshold) / (1 / NUM_SAMPLES + 0.04),
+      );
+      if (local <= 0) continue;
+      const p = samplePos(i);
+      const proj = project(p.x, p.y, p.z);
+      const baseR = 10 * proj.scale * 0.18;
+      const r = baseR * easeOut(local);
+
+      const mix = colorMix[i];
+      const target = samplePalette[i];
+      const cr = lerp(240, target[0], mix);
+      const cg = lerp(240, target[1], mix);
+      const cb = lerp(245, target[2], mix);
+
+      let glow = 0;
+      if (i === queriedIdx) glow = queryFlash;
+
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, r * (1 + glow * 0.25), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${cr | 0},${cg | 0},${cb | 0},${(0.85 + glow * 0.15).toFixed(3)})`;
+      ctx.fill();
+      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = `rgba(40,44,52,${(0.55 + glow * 0.4).toFixed(3)})`;
+      ctx.stroke();
+
+      if (glow > 0.05) {
+        const grad = ctx.createRadialGradient(
+          proj.x, proj.y, r,
+          proj.x, proj.y, r * 3.5,
+        );
+        grad.addColorStop(0, `rgba(255,220,70,${(0.45 * glow).toFixed(3)})`);
+        grad.addColorStop(1, "rgba(255,220,70,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, r * 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + r);
+    c.lineTo(x + w, y + h - r);
+    c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    c.lineTo(x + r, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+  }
+
+  function drawArrow(c, x0, y0, x1, y1) {
+    c.beginPath();
+    c.moveTo(x0, y0);
+    c.lineTo(x1, y1);
+    c.stroke();
+    const a = Math.atan2(y1 - y0, x1 - x0);
+    const ah = 7;
+    c.beginPath();
+    c.moveTo(x1, y1);
+    c.lineTo(x1 - ah * Math.cos(a - 0.4), y1 - ah * Math.sin(a - 0.4));
+    c.lineTo(x1 - ah * Math.cos(a + 0.4), y1 - ah * Math.sin(a + 0.4));
+    c.closePath();
+    c.fill();
+  }
+
+  function drawMLP(alpha) {
+    if (alpha <= 0.01) return null;
+    const boxW = Math.min(W * 0.62, 880);
+    const boxH = Math.min(H * 0.22, 180);
+    const boxX = (W - boxW) / 2;
+    const boxY = Math.max(20, H * 0.08);
+    const r = 14;
+
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = "rgba(20,22,28,0.18)";
+    roundRect(ctx, boxX + 3, boxY + 6, boxW, boxH, r);
+    ctx.fill();
+    ctx.fillStyle = "#1a1c22";
+    roundRect(ctx, boxX, boxY, boxW, boxH, r);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, boxX, boxY, boxW, boxH, r);
+    ctx.stroke();
+
+    const cx = boxX + boxW / 2;
+    const cy = boxY + boxH / 2;
+    const fontSize = Math.max(18, boxH * 0.22);
+    ctx.fillStyle = "#f4f4f6";
+    ctx.font = `italic ${fontSize}px "Times New Roman", Georgia, serif`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+
+    const inputText = "(x,y,z,θ,φ)";
+    const outputText = "(RGBσ)";
+    const inputX = boxX + boxW * 0.21;
+    const outputX = boxX + boxW * 0.79;
+    ctx.fillText(inputText, inputX, cy);
+    ctx.fillText(outputText, outputX, cy);
+
+    const barCount = 3;
+    const barW = Math.max(10, boxW * 0.022);
+    const barH = boxH * 0.55;
+    const barGap = barW * 0.7;
+    const barsTotalW = barCount * barW + (barCount - 1) * barGap;
+    const barsX0 = cx - barsTotalW / 2;
+    const barsY = cy - barH / 2;
+    ctx.fillStyle = "#7ec9b3";
+    for (let i = 0; i < barCount; i++) {
+      const x = barsX0 + i * (barW + barGap);
+      roundRect(ctx, x, barsY, barW, barH, 3);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#dfe2e6";
+    ctx.font = `italic ${fontSize * 0.85}px "Times New Roman", Georgia, serif`;
+    ctx.textAlign = "left";
+    ctx.fillText("F", cx - fontSize * 0.32, barsY + barH + fontSize * 0.7);
+    ctx.font = `italic ${fontSize * 0.55}px "Times New Roman", Georgia, serif`;
+    ctx.fillText("Θ", cx - fontSize * 0.02, barsY + barH + fontSize * 0.85);
+
+    ctx.textAlign = "center";
+    ctx.strokeStyle = "rgba(244,244,246,0.85)";
+    ctx.fillStyle = "rgba(244,244,246,0.85)";
+    ctx.lineWidth = 2;
+    drawArrow(ctx, inputX + fontSize * 2.6, cy, barsX0 - 14, cy);
+    drawArrow(ctx, barsX0 + barsTotalW + 6, cy, outputX - fontSize * 1.7, cy);
+
+    ctx.restore();
+
+    return {
+      inputAnchor: { x: inputX, y: boxY + boxH },
+      outputAnchor: { x: outputX, y: boxY + boxH },
+    };
+  }
+
+  function drawCurvedArrow(from, to, alpha, color = "rgba(244,244,246,0.95)") {
+    if (alpha <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    const midX = (from.x + to.x) / 2;
+    const midY = (from.y + to.y) / 2;
+    const dy = Math.abs(to.y - from.y);
+    const cpX = midX + (to.x - from.x) * 0.05;
+    const cpY = midY - dy * 0.45;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.quadraticCurveTo(cpX, cpY, to.x, to.y);
+    ctx.stroke();
+    const dx = to.x - cpX;
+    const dyy = to.y - cpY;
+    const a = Math.atan2(dyy, dx);
+    const ah = 8;
+    ctx.beginPath();
+    ctx.moveTo(to.x, to.y);
+    ctx.lineTo(to.x - ah * Math.cos(a - 0.4), to.y - ah * Math.sin(a - 0.4));
+    ctx.lineTo(to.x - ah * Math.cos(a + 0.4), to.y - ah * Math.sin(a + 0.4));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPixelChip(alpha) {
+    if (alpha <= 0.01) return;
+    let rr = 0, gg = 0, bb = 0, tot = 0;
+    let trans = 1;
+    for (let i = 0; i < NUM_SAMPLES; i++) {
+      const s = samplePalette[i];
+      const w = s[3] * trans;
+      rr += s[0] * w;
+      gg += s[1] * w;
+      bb += s[2] * w;
+      tot += w;
+      trans *= 1 - s[3];
+      if (trans <= 0.01) break;
+    }
+    if (tot > 0) { rr /= tot; gg /= tot; bb /= tot; }
+    rr = lerp(245, rr, 0.85);
+    gg = lerp(245, gg, 0.85);
+    bb = lerp(245, bb, 0.85);
+
+    const heroProj = project(HERO.x, HERO.y, HERO.z);
+    const px = heroProj.x - 70;
+    const py = heroProj.y - 70;
+    const r = 26;
+
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = `rgb(${rr | 0},${gg | 0},${bb | 0})`;
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(40,44,52,0.8)";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(px + r * 0.7, py + r * 0.7);
+    ctx.lineTo(heroProj.x - 4, heroProj.y - 4);
+    ctx.strokeStyle = "rgba(40,44,52,0.45)";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  let t = 0;
+
+  function step(dtScale) {
+    t += dtScale / 60;
+    if (t >= CYCLE) t -= CYCLE;
+  }
+
+  function draw() {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    const convergeT = clamp01((t - P.introEnd) / (P.convergeEnd - P.introEnd));
+    const heroT = clamp01((t - P.convergeEnd) / (P.heroEnd - P.convergeEnd));
+    const rayT = clamp01((t - P.heroEnd) / (P.rayEnd - P.heroEnd));
+    const samplesT = clamp01((t - P.rayEnd) / (P.samplesEnd - P.rayEnd));
+    const mlpT = clamp01((t - P.samplesEnd) / (P.mlpEnd - P.samplesEnd));
+    const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
+    const fillT = clamp01((t - P.queryEnd) / (P.fillEnd - P.queryEnd));
+    const pixelT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
+    const fadeOut = clamp01((t - P.holdEnd) / (CYCLE - P.holdEnd));
+    const fadeIn = clamp01(t / 0.4);
+    const globalAlpha = Math.min(fadeIn, 1 - fadeOut);
+
+    ctx.save();
+    ctx.globalAlpha = globalAlpha;
+
+    const eConverge = easeInOut(convergeT);
+
+    const camData = [];
+    for (let i = 0; i < NUM_CAMERAS; i++) {
+      const w = wild[i];
+      const ph = t * 0.7 + i * 0.31;
+      const wobble = {
+        x: Math.sin(ph) * 0.3 * (1 - eConverge),
+        y: Math.cos(ph * 0.8) * 0.25 * (1 - eConverge),
+        z: Math.sin(ph * 0.6 + 1.7) * 0.3 * (1 - eConverge),
+      };
+      const tg = targets[i];
+      const pos = {
+        x: lerp(w.x + wobble.x, tg.x, eConverge),
+        y: lerp(w.y + wobble.y, tg.y, eConverge),
+        z: lerp(w.z + wobble.z, tg.z, eConverge),
+      };
+      const spinY = w.yaw + t * w.yawSpeed;
+      const spinP = w.pitch + t * w.pitchSpeed;
+      const wildDir = normalize3({
+        x: Math.cos(spinP) * Math.sin(spinY),
+        y: Math.sin(spinP),
+        z: Math.cos(spinP) * Math.cos(spinY),
+      });
+      const aimDir = normalize3({ x: -pos.x, y: -pos.y, z: -pos.z });
+      const dir = normalize3({
+        x: lerp(wildDir.x, aimDir.x, eConverge),
+        y: lerp(wildDir.y, aimDir.y, eConverge),
+        z: lerp(wildDir.z, aimDir.z, eConverge),
+      });
+      camData.push({ pos, dir, idx: i, depth: pos.z + CAM_DIST });
+    }
+    camData.sort((a, b) => b.depth - a.depth);
+
+    let heroIdx = 0;
+    let heroBest = Infinity;
+    for (let i = 0; i < NUM_CAMERAS; i++) {
+      const tg = targets[i];
+      const d = Math.hypot(tg.x - HERO.x, tg.y - HERO.y, tg.z - HERO.z);
+      if (d < heroBest) {
+        heroBest = d;
+        heroIdx = i;
+      }
+    }
+
+    for (const c of camData) {
+      const isHero = c.idx === heroIdx && convergeT > 0.5 && heroT > 0.05;
+      drawFrustum(c.pos, c.dir, 1.0, isHero);
+    }
+    if (heroT > 0.5) {
+      drawFrustum(HERO, heroDir, 1.0, true);
+    }
+
+    drawCenterObject(eConverge * 0.85);
+
+    if (rayT > 0) drawRay(rayT);
+
+    const colorMix = new Array(NUM_SAMPLES).fill(0);
+    let currentQueriedIdx = -1;
+    let queryFlash = 0;
+    let arrowState = null;
+
+    const querySubset = [4, 7, 10, 13, 16, 2];
+    const PER_SAMPLE = (P.queryEnd - P.mlpEnd) / querySubset.length;
+    if (queryT > 0) {
+      const localT = t - P.mlpEnd;
+      for (let qi = 0; qi < querySubset.length; qi++) {
+        const qStart = qi * PER_SAMPLE;
+        const qEnd = qStart + PER_SAMPLE;
+        const idx = querySubset[qi];
+        if (localT >= qEnd) {
+          colorMix[idx] = 1;
+        } else if (localT >= qStart) {
+          const subT = (localT - qStart) / PER_SAMPLE;
+          currentQueriedIdx = idx;
+          if (subT < 0.3) {
+            queryFlash = subT / 0.3;
+            arrowState = { dir: "up", k: subT / 0.3, idx };
+          } else if (subT < 0.55) {
+            queryFlash = 1;
+            arrowState = { dir: "up", k: 1, idx };
+          } else if (subT < 0.85) {
+            const k = (subT - 0.55) / 0.3;
+            queryFlash = 1 - k * 0.5;
+            colorMix[idx] = easeInOut(k);
+            arrowState = { dir: "down", k, idx };
+          } else {
+            queryFlash = 0.5;
+            colorMix[idx] = 1;
+          }
+        }
+      }
+    }
+
+    if (fillT > 0) {
+      for (let i = 0; i < NUM_SAMPLES; i++) {
+        if (colorMix[i] < 1) {
+          const stagger = clamp01(fillT * 1.4 - (i / NUM_SAMPLES) * 0.4);
+          colorMix[i] = Math.max(colorMix[i], easeOut(stagger));
+        }
+      }
+    }
+
+    drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash);
+
+    const mlpFadeOut = clamp01((t - P.queryEnd - 0.6) / 1.5);
+    const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut));
+    if (mlpInfo && arrowState && currentQueriedIdx >= 0) {
+      const p = samplePos(currentQueriedIdx);
+      const proj = project(p.x, p.y, p.z);
+      const anchor =
+        arrowState.dir === "up" ? mlpInfo.inputAnchor : mlpInfo.outputAnchor;
+      const from =
+        arrowState.dir === "up" ? { x: proj.x, y: proj.y } : anchor;
+      const to =
+        arrowState.dir === "up" ? anchor : { x: proj.x, y: proj.y };
+      drawCurvedArrow(from, to, easeOut(arrowState.k));
+    }
+
+    if (pixelT > 0) drawPixelChip(easeOut(pixelT));
+
+    ctx.restore();
+
+    updateCaption(t);
+  }
+
+  return {
+    enter() {
+      resize();
+    },
+    tick(visible, dtScale) {
+      if (!visible) {
+        if (captionEl) captionEl.classList.remove("visible");
+        return;
+      }
+      if (W === 0 || H === 0) resize();
+      if (W === 0 || H === 0) return;
+      step(dtScale);
+      draw();
+    },
+  };
+}
