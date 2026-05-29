@@ -4002,7 +4002,9 @@ export function initSfMLiDAR() {
     }
 
     function spriteFrameForPolaroid(polaroidIdx) {
-      return Math.round((polaroidIdx / (polaroids.length - 1)) * (SPRITE_TOTAL - 1));
+      return Math.round(
+        (polaroidIdx / (polaroids.length - 1)) * (SPRITE_TOTAL - 1),
+      );
     }
 
     function midpointSpriteFrame(a, b) {
@@ -4054,7 +4056,15 @@ export function initSfMLiDAR() {
       return frame;
     }
 
-    function drawSpriteFrame(frameIdx, cx, cy, boxW, boxH, alpha = 1, tintName = "raw") {
+    function drawSpriteFrame(
+      frameIdx,
+      cx,
+      cy,
+      boxW,
+      boxH,
+      alpha = 1,
+      tintName = "raw",
+    ) {
       const frame = getSpriteFrame(frameIdx, tintName);
       if (!frame) return;
       const frameAR = frame.height / frame.width;
@@ -4098,7 +4108,15 @@ export function initSfMLiDAR() {
       ctx.restore();
     }
 
-    function drawLightRay(fromX, fromY, toX, toY, color, alpha = 1, width = 1.6) {
+    function drawLightRay(
+      fromX,
+      fromY,
+      toX,
+      toY,
+      color,
+      alpha = 1,
+      width = 1.6,
+    ) {
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.shadowColor = color;
@@ -4119,7 +4137,9 @@ export function initSfMLiDAR() {
 
     function drawCameraGlyph(cx, cy, color, label, active = false) {
       ctx.save();
-      ctx.fillStyle = active ? "rgba(255, 255, 255, 0.96)" : "rgba(255, 255, 255, 0.86)";
+      ctx.fillStyle = active
+        ? "rgba(255, 255, 255, 0.96)"
+        : "rgba(255, 255, 255, 0.86)";
       ctx.strokeStyle = color;
       ctx.lineWidth = active ? 2.2 : 1.4;
       roundRectPath(cx - 12, cy - 8, 24, 16, 3);
@@ -4157,9 +4177,33 @@ export function initSfMLiDAR() {
 
       const bunnyW = w * 0.82;
       const bunnyH = h * 0.88;
-      drawSpriteFrame(frameA, cx + leftOffset, cy + 4, bunnyW, bunnyH, 0.6, "left");
-      drawSpriteFrame(frameB, cx + rightOffset, cy + 4, bunnyW, bunnyH, 0.6, "right");
-      drawSpriteFrame(frameMid, cx, cy + 2, bunnyW * 0.95, bunnyH * 0.95, 0.96, "raw");
+      drawSpriteFrame(
+        frameA,
+        cx + leftOffset,
+        cy + 4,
+        bunnyW,
+        bunnyH,
+        0.6,
+        "left",
+      );
+      drawSpriteFrame(
+        frameB,
+        cx + rightOffset,
+        cy + 4,
+        bunnyW,
+        bunnyH,
+        0.6,
+        "right",
+      );
+      drawSpriteFrame(
+        frameMid,
+        cx,
+        cy + 2,
+        bunnyW * 0.95,
+        bunnyH * 0.95,
+        0.96,
+        "raw",
+      );
       ctx.restore();
 
       ctx.save();
@@ -4175,7 +4219,6 @@ export function initSfMLiDAR() {
       roundRectPath(x - 10, y - 10, w + 20, h + 20, 7);
       ctx.stroke();
       ctx.restore();
-
     }
 
     function drawGuideFromTile(tile, toX, toY, color) {
@@ -4194,7 +4237,14 @@ export function initSfMLiDAR() {
       ctx.restore();
     }
 
-    function drawTwoCameraOverlayDiagram(tileA, tileB, frameA, frameB, frameMid, pulse) {
+    function drawTwoCameraOverlayDiagram(
+      tileA,
+      tileB,
+      frameA,
+      frameB,
+      frameMid,
+      pulse,
+    ) {
       const overlay = { x: OUT_CX, y: 450, w: 164, h: 148 };
       const cameraY = 562;
       const camA = { x: tileA.cx, y: cameraY };
@@ -4233,12 +4283,28 @@ export function initSfMLiDAR() {
         const baseY = imageY + overlay.h * lm.ny;
         const parallax = (9 + pairSpread * 8) * lm.depth;
         const left = {
-          x: clamp(baseX + leftOffset - parallax * 0.5, imageX + 12, imageX + overlay.w - 12),
-          y: clamp(baseY - verticalSkew * 0.5, imageY + 12, imageY + overlay.h - 12),
+          x: clamp(
+            baseX + leftOffset - parallax * 0.5,
+            imageX + 12,
+            imageX + overlay.w - 12,
+          ),
+          y: clamp(
+            baseY - verticalSkew * 0.5,
+            imageY + 12,
+            imageY + overlay.h - 12,
+          ),
         };
         const right = {
-          x: clamp(baseX + rightOffset + parallax * 0.5, imageX + 12, imageX + overlay.w - 12),
-          y: clamp(baseY + verticalSkew * 0.5, imageY + 12, imageY + overlay.h - 12),
+          x: clamp(
+            baseX + rightOffset + parallax * 0.5,
+            imageX + 12,
+            imageX + overlay.w - 12,
+          ),
+          y: clamp(
+            baseY + verticalSkew * 0.5,
+            imageY + 12,
+            imageY + overlay.h - 12,
+          ),
         };
         return {
           left,
@@ -4249,17 +4315,35 @@ export function initSfMLiDAR() {
           },
         };
       });
-      const activePoint = targetPoints[Math.floor((pulse / 48) % targetPoints.length)];
+      const activePoint =
+        targetPoints[Math.floor((pulse / 48) % targetPoints.length)];
 
       drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
       drawGuideFromTile(tileB, camB.x, camB.y - 15, rightColor);
 
-      drawBunnySynthesis(frameA, frameB, frameMid, overlay.x, overlay.y, overlay.w, overlay.h, pulse);
+      drawBunnySynthesis(
+        frameA,
+        frameB,
+        frameMid,
+        overlay.x,
+        overlay.y,
+        overlay.w,
+        overlay.h,
+        pulse,
+      );
 
       targetPoints.forEach((pt, i) => {
         const alpha = pt === activePoint ? 0.88 : 0.34;
         const width = pt === activePoint ? 2.4 : 1.15;
-        drawLightRay(camA.x, camA.y, pt.left.x, pt.left.y, "rgba(235, 62, 77, 0.64)", alpha, width);
+        drawLightRay(
+          camA.x,
+          camA.y,
+          pt.left.x,
+          pt.left.y,
+          "rgba(235, 62, 77, 0.64)",
+          alpha,
+          width,
+        );
         drawLightRay(
           camB.x,
           camB.y,
@@ -4270,14 +4354,28 @@ export function initSfMLiDAR() {
           width,
         );
         if (pt === activePoint) {
-          drawLightRay(virtualCam.x, virtualCam.y, pt.mid.x, pt.mid.y, newColor, 0.88, 2.9);
+          drawLightRay(
+            virtualCam.x,
+            virtualCam.y,
+            pt.mid.x,
+            pt.mid.y,
+            newColor,
+            0.88,
+            2.9,
+          );
         }
       });
 
       ctx.save();
       ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
       ctx.beginPath();
-      ctx.arc(activePoint.mid.x, activePoint.mid.y, 7 + Math.sin(pulse * 0.12) * 1.2, 0, Math.PI * 2);
+      ctx.arc(
+        activePoint.mid.x,
+        activePoint.mid.y,
+        7 + Math.sin(pulse * 0.12) * 1.2,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
       ctx.strokeStyle = newColor;
       ctx.lineWidth = 2;
@@ -4391,7 +4489,11 @@ export function initSfMLiDAR() {
       tiles.forEach((tile, i) => {
         tile.highlight = i === tileAIdx || i === tileBIdx ? curH : 0;
         tile.highlightColor =
-          i === tileAIdx ? "235, 62, 77" : i === tileBIdx ? "54, 116, 235" : null;
+          i === tileAIdx
+            ? "235, 62, 77"
+            : i === tileBIdx
+              ? "54, 116, 235"
+              : null;
       });
 
       tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
@@ -5763,9 +5865,13 @@ export function initNeRFVideo() {
   // uses the same matrix.
   const view = {
     center: { x: 0, y: 0, z: 0 },
-    yaw: 0, pitch: 0, zoom: 1,
-    cYaw: 1, sYaw: 0,
-    cPit: 1, sPit: 0,
+    yaw: 0,
+    pitch: 0,
+    zoom: 1,
+    cYaw: 1,
+    sYaw: 0,
+    cPit: 1,
+    sPit: 0,
   };
 
   function setView(cx, cy, cz, yaw, pitch, zoom) {
@@ -5822,7 +5928,10 @@ export function initNeRFVideo() {
         targets[i].y - HERO.y,
         targets[i].z - HERO.z,
       );
-      if (d < best) { best = d; HERO_IDX = i; }
+      if (d < best) {
+        best = d;
+        HERO_IDX = i;
+      }
     }
     targets[HERO_IDX] = { x: HERO.x, y: HERO.y, z: HERO.z };
   }
@@ -5888,21 +5997,29 @@ export function initNeRFVideo() {
   // Chapter-based playback: animation plays inside each chapter, then pauses
   // at the chapter's end frame until the user clicks to advance.
   const chapters = [
-    { start: 0.0,  end: 3.0,  title: "מצלמות תופסות את אותה סצנה מזוויות רבות" },
-    { start: 3.0,  end: 4.7,  title: "המצלמות מתכנסות סביב הסצנה" },
-    { start: 4.7,  end: 6.8,  title: "מתקרבים לאחת המצלמות" },
-    { start: 6.8,  end: 8.6,  title: "המצלמה שולחת קרן אל תוך הסצנה" },
-    { start: 8.6,  end: 11.3, title: "דוגמים נקודות לאורך הקרן" },
+    { start: 0.0, end: 3.0, title: "מצלמות תופסות את אותה סצנה מזוויות רבות" },
+    { start: 3.0, end: 4.7, title: "המצלמות מתכנסות סביב הסצנה" },
+    { start: 4.7, end: 6.8, title: "מתקרבים לאחת המצלמות" },
+    { start: 6.8, end: 8.6, title: "המצלמה שולחת קרן אל תוך הסצנה" },
+    { start: 8.6, end: 11.3, title: "דוגמים נקודות לאורך הקרן" },
     { start: 11.3, end: 12.8, title: "הרשת F_Θ מחכה לקבל כל נקודה" },
-    { start: 12.8, end: 22.3, title: "כל (x,y,z,θ,φ) עוברת דרך הרשת ומקבלת (RGB,σ)" },
+    {
+      start: 12.8,
+      end: 22.3,
+      title: "כל (x,y,z,θ,φ) עוברת דרך הרשת ומקבלת (RGB,σ)",
+    },
     { start: 22.3, end: 24.3, title: "הרשת מחזירה לכל הנקודות צבע וצפיפות" },
-    { start: 24.3, end: 27.8, title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה" },
+    {
+      start: 24.3,
+      end: 27.8,
+      title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה",
+    },
   ];
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
-  let chapterT = 0;     // storyboard time within chapter (0 → dur)
+  let chapterT = 0; // storyboard time within chapter (0 → dur)
   let paused = false;
-  let pausePulse = 0;   // 0..1 used to animate the "click to continue" hint
+  let pausePulse = 0; // 0..1 used to animate the "click to continue" hint
   // Deceleration state: when set, chapterT smoothly eases from
   // decelStartT to decelTargetT over DECEL wallclock seconds.
   let decelMode = false;
@@ -6012,8 +6129,18 @@ export function initNeRFVideo() {
       for (const sy of [-s, s])
         for (const sz of [-s, s]) verts.push({ x: sx, y: sy, z: sz });
     const edges = [
-      [0, 1], [0, 2], [0, 4], [1, 3], [1, 5], [2, 3], [2, 6],
-      [3, 7], [4, 5], [4, 6], [5, 7], [6, 7],
+      [0, 1],
+      [0, 2],
+      [0, 4],
+      [1, 3],
+      [1, 5],
+      [2, 3],
+      [2, 6],
+      [3, 7],
+      [4, 5],
+      [4, 6],
+      [5, 7],
+      [6, 7],
     ];
     const col = `rgba(40,44,52,${(0.55 * alpha).toFixed(3)})`;
     for (const [a, b] of edges) {
@@ -6036,9 +6163,7 @@ export function initNeRFVideo() {
   function drawSamples(appearT, colorMix, queriedIdx, queryFlash) {
     for (let i = 0; i < NUM_SAMPLES; i++) {
       const threshold = i / NUM_SAMPLES;
-      const local = clamp01(
-        (appearT - threshold) / (1 / NUM_SAMPLES + 0.04),
-      );
+      const local = clamp01((appearT - threshold) / (1 / NUM_SAMPLES + 0.04));
       if (local <= 0) continue;
       const p = samplePos(i);
       const proj = project(p.x, p.y, p.z);
@@ -6060,8 +6185,12 @@ export function initNeRFVideo() {
       // Glow halo (drawn first, under the sphere)
       if (glow > 0.05) {
         const halo = ctx.createRadialGradient(
-          proj.x, proj.y, r,
-          proj.x, proj.y, r * 4,
+          proj.x,
+          proj.y,
+          r,
+          proj.x,
+          proj.y,
+          r * 4,
         );
         halo.addColorStop(0, `rgba(255,210,60,${(0.55 * glow).toFixed(3)})`);
         halo.addColorStop(1, "rgba(255,210,60,0)");
@@ -6074,12 +6203,22 @@ export function initNeRFVideo() {
       // Sphere body with a soft radial gradient for a 3D look (highlight upper-left).
       const sphereR = r * (1 + glow * 0.2);
       const grad = ctx.createRadialGradient(
-        proj.x - sphereR * 0.35, proj.y - sphereR * 0.35, sphereR * 0.1,
-        proj.x, proj.y, sphereR,
+        proj.x - sphereR * 0.35,
+        proj.y - sphereR * 0.35,
+        sphereR * 0.1,
+        proj.x,
+        proj.y,
+        sphereR,
       );
-      grad.addColorStop(0, `rgb(${Math.min(255, (cr | 0) + 28)},${Math.min(255, (cg | 0) + 24)},${Math.min(255, (cb | 0) + 20)})`);
+      grad.addColorStop(
+        0,
+        `rgb(${Math.min(255, (cr | 0) + 28)},${Math.min(255, (cg | 0) + 24)},${Math.min(255, (cb | 0) + 20)})`,
+      );
       grad.addColorStop(0.65, `rgb(${cr | 0},${cg | 0},${cb | 0})`);
-      grad.addColorStop(1, `rgb(${Math.max(0, (cr | 0) - 50)},${Math.max(0, (cg | 0) - 48)},${Math.max(0, (cb | 0) - 44)})`);
+      grad.addColorStop(
+        1,
+        `rgb(${Math.max(0, (cr | 0) - 50)},${Math.max(0, (cg | 0) - 48)},${Math.max(0, (cb | 0) - 44)})`,
+      );
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(proj.x, proj.y, sphereR, 0, Math.PI * 2);
@@ -6196,7 +6335,13 @@ export function initNeRFVideo() {
     ctx.fillStyle = "rgba(244,244,246,0.85)";
     ctx.lineWidth = 2;
     drawArrow(ctx, inputX + fontSize * 2.6, rowY, barsX0 - 14, rowY);
-    drawArrow(ctx, barsX0 + barsTotalW + 6, rowY, outputX - fontSize * 1.7, rowY);
+    drawArrow(
+      ctx,
+      barsX0 + barsTotalW + 6,
+      rowY,
+      outputX - fontSize * 1.7,
+      rowY,
+    );
 
     ctx.restore();
 
@@ -6237,7 +6382,10 @@ export function initNeRFVideo() {
 
   function drawPixelChip(alpha) {
     if (alpha <= 0.01) return;
-    let rr = 0, gg = 0, bb = 0, tot = 0;
+    let rr = 0,
+      gg = 0,
+      bb = 0,
+      tot = 0;
     let trans = 1;
     for (let i = 0; i < NUM_SAMPLES; i++) {
       const s = samplePalette[i];
@@ -6249,7 +6397,11 @@ export function initNeRFVideo() {
       trans *= 1 - s[3];
       if (trans <= 0.01) break;
     }
-    if (tot > 0) { rr /= tot; gg /= tot; bb /= tot; }
+    if (tot > 0) {
+      rr /= tot;
+      gg /= tot;
+      bb /= tot;
+    }
     rr = lerp(245, rr, 0.85);
     gg = lerp(245, gg, 0.85);
     bb = lerp(245, bb, 0.85);
@@ -6350,7 +6502,8 @@ export function initNeRFVideo() {
     // camera while it fires, then follow the ray outward. Orbit oscillation
     // uses wall-clock time so the camera keeps floating during pauses.
     const orbit = wallT * 0.18;
-    const orbitYaw = Math.sin(orbit) * 0.42 + Math.sin(orbit * 0.37 + 1.3) * 0.1;
+    const orbitYaw =
+      Math.sin(orbit) * 0.42 + Math.sin(orbit * 0.37 + 1.3) * 0.1;
     const orbitPitch = Math.sin(orbit * 0.71 + 0.6) * 0.12 - 0.04;
     const orbitZoom = 1 + 0.08 * Math.sin(orbit * 0.5);
     // Small ambient drift that stays alive even while the orbit is dampened
@@ -6360,8 +6513,12 @@ export function initNeRFVideo() {
 
     // Focal target = the world point the orbit centers on. Moves toward HERO
     // during the hero phase, then sweeps along the ray, then returns home.
-    let cx = 0, cy = 0, cz = 0;
-    let extraYaw = 0, extraPitch = 0, extraZoom = 1;
+    let cx = 0,
+      cy = 0,
+      cz = 0;
+    let extraYaw = 0,
+      extraPitch = 0,
+      extraZoom = 1;
 
     // Hero focus ramps up at the converge → hero handoff, then decays once
     // the MLP/query phase takes over.
@@ -6386,9 +6543,9 @@ export function initNeRFVideo() {
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      // Tiny extra yaw so the angle on the hero frustum reads as a 3/4 view
-      // rather than dead-on.
-      extraYaw = -0.1 * heroFocus;
+      // Extra yaw turns the camera slightly to the right so we see the hero
+      // frustum from a 3/4 angle.
+      extraYaw = -0.22 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
       extraZoom = lerp(1, lerp(5.5, 1.6, pullBack), heroFocus * closeIn);
@@ -6397,7 +6554,8 @@ export function initNeRFVideo() {
     // Dampen the orbit hard while zoomed in so the tight close-up on the
     // hero frustum stays stable (driftYaw/Pitch add a faint breathing motion).
     const finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw + extraYaw;
-    const finalPitch = orbitPitch * (1 - heroFocus * 0.88) + driftPitch + extraPitch;
+    const finalPitch =
+      orbitPitch * (1 - heroFocus * 0.88) + driftPitch + extraPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
@@ -6511,10 +6669,8 @@ export function initNeRFVideo() {
       const proj = project(p.x, p.y, p.z);
       const anchor =
         arrowState.dir === "up" ? mlpInfo.inputAnchor : mlpInfo.outputAnchor;
-      const from =
-        arrowState.dir === "up" ? { x: proj.x, y: proj.y } : anchor;
-      const to =
-        arrowState.dir === "up" ? anchor : { x: proj.x, y: proj.y };
+      const from = arrowState.dir === "up" ? { x: proj.x, y: proj.y } : anchor;
+      const to = arrowState.dir === "up" ? anchor : { x: proj.x, y: proj.y };
       drawCurvedArrow(from, to, easeOut(arrowState.k));
     }
 
