@@ -5936,8 +5936,7 @@ export function initNeRFVideo() {
   let lastCaption = "";
   function updateCaption() {
     if (!captionEl) return;
-    const ch = chapters[chapterIdx];
-    const next = paused ? `${ch.title}  ·  לחץ להמשך` : ch.title;
+    const next = chapters[chapterIdx].title;
     if (next !== lastCaption) {
       lastCaption = next;
       captionEl.textContent = next;
@@ -6362,42 +6361,24 @@ export function initNeRFVideo() {
     let cx = 0, cy = 0, cz = 0;
     let extraYaw = 0, extraPitch = 0, extraZoom = 1;
 
-    // Blend in the "fly to hero" behaviour across the converge → hero window
-    // and decay it once the MLP/query phase takes over.
-    const heroApproach = easeInOut(clamp01((t - (P.convergeEnd - 0.3)) / 1.6));
+    // Blend in the "fly to hero" behaviour starting at the converge phase —
+    // the very first click pays off with a clearly visible leftward camera
+    // move — then decay it once the MLP/query phase takes over.
+    const heroApproach = easeInOut(clamp01((t - P.introEnd) / 2.4));
     const heroRelease = easeInOut(clamp01((t - (P.samplesEnd + 0.8)) / 1.6));
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
-      // Where to look at, along the ray. Before/at hero phase: HERO itself.
-      // After ray fires: pan outward so the ray streams across the screen.
-      let aimD = 0.0;
-      if (t > P.heroEnd) {
-        const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
-        aimD = lerp(0.0, 5.0, easeInOut(k));
-      }
-      const aim = {
-        x: HERO.x + heroDir.x * aimD,
-        y: HERO.y + heroDir.y * aimD,
-        z: HERO.z + heroDir.z * aimD,
-      };
-      cx = lerp(0, aim.x, heroFocus);
-      cy = lerp(0, aim.y, heroFocus);
-      cz = lerp(0, aim.z, heroFocus);
-      // Tilt the view slightly so the ray reads diagonally across the screen
-      // (left-to-right) rather than head-on.
-      extraYaw = -0.35 * heroFocus;
-      extraPitch = 0.12 * heroFocus;
-      // Zoom in really tight on the hero frustum while the ray is firing,
-      // then ease back gently as samples appear so we can see the whole ray.
+      // No focal shift, no extra yaw/pitch — leave the orbiting camera where
+      // it is and just zoom in on the centre of the scene. The user explicitly
+      // didn't want a translational fly-to-hero, only a closer view.
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.2));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(3.2, 1.4, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(2.6, 1.4, pullBack), heroFocus * closeIn);
     }
 
-    const finalYaw = orbitYaw * (1 - heroFocus * 0.7) + extraYaw + driftYaw;
-    const finalPitch =
-      orbitPitch * (1 - heroFocus * 0.7) + extraPitch + driftPitch;
+    const finalYaw = orbitYaw + driftYaw;
+    const finalPitch = orbitPitch + driftPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
@@ -6521,25 +6502,7 @@ export function initNeRFVideo() {
 
     ctx.restore();
 
-    // "Click to continue" indicator (gentle pulsing dot in the corner) when
-    // a chapter has finished playing.
-    if (paused) drawPauseHint();
-
     updateCaption();
-  }
-
-  function drawPauseHint() {
-    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 400);
-    const radius = 7 + 2 * pulse;
-    const cx = W - 38;
-    const cy = H - 38;
-    ctx.save();
-    ctx.globalAlpha = 0.55 + 0.3 * pulse;
-    ctx.fillStyle = "#ff5a36";
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 
   // One click = "go to the next chapter". Behaviour depends on state:
