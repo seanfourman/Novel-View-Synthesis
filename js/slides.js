@@ -3665,34 +3665,33 @@ export function initSfMLiDAR() {
   const VIS_ACCENT = "#ff5a36";
   const VIS_INK = "#1a1a1a";
 
-  // ── SfM panel canvas: real bunny polaroids → 3D bunny rotating in orbit ──
+  // ── SfM panel canvas: bunny polaroids → still bunny surrounded by recovered camera frustums ──
   const sfmVisDraw = (() => {
     const cv = split.querySelector(".cp-vis-sfm");
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
     const W = cv.width,
-      H = cv.height; // 400 × 340
+      H = cv.height; // 520 × 340
 
     const BASE = "assets/generated/bunny_renders/";
-    const SPRITE_FRAMES = 36,
-      SPRITE_COLS = 6;
+    const SPRITE_COLS = 6;
     const SPRITE_FW = 300,
       SPRITE_FH = 300;
+    // Frame used as the still bunny render. Row 2, col 4 — a moderate top-down 3/4 view.
+    const STILL_FRAME = 16;
 
-    // Real bunny polaroid images (9 angles)
+    // Real bunny polaroid images (9 angles) shown on the left
     const polaroidImgs = Array.from({ length: 9 }, (_, i) => {
       const img = new Image();
       img.src = BASE + `polaroid_${String(i).padStart(2, "0")}.png`;
       return img;
     });
 
-    // Sprite sheet for rotating bunny
+    // Sprite sheet — one frame is drawn as the still 3D bunny render
     const spriteSheet = new Image();
     spriteSheet.src = BASE + "sprite_sheet.png";
 
     // Photo positions: (x, y, rotation_rad) - scattered 3×3 grid on left zone
-    // Canvas is 520×340: photos on left ~x:50-180, orbit on right ~x:310-500.
-    // Min x must account for PW/2 + rotation extent (~46px at max angle) to avoid left-edge clipping.
     const photos = [
       [76, 78, -0.28],
       [124, 58, 0.16],
@@ -3706,20 +3705,12 @@ export function initSfMLiDAR() {
     ];
 
     const PW = 72,
-      PH = 84; // polaroid display size on canvas
-    const ox = 390,
-      oy = H * 0.57; // orbit centre shifted right + down
-    const rx = 90,
-      ry1 = 54,
-      ry2 = 28;
-    const N = 26;
-    let t = 0;
+      PH = 84;
 
     const drawPolaroid = (px, py, angle, img) => {
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(angle);
-      // Drop shadow
       ctx.shadowColor = "rgba(0,0,0,0.16)";
       ctx.shadowBlur = 7;
       ctx.shadowOffsetX = 2;
@@ -3727,7 +3718,6 @@ export function initSfMLiDAR() {
       ctx.fillStyle = "#f8f6f2";
       ctx.fillRect(-PW / 2, -PH / 2, PW, PH);
       ctx.shadowColor = "transparent";
-      // Bunny photo inside frame
       const m = 4,
         bot = 11;
       if (img.complete && img.naturalWidth > 0) {
@@ -3739,14 +3729,112 @@ export function initSfMLiDAR() {
       ctx.restore();
     };
 
-    return (dtScale = 1) => {
-      t += dtScale;
+    // ── 3D scene: still bunny + two horizontal rings of recovered cameras ──
+    // Viewer is above and slightly in front of the scene, looking down at the
+    // bunny at the origin. World Y is up, world Z is forward (toward viewer).
+    const ox = 390,
+      oy = H * 0.55;
+    const SCALE = 90;
+    const Y_FACTOR = 0.86; // world Y → screen Y compression (mostly preserved)
+    const Z_FACTOR = 0.50; // world Z → screen Y compression (top-down tilt)
+
+    const project = (x, y, z) => ({
+      sx: ox + x * SCALE,
+      sy: oy - y * SCALE * Y_FACTOR + z * SCALE * Z_FACTOR,
+    });
+
+    const buildRing = (count, radius, yLevel, phase = 0) => {
+      const cams = [];
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + phase;
+        cams.push([Math.cos(a) * radius, yLevel, Math.sin(a) * radius]);
+      }
+      return cams;
+    };
+
+    // Two horizontal rings — outer/lower and inner/upper, like the classic SfM diagram
+    const ringA = buildRing(48, 1.05, -0.16);
+    const ringB = buildRing(42, 0.92, 0.30, Math.PI / 48);
+
+    // For a camera at world position camPos pointing at the origin, build the
+    // frustum geometry: apex at the camera, 4 corners of the far image plane
+    // between the camera and the bunny. The view spreads outward from the
+    // apex toward the scene.
+    const frustumOf = (camPos) => {
+      const [cx, cy, cz] = camPos;
+      const len = Math.hypot(cx, cy, cz) || 1;
+      const lx = -cx / len,
+        ly = -cy / len,
+        lz = -cz / len;
+      // right = cross(look, worldUp=(0,1,0)) = (-lz, 0, lx)
+      let rxv = -lz,
+        ryv = 0,
+        rzv = lx;
+      const rLen = Math.hypot(rxv, ryv, rzv) || 1;
+      rxv /= rLen;
+      ryv /= rLen;
+      rzv /= rLen;
+      // up = cross(right, look)
+      const uxv = ryv * lz - rzv * ly;
+      const uyv = rzv * lx - rxv * lz;
+      const uzv = rxv * ly - ryv * lx;
+
+      const d = 0.18,
+        fw = 0.16,
+        fh = 0.11;
+      const ccx = cx + lx * d,
+        ccy = cy + ly * d,
+        ccz = cz + lz * d;
+      const corner = (sR, sU) => [
+        ccx + rxv * (fw / 2) * sR + uxv * (fh / 2) * sU,
+        ccy + ryv * (fw / 2) * sR + uyv * (fh / 2) * sU,
+        ccz + rzv * (fw / 2) * sR + uzv * (fh / 2) * sU,
+      ];
+      return {
+        apex: [cx, cy, cz],
+        corners: [
+          corner(-1, -1),
+          corner(-1, 1),
+          corner(1, 1),
+          corner(1, -1),
+        ],
+        worldZ: cz,
+      };
+    };
+
+    const allFrustums = [...ringA, ...ringB].map(frustumOf);
+    const backFrustums = allFrustums.filter((f) => f.worldZ <= 0);
+    const frontFrustums = allFrustums.filter((f) => f.worldZ > 0);
+
+    const drawFrustum = (f, alpha) => {
+      const a = project(f.apex[0], f.apex[1], f.apex[2]);
+      const cs = f.corners.map((c) => project(c[0], c[1], c[2]));
+      ctx.strokeStyle = `rgba(220,40,30,${alpha})`;
+      ctx.lineWidth = 1;
+      // apex → each corner of the far plane
+      for (const c of cs) {
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.lineTo(c.sx, c.sy);
+        ctx.stroke();
+      }
+      // far-plane rectangle
+      ctx.beginPath();
+      ctx.moveTo(cs[0].sx, cs[0].sy);
+      for (let i = 1; i < cs.length; i++) {
+        ctx.lineTo(cs[i].sx, cs[i].sy);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    };
+
+    return (_dtScale = 1) => {
       ctx.clearRect(0, 0, W, H);
 
-      // Polaroid photos
+      // Polaroid photos (input)
       photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
-      // Arrow (centred in the gap between photos and orbit)
+      // Arrow
       const ax = 210,
         ay = H * 0.5,
         aw = 32,
@@ -3763,65 +3851,14 @@ export function initSfMLiDAR() {
       ctx.closePath();
       ctx.fill();
 
-      const rot = t * 0.007;
+      // Back-half frustums (behind the bunny) — drawn first, slightly faded
+      backFrustums.forEach((f) => drawFrustum(f, 0.32));
 
-      // Orbit rings
-      const outer = Array.from({ length: N }, (_, i) => {
-        const a = (i / N) * Math.PI * 2 + rot;
-        return {
-          x: ox + Math.cos(a) * rx,
-          y: oy + Math.sin(a) * ry1,
-          z: Math.sin(a),
-        };
-      });
-      const inner = Array.from({ length: N }, (_, i) => {
-        const a = (i / N) * Math.PI * 2 - rot * 0.55 + Math.PI * 0.18;
-        return {
-          x: ox + Math.cos(a) * rx * 0.72,
-          y: oy + Math.sin(a) * ry2,
-          z: Math.sin(a),
-        };
-      });
-
-      // Back-half mesh + arcs
-      ctx.lineWidth = 0.8;
-      for (let i = 0; i < N; i++) {
-        const o = outer[i],
-          inn = inner[i],
-          o2 = outer[(i + 1) % N];
-        if (o.z > 0 || inn.z > 0) continue;
-        ctx.strokeStyle = "rgba(175,38,28,0.13)";
-        ctx.beginPath();
-        ctx.moveTo(o.x, o.y);
-        ctx.lineTo(inn.x, inn.y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(o.x, o.y);
-        ctx.lineTo(o2.x, o2.y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(inn.x, inn.y);
-        ctx.lineTo(o2.x, o2.y);
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.ellipse(ox, oy, rx, ry1, 0, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = "rgba(175,38,28,0.38)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(ox, oy, rx * 0.72, ry2, 0, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = "rgba(175,38,28,0.30)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Rotating 3D bunny (sprite sheet, synced to orbit speed)
-      const frame =
-        Math.floor((rot * SPRITE_FRAMES) / (2 * Math.PI)) % SPRITE_FRAMES;
-      const fc = frame % SPRITE_COLS,
-        fr = Math.floor(frame / SPRITE_COLS);
-      const bSize = 130;
+      // Still bunny render in the centre
       if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
+        const fc = STILL_FRAME % SPRITE_COLS;
+        const fr = Math.floor(STILL_FRAME / SPRITE_COLS);
+        const bSize = 130;
         ctx.drawImage(
           spriteSheet,
           fc * SPRITE_FW,
@@ -3829,53 +3866,14 @@ export function initSfMLiDAR() {
           SPRITE_FW,
           SPRITE_FH,
           ox - bSize / 2,
-          oy - bSize / 2 - 8,
+          oy - bSize / 2 - 6,
           bSize,
           bSize,
         );
       }
 
-      // Front-half mesh + arcs (drawn over bunny)
-      ctx.lineWidth = 0.8;
-      for (let i = 0; i < N; i++) {
-        const o = outer[i],
-          inn = inner[i],
-          o2 = outer[(i + 1) % N];
-        if (o.z <= 0 || inn.z <= 0) continue;
-        ctx.strokeStyle = "rgba(175,38,28,0.13)";
-        ctx.beginPath();
-        ctx.moveTo(o.x, o.y);
-        ctx.lineTo(inn.x, inn.y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(o.x, o.y);
-        ctx.lineTo(o2.x, o2.y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(inn.x, inn.y);
-        ctx.lineTo(o2.x, o2.y);
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.ellipse(ox, oy, rx, ry1, 0, 0, Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.80)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(ox, oy, rx * 0.72, ry2, 0, 0, Math.PI);
-      ctx.strokeStyle = "rgba(175,38,28,0.68)";
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-
-      // Camera dots
-      for (let i = 0; i < N; i++) {
-        const o = outer[i];
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, 2.8, 0, Math.PI * 2);
-        ctx.fillStyle =
-          o.z > 0 ? "rgba(175,38,28,0.88)" : "rgba(175,38,28,0.32)";
-        ctx.fill();
-      }
+      // Front-half frustums (in front of the bunny) — drawn over it, fully opaque
+      frontFrustums.forEach((f) => drawFrustum(f, 0.82));
     };
   })();
 
