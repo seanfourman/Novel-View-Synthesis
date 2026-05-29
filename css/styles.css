@@ -4030,7 +4030,7 @@ code {
   justify-content: center;
   gap: clamp(0.5rem, 0.9vw, 0.85rem);
   white-space: nowrap;
-  font-size: clamp(0.9rem, 1.15vw, 1.05rem);
+  font-size: 21px;
   color: var(--ink-soft);
   direction: ltr;
 }
@@ -4223,7 +4223,7 @@ code {
   color: var(--ink-soft);
   direction: rtl;
   text-align: right;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 500;
   line-height: 1.45;
   white-space: nowrap;
@@ -4370,7 +4370,7 @@ code {
   padding: clamp(1.2rem, 2.5vw, 2.5rem) clamp(2rem, 4vw, 5rem);
   box-sizing: border-box;
   direction: rtl;
-  gap: clamp(0.8rem, 1.5vh, 1.4rem);
+  gap: clamp(0.15rem, 0.35vh, 0.3rem);
 }
 
 .srn-learn-top {
@@ -4391,17 +4391,24 @@ code {
 }
 
 .srn-learn-intro {
-  font-size: clamp(0.95rem, 1.15vw, 1.15rem);
+  font-size: 21px;
   line-height: 1.55;
   color: var(--ink-soft);
-  margin: 0;
+  margin: 0 auto 20px;
   max-width: 90ch;
-  margin-inline: auto;
 }
 
 .srn-learn-intro strong {
   color: var(--ink);
   font-weight: 700;
+}
+
+.srn-learn-net-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
 }
 
 .srn-learn-net-wrap {
@@ -4413,7 +4420,7 @@ code {
   box-shadow: none;
   overflow: visible;
   position: relative;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .srn-learn-net-wrap #srn-net-canvas {
@@ -4517,7 +4524,7 @@ code {
   gap: 0.6rem;
   width: 100%;
   max-width: 900px;
-  font-size: 18px;
+  font-size: 21px;
   line-height: 1.6;
   color: var(--ink-soft);
   text-align: center;
@@ -4534,7 +4541,7 @@ code {
 }
 
 .srn-learn-tagline {
-  font-size: clamp(0.95rem, 1.15vw, 1.1rem);
+  font-size: 21px;
   color: var(--accent);
   font-weight: 600;
   text-align: center;
