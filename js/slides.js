@@ -5950,6 +5950,14 @@ export function initNeRFVideo() {
   }
 
   const heroDir = normalize3({ x: -HERO.x, y: -HERO.y, z: -HERO.z });
+  // Camera frustum depth from apex to the square image plane.
+  const FRUSTUM_DEPTH = 0.55;
+  const legoViewImg = new Image();
+  legoViewImg.decoding = "async";
+  legoViewImg.src = new URL(
+    "../assets/nerf/nerf video/lego/train/r_0.png",
+    import.meta.url,
+  ).href;
 
   const sampleDists = [];
   {
@@ -6074,32 +6082,99 @@ export function initNeRFVideo() {
     ctx.stroke();
   }
 
-  function drawFrustum(pos, dir, alpha, highlight = false) {
-    if (alpha <= 0.01) return;
+  function drawImageTriangle(img, s0, s1, s2, d0, d1, d2, alpha) {
+    const denom =
+      s0.x * (s1.y - s2.y) +
+      s1.x * (s2.y - s0.y) +
+      s2.x * (s0.y - s1.y);
+    if (Math.abs(denom) < 0.001) return;
+
+    const a =
+      (d0.x * (s1.y - s2.y) +
+        d1.x * (s2.y - s0.y) +
+        d2.x * (s0.y - s1.y)) /
+      denom;
+    const b =
+      (d0.y * (s1.y - s2.y) +
+        d1.y * (s2.y - s0.y) +
+        d2.y * (s0.y - s1.y)) /
+      denom;
+    const c =
+      (d0.x * (s2.x - s1.x) +
+        d1.x * (s0.x - s2.x) +
+        d2.x * (s1.x - s0.x)) /
+      denom;
+    const d =
+      (d0.y * (s2.x - s1.x) +
+        d1.y * (s0.x - s2.x) +
+        d2.y * (s1.x - s0.x)) /
+      denom;
+    const e =
+      (d0.x * (s1.x * s2.y - s2.x * s1.y) +
+        d1.x * (s2.x * s0.y - s0.x * s2.y) +
+        d2.x * (s0.x * s1.y - s1.x * s0.y)) /
+      denom;
+    const f =
+      (d0.y * (s1.x * s2.y - s2.x * s1.y) +
+        d1.y * (s2.x * s0.y - s0.x * s2.y) +
+        d2.y * (s0.x * s1.y - s1.x * s0.y)) /
+      denom;
+
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.beginPath();
+    ctx.moveTo(d0.x, d0.y);
+    ctx.lineTo(d1.x, d1.y);
+    ctx.lineTo(d2.x, d2.y);
+    ctx.closePath();
+    ctx.clip();
+    ctx.transform(a, b, c, d, e, f);
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+
+  function drawImageOnFrustumBase(img, corners, alpha) {
+    if (!img.complete || !img.naturalWidth || !img.naturalHeight) return;
+    const [tr, tl, bl, br] = corners;
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
+    const stl = { x: 0, y: 0 };
+    const str = { x: iw, y: 0 };
+    const sbr = { x: iw, y: ih };
+    const sbl = { x: 0, y: ih };
+    drawImageTriangle(img, stl, str, sbl, tl, tr, bl, alpha);
+    drawImageTriangle(img, str, sbr, sbl, tr, br, bl, alpha);
+  }
+
+  // Pyramid wireframe with a SQUARE base. pos is the apex (the camera's eye),
+  // dir points outward from the apex to the base. Returns the 4 projected
+  // base corners so the caller can paint a texture on the base if needed.
+  function drawFrustum(pos, dir, alpha, highlight = false, baseImage = null) {
+    if (alpha <= 0.01) return null;
     const f = normalize3(dir);
     const worldUp = { x: 0, y: 1, z: 0 };
     let right = normalize3(cross3(f, worldUp));
     if (!isFinite(right.x)) right = { x: 1, y: 0, z: 0 };
     const up = normalize3(cross3(right, f));
 
-    const depthLen = 0.55;
-    const halfW = 0.32;
-    const halfH = 0.24;
+    const depthLen = FRUSTUM_DEPTH;
+    const half = 0.36; // square base
     const bc = {
       x: pos.x + f.x * depthLen,
       y: pos.y + f.y * depthLen,
       z: pos.z + f.z * depthLen,
     };
     const corners = [
-      [+1, +1],
-      [-1, +1],
-      [-1, -1],
-      [+1, -1],
+      [+1, +1], // top-right (in local axes)
+      [-1, +1], // top-left
+      [-1, -1], // bottom-left
+      [+1, -1], // bottom-right
     ].map(([sx, sy]) => ({
-      x: bc.x + right.x * halfW * sx + up.x * halfH * sy,
-      y: bc.y + right.y * halfW * sx + up.y * halfH * sy,
-      z: bc.z + right.z * halfW * sx + up.z * halfH * sy,
+      x: bc.x + right.x * half * sx + up.x * half * sy,
+      y: bc.y + right.y * half * sx + up.y * half * sy,
+      z: bc.z + right.z * half * sx + up.z * half * sy,
     }));
+    const projectedCorners = corners.map((c) => project(c.x, c.y, c.z));
 
     const apex = project(pos.x, pos.y, pos.z);
     const depthFade = clamp01(1.4 - apex.depth / 14);
@@ -6110,6 +6185,10 @@ export function initNeRFVideo() {
       : `rgba(60,64,72,${baseAlpha.toFixed(3)})`;
     const width = highlight ? 2.2 : 1.0;
 
+    if (baseImage) {
+      drawImageOnFrustumBase(baseImage, projectedCorners, 0.96 * alpha);
+    }
+
     for (const c of corners) strokeLine3(pos, c, color, width);
     for (let i = 0; i < 4; i++) {
       strokeLine3(corners[i], corners[(i + 1) % 4], color, width);
@@ -6119,6 +6198,9 @@ export function initNeRFVideo() {
     ctx.beginPath();
     ctx.arc(apex.x, apex.y, highlight ? 3.4 : 2.0, 0, Math.PI * 2);
     ctx.fill();
+
+    // Project the base corners so the caller can paint a texture on the square.
+    return projectedCorners;
   }
 
   function drawCenterObject(alpha) {
@@ -6612,7 +6694,7 @@ export function initNeRFVideo() {
 
     for (const c of camData) {
       const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
-      drawFrustum(c.pos, c.dir, 1.0, isHero);
+      drawFrustum(c.pos, c.dir, 1.0, isHero, isHero ? legoViewImg : null);
     }
 
     drawCenterObject(eConverge * 0.85);
