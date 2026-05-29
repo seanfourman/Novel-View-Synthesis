@@ -4335,7 +4335,7 @@ code {
 
 .srn-video-label {
   position: absolute;
-  right: 8px;
+  right: 2px;
   font-size: 15px;
   font-weight: 700;
   color: #000;
@@ -4357,7 +4357,7 @@ code {
   top: 33.75%;
 }
 .srn-video-label-3 {
-  top: 65.5%;
+  top: calc(65.5% - 5px);
 }
 
 /* ---- Slide 11: What SRN learns (centered layout, network animation in middle) ---- */
