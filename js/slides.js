@@ -5955,7 +5955,7 @@ export function initNeRFVideo() {
   const legoViewImg = new Image();
   legoViewImg.decoding = "async";
   legoViewImg.src = new URL(
-    "../assets/nerf/nerf video/lego/train/r_0.png",
+    "../assets/nerf/nerf video/lego/r_63.png",
     import.meta.url,
   ).href;
 
@@ -6084,30 +6084,20 @@ export function initNeRFVideo() {
 
   function drawImageTriangle(img, s0, s1, s2, d0, d1, d2, alpha) {
     const denom =
-      s0.x * (s1.y - s2.y) +
-      s1.x * (s2.y - s0.y) +
-      s2.x * (s0.y - s1.y);
+      s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
     if (Math.abs(denom) < 0.001) return;
 
     const a =
-      (d0.x * (s1.y - s2.y) +
-        d1.x * (s2.y - s0.y) +
-        d2.x * (s0.y - s1.y)) /
+      (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) /
       denom;
     const b =
-      (d0.y * (s1.y - s2.y) +
-        d1.y * (s2.y - s0.y) +
-        d2.y * (s0.y - s1.y)) /
+      (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) /
       denom;
     const c =
-      (d0.x * (s2.x - s1.x) +
-        d1.x * (s0.x - s2.x) +
-        d2.x * (s1.x - s0.x)) /
+      (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) /
       denom;
     const d =
-      (d0.y * (s2.x - s1.x) +
-        d1.y * (s0.x - s2.x) +
-        d2.y * (s1.x - s0.x)) /
+      (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) /
       denom;
     const e =
       (d0.x * (s1.x * s2.y - s2.x * s1.y) +
