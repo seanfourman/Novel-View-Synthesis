@@ -5955,38 +5955,53 @@ export function initNeRFVideo() {
       if (local <= 0) continue;
       const p = samplePos(i);
       const proj = project(p.x, p.y, p.z);
-      const baseR = 10 * proj.scale * 0.18;
+      // Fixed on-screen radius with mild perspective scaling (clamped).
+      const sizeScale = Math.max(0.55, Math.min(1.7, CAM_DIST / proj.depth));
+      const baseR = Math.min(W, H) * 0.012 * sizeScale;
       const r = baseR * easeOut(local);
 
       const mix = colorMix[i];
       const target = samplePalette[i];
-      const cr = lerp(240, target[0], mix);
-      const cg = lerp(240, target[1], mix);
-      const cb = lerp(245, target[2], mix);
+      // Neutral (un-queried) reads as a cool light gray; queried fades to palette.
+      const cr = lerp(218, target[0], mix);
+      const cg = lerp(222, target[1], mix);
+      const cb = lerp(230, target[2], mix);
 
       let glow = 0;
       if (i === queriedIdx) glow = queryFlash;
 
-      ctx.beginPath();
-      ctx.arc(proj.x, proj.y, r * (1 + glow * 0.25), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${cr | 0},${cg | 0},${cb | 0},${(0.85 + glow * 0.15).toFixed(3)})`;
-      ctx.fill();
-      ctx.lineWidth = 1.1;
-      ctx.strokeStyle = `rgba(40,44,52,${(0.55 + glow * 0.4).toFixed(3)})`;
-      ctx.stroke();
-
+      // Glow halo (drawn first, under the sphere)
       if (glow > 0.05) {
-        const grad = ctx.createRadialGradient(
+        const halo = ctx.createRadialGradient(
           proj.x, proj.y, r,
-          proj.x, proj.y, r * 3.5,
+          proj.x, proj.y, r * 4,
         );
-        grad.addColorStop(0, `rgba(255,220,70,${(0.45 * glow).toFixed(3)})`);
-        grad.addColorStop(1, "rgba(255,220,70,0)");
-        ctx.fillStyle = grad;
+        halo.addColorStop(0, `rgba(255,210,60,${(0.55 * glow).toFixed(3)})`);
+        halo.addColorStop(1, "rgba(255,210,60,0)");
+        ctx.fillStyle = halo;
         ctx.beginPath();
-        ctx.arc(proj.x, proj.y, r * 3.5, 0, Math.PI * 2);
+        ctx.arc(proj.x, proj.y, r * 4, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // Sphere body with a soft radial gradient for a 3D look (highlight upper-left).
+      const sphereR = r * (1 + glow * 0.2);
+      const grad = ctx.createRadialGradient(
+        proj.x - sphereR * 0.35, proj.y - sphereR * 0.35, sphereR * 0.1,
+        proj.x, proj.y, sphereR,
+      );
+      grad.addColorStop(0, `rgb(${Math.min(255, (cr | 0) + 28)},${Math.min(255, (cg | 0) + 24)},${Math.min(255, (cb | 0) + 20)})`);
+      grad.addColorStop(0.65, `rgb(${cr | 0},${cg | 0},${cb | 0})`);
+      grad.addColorStop(1, `rgb(${Math.max(0, (cr | 0) - 50)},${Math.max(0, (cg | 0) - 48)},${Math.max(0, (cb | 0) - 44)})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, sphereR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crisp outline so spheres remain readable on white.
+      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = `rgba(40,44,52,${(0.45 + glow * 0.5).toFixed(3)})`;
+      ctx.stroke();
     }
   }
 
@@ -6022,9 +6037,9 @@ export function initNeRFVideo() {
   function drawMLP(alpha) {
     if (alpha <= 0.01) return null;
     const boxW = Math.min(W * 0.62, 880);
-    const boxH = Math.min(H * 0.22, 180);
+    const boxH = Math.min(H * 0.26, 210);
     const boxX = (W - boxW) / 2;
-    const boxY = Math.max(20, H * 0.08);
+    const boxY = Math.max(20, H * 0.07);
     const r = 14;
 
     ctx.save();
@@ -6041,8 +6056,9 @@ export function initNeRFVideo() {
     ctx.stroke();
 
     const cx = boxX + boxW / 2;
-    const cy = boxY + boxH / 2;
-    const fontSize = Math.max(18, boxH * 0.22);
+    // Pull the row of input/F_Θ/output up so the F_Θ label has room below.
+    const rowY = boxY + boxH * 0.42;
+    const fontSize = Math.max(18, boxH * 0.2);
     ctx.fillStyle = "#f4f4f6";
     ctx.font = `italic ${fontSize}px "Times New Roman", Georgia, serif`;
     ctx.textBaseline = "middle";
@@ -6050,37 +6066,50 @@ export function initNeRFVideo() {
 
     const inputText = "(x,y,z,θ,φ)";
     const outputText = "(RGBσ)";
-    const inputX = boxX + boxW * 0.21;
-    const outputX = boxX + boxW * 0.79;
-    ctx.fillText(inputText, inputX, cy);
-    ctx.fillText(outputText, outputX, cy);
+    const inputX = boxX + boxW * 0.22;
+    const outputX = boxX + boxW * 0.78;
+    ctx.fillText(inputText, inputX, rowY);
+    ctx.fillText(outputText, outputX, rowY);
 
     const barCount = 3;
     const barW = Math.max(10, boxW * 0.022);
-    const barH = boxH * 0.55;
+    const barH = boxH * 0.42;
     const barGap = barW * 0.7;
     const barsTotalW = barCount * barW + (barCount - 1) * barGap;
     const barsX0 = cx - barsTotalW / 2;
-    const barsY = cy - barH / 2;
+    const barsY = rowY - barH / 2;
     ctx.fillStyle = "#7ec9b3";
     for (let i = 0; i < barCount; i++) {
       const x = barsX0 + i * (barW + barGap);
       roundRect(ctx, x, barsY, barW, barH, 3);
       ctx.fill();
     }
+
+    // F_Θ label centered below the bars, fully inside the box.
+    const labelMain = fontSize * 0.85;
+    const labelSub = labelMain * 0.65;
+    const labelY = barsY + barH + labelMain * 0.95;
     ctx.fillStyle = "#dfe2e6";
-    ctx.font = `italic ${fontSize * 0.85}px "Times New Roman", Georgia, serif`;
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `italic ${labelMain}px "Times New Roman", Georgia, serif`;
+    const fW = ctx.measureText("F").width;
+    ctx.font = `italic ${labelSub}px "Times New Roman", Georgia, serif`;
+    const tW = ctx.measureText("Θ").width;
+    const blockW = fW + tW * 0.95;
+    const blockX = cx - blockW / 2;
+    ctx.font = `italic ${labelMain}px "Times New Roman", Georgia, serif`;
     ctx.textAlign = "left";
-    ctx.fillText("F", cx - fontSize * 0.32, barsY + barH + fontSize * 0.7);
-    ctx.font = `italic ${fontSize * 0.55}px "Times New Roman", Georgia, serif`;
-    ctx.fillText("Θ", cx - fontSize * 0.02, barsY + barH + fontSize * 0.85);
+    ctx.fillText("F", blockX, labelY);
+    ctx.font = `italic ${labelSub}px "Times New Roman", Georgia, serif`;
+    ctx.fillText("Θ", blockX + fW * 0.95, labelY + labelSub * 0.35);
 
     ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.strokeStyle = "rgba(244,244,246,0.85)";
     ctx.fillStyle = "rgba(244,244,246,0.85)";
     ctx.lineWidth = 2;
-    drawArrow(ctx, inputX + fontSize * 2.6, cy, barsX0 - 14, cy);
-    drawArrow(ctx, barsX0 + barsTotalW + 6, cy, outputX - fontSize * 1.7, cy);
+    drawArrow(ctx, inputX + fontSize * 2.6, rowY, barsX0 - 14, rowY);
+    drawArrow(ctx, barsX0 + barsTotalW + 6, rowY, outputX - fontSize * 1.7, rowY);
 
     ctx.restore();
 
