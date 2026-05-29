@@ -5884,20 +5884,56 @@ export function initNeRFVideo() {
     [220, 220, 220, 0.08],
   ];
 
-  function captionForTime(tt) {
-    if (tt < P.convergeEnd) return "מצלמות תופסות את אותה סצנה מזוויות רבות";
-    if (tt < P.rayEnd) return "מכל פיקסל שולחים קרן אל תוך הסצנה";
-    if (tt < P.mlpEnd) return "דוגמים נקודות לאורך הקרן";
-    if (tt < P.queryEnd)
-      return "כל נקודה (x,y,z) עם כיוון הצפייה (θ,φ) עוברת דרך הרשת F_Θ";
-    if (tt < P.fillEnd) return "הרשת מחזירה לכל נקודה צבע (RGB) וצפיפות σ";
-    if (tt < P.holdEnd) return "כל הדגימות מצטרפות לצבע אחד של פיקסל בתמונה החדשה";
-    return "";
+  // Chapter-based playback: animation plays inside each chapter, then pauses
+  // at the chapter's end frame until the user clicks to advance.
+  const chapters = [
+    { start: 0.0,  end: 3.0,  title: "מצלמות תופסות את אותה סצנה מזוויות רבות" },
+    { start: 3.0,  end: 4.7,  title: "המצלמות מתכנסות סביב הסצנה" },
+    { start: 4.7,  end: 6.8,  title: "מצלמה אחת שולחת קרן אל תוך הסצנה" },
+    { start: 6.8,  end: 9.5,  title: "דוגמים נקודות לאורך הקרן" },
+    { start: 9.5,  end: 11.0, title: "הרשת F_Θ מחכה לקבל כל נקודה" },
+    { start: 11.0, end: 20.5, title: "כל (x,y,z,θ,φ) עוברת דרך הרשת ומקבלת (RGB,σ)" },
+    { start: 20.5, end: 22.5, title: "הרשת מחזירה לכל הנקודות צבע וצפיפות" },
+    { start: 22.5, end: 26.0, title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה" },
+  ];
+  const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
+  let chapterIdx = 0;
+  let chapterT = 0;     // storyboard time within chapter (0 → dur)
+  let paused = false;
+  let pausePulse = 0;   // 0..1 used to animate the "click to continue" hint
+  // Deceleration state: when set, chapterT smoothly eases from
+  // decelStartT to decelTargetT over DECEL wallclock seconds.
+  let decelMode = false;
+  let decelStartT = 0;
+  let decelTargetT = 0;
+  let decelElapsed = 0;
+
+  function chapterDur(i) {
+    return chapters[i].end - chapters[i].start;
   }
+
+  function beginDecel() {
+    if (decelMode) return;
+    decelMode = true;
+    decelStartT = chapterT;
+    decelTargetT = chapterDur(chapterIdx);
+    decelElapsed = 0;
+  }
+
+  function advanceChapter() {
+    chapterIdx = (chapterIdx + 1) % chapters.length;
+    chapterT = 0;
+    paused = false;
+    pausePulse = 0;
+    decelMode = false;
+    updateCaption();
+  }
+
   let lastCaption = "";
-  function updateCaption(tt) {
+  function updateCaption() {
     if (!captionEl) return;
-    const next = captionForTime(tt);
+    const ch = chapters[chapterIdx];
+    const next = paused ? `${ch.title}  ·  לחץ להמשך` : ch.title;
     if (next !== lastCaption) {
       lastCaption = next;
       captionEl.textContent = next;
@@ -6237,10 +6273,51 @@ export function initNeRFVideo() {
   }
 
   let t = 0;
+  // Wall-clock timer that always advances, even when the storyboard is paused.
+  // Used for purely ambient motion (orbit drift, wild-camera wobble/spin) so
+  // the view keeps floating during a pause.
+  let wallT = 0;
 
   function step(dtScale) {
-    t += dtScale / 60;
-    if (t >= CYCLE) t -= CYCLE;
+    const dt = dtScale / 60;
+    wallT += dt;
+    if (paused) {
+      pausePulse = Math.min(1, pausePulse + dt / 0.6);
+      return;
+    }
+    const dur = chapterDur(chapterIdx);
+
+    // Auto-trigger deceleration once the storyboard is close enough that a
+    // cosine ease-out from here will land on the chapter end with zero rate.
+    // (Natural decel covers ~DECEL/2 storyboard seconds in DECEL wallclock
+    // seconds: rate 1 → 0 with average 0.5.)
+    if (!decelMode && chapterT >= dur - DECEL / 2) {
+      beginDecel();
+    }
+
+    if (decelMode) {
+      decelElapsed += dt;
+      if (decelElapsed >= DECEL) {
+        chapterT = decelTargetT;
+        paused = true;
+        decelMode = false;
+        updateCaption();
+      } else {
+        // Position curve f(k) = k + sin(π·k)/π. Properties:
+        //   f(0)=0, f(1)=1, f'(0)=2, f'(1)=0.
+        // For the natural ease-in (auto-trigger at dur - DECEL/2), the
+        // storyboard advance is DECEL/2 over DECEL seconds, so the actual
+        // rate at k=0 is 0.5 * f'(0) = 1 — a perfect handoff from
+        // full-speed play to the decel curve. For a click-initiated decel
+        // covering more ground, the rate starts higher then eases to 0.
+        const k = decelElapsed / DECEL;
+        const f = k + Math.sin(Math.PI * k) / Math.PI;
+        chapterT = decelStartT + (decelTargetT - decelStartT) * f;
+      }
+    } else {
+      chapterT += dt;
+    }
+    t = chapters[chapterIdx].start + chapterT;
   }
 
   function draw() {
@@ -6255,16 +6332,22 @@ export function initNeRFVideo() {
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
     const fillT = clamp01((t - P.queryEnd) / (P.fillEnd - P.queryEnd));
     const pixelT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
-    const fadeOut = clamp01((t - P.holdEnd) / (CYCLE - P.holdEnd));
+    // No auto-loop fade: the deck stays on the current chapter's last frame
+    // until the user clicks. Only the initial fade-in remains.
     const fadeIn = clamp01(t / 0.4);
-    const globalAlpha = Math.min(fadeIn, 1 - fadeOut);
+    const globalAlpha = fadeIn;
 
     // Virtual camera path: orbit the scene by default, fly close to the hero
-    // camera while it fires, then follow the ray outward.
-    const orbit = t * 0.18;
+    // camera while it fires, then follow the ray outward. Orbit oscillation
+    // uses wall-clock time so the camera keeps floating during pauses.
+    const orbit = wallT * 0.18;
     const orbitYaw = Math.sin(orbit) * 0.42 + Math.sin(orbit * 0.37 + 1.3) * 0.1;
     const orbitPitch = Math.sin(orbit * 0.71 + 0.6) * 0.12 - 0.04;
     const orbitZoom = 1 + 0.08 * Math.sin(orbit * 0.5);
+    // Small ambient drift that stays alive even while the orbit is dampened
+    // (e.g. when the camera is zoomed in tight on the hero).
+    const driftYaw = Math.sin(wallT * 0.55) * 0.025;
+    const driftPitch = Math.cos(wallT * 0.41 + 0.6) * 0.018;
 
     // Focal target = the world point the orbit centers on. Moves toward HERO
     // during the hero phase, then sweeps along the ray, then returns home.
@@ -6304,8 +6387,9 @@ export function initNeRFVideo() {
       extraZoom = lerp(1, lerp(1.85, 1.1, pullBack), heroFocus * closeIn);
     }
 
-    const finalYaw = orbitYaw * (1 - heroFocus * 0.7) + extraYaw;
-    const finalPitch = orbitPitch * (1 - heroFocus * 0.7) + extraPitch;
+    const finalYaw = orbitYaw * (1 - heroFocus * 0.7) + extraYaw + driftYaw;
+    const finalPitch =
+      orbitPitch * (1 - heroFocus * 0.7) + extraPitch + driftPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
@@ -6317,20 +6401,28 @@ export function initNeRFVideo() {
     const camData = [];
     for (let i = 0; i < NUM_CAMERAS; i++) {
       const w = wild[i];
-      const ph = t * 0.7 + i * 0.31;
+      const ph = wallT * 0.7 + i * 0.31;
       const wobble = {
         x: Math.sin(ph) * 0.3 * (1 - eConverge),
         y: Math.cos(ph * 0.8) * 0.25 * (1 - eConverge),
         z: Math.sin(ph * 0.6 + 1.7) * 0.3 * (1 - eConverge),
       };
       const tg = targets[i];
-      const pos = {
-        x: lerp(w.x + wobble.x, tg.x, eConverge),
-        y: lerp(w.y + wobble.y, tg.y, eConverge),
-        z: lerp(w.z + wobble.z, tg.z, eConverge),
+      // Once converged, add a subtle breathing offset so the sphere of cameras
+      // keeps drifting in place during pauses.
+      const settledOffset = eConverge * 0.06;
+      const breathe = {
+        x: Math.sin(wallT * 0.5 + i * 0.7) * settledOffset,
+        y: Math.cos(wallT * 0.4 + i * 1.1) * settledOffset,
+        z: Math.sin(wallT * 0.6 + i * 0.3) * settledOffset,
       };
-      const spinY = w.yaw + t * w.yawSpeed;
-      const spinP = w.pitch + t * w.pitchSpeed;
+      const pos = {
+        x: lerp(w.x + wobble.x, tg.x, eConverge) + breathe.x,
+        y: lerp(w.y + wobble.y, tg.y, eConverge) + breathe.y,
+        z: lerp(w.z + wobble.z, tg.z, eConverge) + breathe.z,
+      };
+      const spinY = w.yaw + wallT * w.yawSpeed;
+      const spinP = w.pitch + wallT * w.pitchSpeed;
       const wildDir = normalize3({
         x: Math.cos(spinP) * Math.sin(spinY),
         y: Math.sin(spinP),
@@ -6421,12 +6513,42 @@ export function initNeRFVideo() {
 
     ctx.restore();
 
-    updateCaption(t);
+    // "Click to continue" indicator (gentle pulsing dot in the corner) when
+    // a chapter has finished playing.
+    if (paused) drawPauseHint();
+
+    updateCaption();
   }
+
+  function drawPauseHint() {
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 400);
+    const radius = 7 + 2 * pulse;
+    const cx = W - 38;
+    const cy = H - 38;
+    ctx.save();
+    ctx.globalAlpha = 0.55 + 0.3 * pulse;
+    ctx.fillStyle = "#ff5a36";
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Click during playback triggers the same smooth cosine decel from the
+  // current chapterT to the chapter end (fast-forward with graceful stop —
+  // never a snap). Click while paused advances to the next chapter.
+  slide.addEventListener("click", () => {
+    if (paused) {
+      advanceChapter();
+    } else {
+      beginDecel();
+    }
+  });
 
   return {
     enter() {
       resize();
+      updateCaption();
     },
     tick(visible, dtScale) {
       if (!visible) {
