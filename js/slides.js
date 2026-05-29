@@ -3674,11 +3674,6 @@ export function initSfMLiDAR() {
       H = cv.height; // 520 × 340
 
     const BASE = "assets/generated/bunny_renders/";
-    const SPRITE_COLS = 6;
-    const SPRITE_FW = 300,
-      SPRITE_FH = 300;
-    // Frame used as the still bunny render. Row 0, col 1 — top-down view of the bunny's front.
-    const STILL_FRAME = 1;
 
     // Real bunny polaroid images (9 angles) shown on the left
     const polaroidImgs = Array.from({ length: 9 }, (_, i) => {
@@ -3687,9 +3682,8 @@ export function initSfMLiDAR() {
       return img;
     });
 
-    // Sprite sheet — one frame is drawn as the still 3D bunny render
-    const spriteSheet = new Image();
-    spriteSheet.src = BASE + "sprite_sheet.png";
+    const bunnyTopImg = new Image();
+    bunnyTopImg.src = BASE + "bunny_from_top.png";
 
     // Photo positions: (x, y, rotation_rad) - scattered 3×3 grid on left zone
     const photos = [
@@ -3730,31 +3724,39 @@ export function initSfMLiDAR() {
     };
 
     // ── 3D scene: still bunny + two horizontal rings of recovered cameras ──
-    // Viewer is above and slightly in front of the scene, looking down at the
-    // bunny at the origin. World Y is up, world Z is forward (toward viewer).
+    // Viewer is above and in front of the scene, matching the still bunny render.
+    // World Y is up, world Z is forward (toward viewer).
     const ox = 390,
-      oy = H * 0.55;
-    const SCALE = 90;
-    const Y_FACTOR = 0.86; // world Y → screen Y compression (mostly preserved)
-    const Z_FACTOR = 0.50; // world Z → screen Y compression (top-down tilt)
+      oy = H * 0.56;
+    const SCALE = 88;
+    const Y_FACTOR = 0.56; // vertical height is foreshortened from the high view
+    const Z_FACTOR = 0.68; // depth is more visible in the top-front view
 
     const project = (x, y, z) => ({
       sx: ox + x * SCALE,
       sy: oy - y * SCALE * Y_FACTOR + z * SCALE * Z_FACTOR,
     });
 
-    const buildRing = (count, radius, yLevel, phase = 0) => {
-      const cams = [];
-      for (let i = 0; i < count; i++) {
-        const a = (i / count) * Math.PI * 2 + phase;
-        cams.push([Math.cos(a) * radius, yLevel, Math.sin(a) * radius]);
-      }
-      return cams;
-    };
-
-    // Two horizontal rings — outer/lower and inner/upper, like the classic SfM diagram
-    const ringA = buildRing(48, 1.05, -0.16);
-    const ringB = buildRing(42, 0.92, 0.30, Math.PI / 48);
+    const polaroidCameraPoses = [
+      { deg: 0, radius: 1.18, elev: 27 },
+      { deg: 40, radius: 0.82, elev: 9 },
+      { deg: 80, radius: 1.09, elev: 18 },
+      { deg: 120, radius: 0.92, elev: 31 },
+      { deg: 160, radius: 1.24, elev: 13 },
+      { deg: 200, radius: 0.87, elev: 24 },
+      { deg: 240, radius: 1.08, elev: 7 },
+      { deg: 280, radius: 0.95, elev: 28 },
+      { deg: 320, radius: 1.27, elev: 16 },
+    ];
+    const polaroidCameras = polaroidCameraPoses.map(({ deg, radius, elev }) => {
+      const az = (deg * Math.PI) / 180;
+      const el = (elev * Math.PI) / 180;
+      return [
+        Math.sin(az) * Math.cos(el) * radius,
+        Math.sin(el) * radius,
+        Math.cos(az) * Math.cos(el) * radius,
+      ];
+    });
 
     // For a camera at world position camPos pointing at the origin, build the
     // frustum geometry: apex at the camera, 4 corners of the far image plane
@@ -3802,7 +3804,7 @@ export function initSfMLiDAR() {
       };
     };
 
-    const allFrustums = [...ringA, ...ringB].map(frustumOf);
+    const allFrustums = polaroidCameras.map(frustumOf);
     const backFrustums = allFrustums.filter((f) => f.worldZ <= 0);
     const frontFrustums = allFrustums.filter((f) => f.worldZ > 0);
 
@@ -3855,18 +3857,12 @@ export function initSfMLiDAR() {
       backFrustums.forEach((f) => drawFrustum(f, 0.32));
 
       // Still bunny render in the centre
-      if (spriteSheet.complete && spriteSheet.naturalWidth > 0) {
-        const fc = STILL_FRAME % SPRITE_COLS;
-        const fr = Math.floor(STILL_FRAME / SPRITE_COLS);
-        const bSize = 130;
+      if (bunnyTopImg.complete && bunnyTopImg.naturalWidth > 0) {
+        const bSize = 142;
         ctx.drawImage(
-          spriteSheet,
-          fc * SPRITE_FW,
-          fr * SPRITE_FH,
-          SPRITE_FW,
-          SPRITE_FH,
+          bunnyTopImg,
           ox - bSize / 2,
-          oy - bSize / 2 - 6,
+          oy - bSize / 2 - 2,
           bSize,
           bSize,
         );
