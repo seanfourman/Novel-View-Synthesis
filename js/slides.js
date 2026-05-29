@@ -5757,17 +5757,20 @@ export function initNeRFVideo() {
     };
   }
 
-  // Virtual viewing camera (orbits the scene). Updated once per frame from
-  // updateViewState() so all projections share the same matrix.
+  // Virtual viewing camera: orbits a focal point (view.center) at distance
+  // CAM_DIST/zoom. Updated once per frame from setView so every projection
+  // uses the same matrix.
   const view = {
-    yaw: 0,
-    pitch: 0,
-    zoom: 1,
+    center: { x: 0, y: 0, z: 0 },
+    yaw: 0, pitch: 0, zoom: 1,
     cYaw: 1, sYaw: 0,
     cPit: 1, sPit: 0,
   };
 
-  function setView(yaw, pitch, zoom) {
+  function setView(cx, cy, cz, yaw, pitch, zoom) {
+    view.center.x = cx;
+    view.center.y = cy;
+    view.center.z = cz;
     view.yaw = yaw;
     view.pitch = pitch;
     view.zoom = zoom;
@@ -5776,15 +5779,16 @@ export function initNeRFVideo() {
     view.cPit = Math.cos(pitch);
     view.sPit = Math.sin(pitch);
   }
-  setView(0, 0, 1);
+  setView(0, 0, 0, 0, 0, 1);
 
   function project(x, y, z) {
-    // yaw around Y axis
-    const x1 = view.cYaw * x + view.sYaw * z;
-    const z1 = -view.sYaw * x + view.cYaw * z;
-    // pitch around X axis
-    const y2 = view.cPit * y - view.sPit * z1;
-    const z2 = view.sPit * y + view.cPit * z1;
+    const dx = x - view.center.x;
+    const dy = y - view.center.y;
+    const dz = z - view.center.z;
+    const x1 = view.cYaw * dx + view.sYaw * dz;
+    const z1 = -view.sYaw * dx + view.cYaw * dz;
+    const y2 = view.cPit * dy - view.sPit * z1;
+    const z2 = view.sPit * dy + view.cPit * z1;
     const f = Math.min(W, H) * 0.95 * view.zoom;
     const denom = z2 + CAM_DIST;
     return {
@@ -5805,6 +5809,21 @@ export function initNeRFVideo() {
     const sy = r * Math.cos(phi) * 0.6;
     const sz = r * Math.sin(phi) * Math.sin(theta);
     targets.push({ x: sx, y: sy, z: sz });
+  }
+  // Pick a hero slot once and rewrite its target to exactly HERO so the
+  // converged frustum and the ray line up — no duplicate hero camera.
+  let HERO_IDX = 0;
+  {
+    let best = Infinity;
+    for (let i = 0; i < NUM_CAMERAS; i++) {
+      const d = Math.hypot(
+        targets[i].x - HERO.x,
+        targets[i].y - HERO.y,
+        targets[i].z - HERO.z,
+      );
+      if (d < best) { best = d; HERO_IDX = i; }
+    }
+    targets[HERO_IDX] = { x: HERO.x, y: HERO.y, z: HERO.z };
   }
 
   const wild = [];
@@ -6240,16 +6259,55 @@ export function initNeRFVideo() {
     const fadeIn = clamp01(t / 0.4);
     const globalAlpha = Math.min(fadeIn, 1 - fadeOut);
 
-    // Virtual camera: continuous slow orbit so the scene reads as 3D,
-    // with a gentle zoom-in once the cameras have converged.
-    const orbit = t * 0.18; // ~35s per oscillation
-    const yaw = Math.sin(orbit) * 0.45 + Math.sin(orbit * 0.37 + 1.3) * 0.12;
-    const pitch =
-      Math.sin(orbit * 0.71 + 0.6) * 0.13 -
-      0.05 * easeInOut(clamp01((t - P.convergeEnd) / 3));
-    const zoom = 1 + 0.12 * easeInOut(clamp01((t - P.introEnd) / 4))
-      - 0.05 * Math.sin(orbit * 0.5);
-    setView(yaw, pitch, zoom);
+    // Virtual camera path: orbit the scene by default, fly close to the hero
+    // camera while it fires, then follow the ray outward.
+    const orbit = t * 0.18;
+    const orbitYaw = Math.sin(orbit) * 0.42 + Math.sin(orbit * 0.37 + 1.3) * 0.1;
+    const orbitPitch = Math.sin(orbit * 0.71 + 0.6) * 0.12 - 0.04;
+    const orbitZoom = 1 + 0.08 * Math.sin(orbit * 0.5);
+
+    // Focal target = the world point the orbit centers on. Moves toward HERO
+    // during the hero phase, then sweeps along the ray, then returns home.
+    let cx = 0, cy = 0, cz = 0;
+    let extraYaw = 0, extraPitch = 0, extraZoom = 1;
+
+    // Blend in the "fly to hero" behaviour across the converge → hero window
+    // and decay it once the MLP/query phase takes over.
+    const heroApproach = easeInOut(clamp01((t - (P.convergeEnd - 0.3)) / 1.6));
+    const heroRelease = easeInOut(clamp01((t - (P.samplesEnd + 0.8)) / 1.6));
+    const heroFocus = heroApproach * (1 - heroRelease);
+
+    if (heroFocus > 0) {
+      // Where to look at, along the ray. Before/at hero phase: HERO itself.
+      // After ray fires: pan outward so the ray streams across the screen.
+      let aimD = 0.0;
+      if (t > P.heroEnd) {
+        const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
+        aimD = lerp(0.0, 5.0, easeInOut(k));
+      }
+      const aim = {
+        x: HERO.x + heroDir.x * aimD,
+        y: HERO.y + heroDir.y * aimD,
+        z: HERO.z + heroDir.z * aimD,
+      };
+      cx = lerp(0, aim.x, heroFocus);
+      cy = lerp(0, aim.y, heroFocus);
+      cz = lerp(0, aim.z, heroFocus);
+      // Tilt the view slightly so the ray reads diagonally across the screen
+      // (left-to-right) rather than head-on.
+      extraYaw = -0.35 * heroFocus;
+      extraPitch = 0.12 * heroFocus;
+      // Zoom in tightest while the ray is firing, then ease out as samples
+      // appear so we can see the full line of beads.
+      const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.2));
+      const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
+      extraZoom = lerp(1, lerp(1.85, 1.1, pullBack), heroFocus * closeIn);
+    }
+
+    const finalYaw = orbitYaw * (1 - heroFocus * 0.7) + extraYaw;
+    const finalPitch = orbitPitch * (1 - heroFocus * 0.7) + extraPitch;
+    const finalZoom = orbitZoom * extraZoom;
+    setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
     ctx.save();
     ctx.globalAlpha = globalAlpha;
@@ -6288,23 +6346,9 @@ export function initNeRFVideo() {
     }
     camData.sort((a, b) => b.depth - a.depth);
 
-    let heroIdx = 0;
-    let heroBest = Infinity;
-    for (let i = 0; i < NUM_CAMERAS; i++) {
-      const tg = targets[i];
-      const d = Math.hypot(tg.x - HERO.x, tg.y - HERO.y, tg.z - HERO.z);
-      if (d < heroBest) {
-        heroBest = d;
-        heroIdx = i;
-      }
-    }
-
     for (const c of camData) {
-      const isHero = c.idx === heroIdx && convergeT > 0.5 && heroT > 0.05;
+      const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
       drawFrustum(c.pos, c.dir, 1.0, isHero);
-    }
-    if (heroT > 0.5) {
-      drawFrustum(HERO, heroDir, 1.0, true);
     }
 
     drawCenterObject(eConverge * 0.85);
