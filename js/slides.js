@@ -4095,7 +4095,6 @@ export function initSfMLiDAR() {
       ctx.strokeRect(x - 10, y - 10, w + 20, h + 20);
       ctx.restore();
 
-      drawTinyLabel("overlaid views", cx, y - 18, "rgba(70, 168, 104, 0.86)");
     }
 
     function drawGuideFromTile(tile, toX, toY, color) {
@@ -4167,9 +4166,9 @@ export function initSfMLiDAR() {
       ctx.stroke();
       ctx.restore();
 
-      drawCameraGlyph(camA.x, camA.y, leftColor, "view A", true);
-      drawCameraGlyph(camB.x, camB.y, rightColor, "view B", true);
-      drawCameraGlyph(virtualCam.x, virtualCam.y, newColor, "between", true);
+      drawCameraGlyph(camA.x, camA.y, leftColor, "", true);
+      drawCameraGlyph(camB.x, camB.y, rightColor, "", true);
+      drawCameraGlyph(virtualCam.x, virtualCam.y, newColor, "", true);
     }
 
     function drawTile(tile, highlight) {
@@ -4222,13 +4221,29 @@ export function initSfMLiDAR() {
       }
     }
     const STEP_FRAMES = 75; // ~1.25 s per tile at 60 fps
-    const viewPairs = [
-      [3, 5],
-      [0, 2],
-      [6, 8],
-    ];
+
+    function chooseRandomPair(previousPair) {
+      for (let attempt = 0; attempt < 24; attempt++) {
+        let a = Math.floor(Math.random() * tiles.length);
+        let b = Math.floor(Math.random() * tiles.length);
+        if (a === b) continue;
+        if (Math.abs(tiles[a].cx - tiles[b].cx) < 85) continue;
+        if (
+          previousPair &&
+          ((a === previousPair[0] && b === previousPair[1]) ||
+            (a === previousPair[1] && b === previousPair[0]))
+        ) {
+          continue;
+        }
+        if (tiles[a].cx > tiles[b].cx) [a, b] = [b, a];
+        return [a, b];
+      }
+      return [0, 5];
+    }
 
     let t = 0;
+    let pairStep = -1;
+    let currentPair = chooseRandomPair(null);
     return (dtScale = 1) => {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
@@ -4238,7 +4253,12 @@ export function initSfMLiDAR() {
       const stepIdx = Math.floor(phase / STEP_FRAMES);
       const subT = (phase - stepIdx * STEP_FRAMES) / STEP_FRAMES;
 
-      const [tileAIdx, tileBIdx] = viewPairs[stepIdx % viewPairs.length];
+      if (stepIdx !== pairStep) {
+        currentPair = chooseRandomPair(currentPair);
+        pairStep = stepIdx;
+      }
+
+      const [tileAIdx, tileBIdx] = currentPair;
       const tileA = tiles[tileAIdx];
       const tileB = tiles[tileBIdx];
 
