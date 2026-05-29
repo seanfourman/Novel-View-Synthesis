@@ -2952,6 +2952,16 @@ code {
   padding: clamp(1rem, 0.9vw, 1rem) clamp(1rem, 1.2vw, 1rem);
 }
 
+.compare-split[data-active="sfm"] .cp-sfm .cp-open-nowrap,
+.compare-split[data-active="lidar"] .cp-lidar .cp-open-nowrap {
+  white-space: nowrap;
+}
+
+.compare-split[data-active="sfm"] .cp-sfm .cp-open-nowrap br,
+.compare-split[data-active="lidar"] .cp-lidar .cp-open-nowrap br {
+  display: none;
+}
+
 /* ── Charge bar ── */
 .cp-charge-bar {
   position: absolute;

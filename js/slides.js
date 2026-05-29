@@ -3701,14 +3701,16 @@ export function initSfMLiDAR() {
     const PW = 72,
       PH = 84;
 
-    const drawPolaroid = (px, py, angle, img) => {
+    const drawPolaroid = (px, py, angle, img, isActive = false, pulse = 0) => {
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(angle);
-      ctx.shadowColor = "rgba(0,0,0,0.16)";
-      ctx.shadowBlur = 7;
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 3;
+      ctx.shadowColor = isActive
+        ? `rgba(255,90,54,${pulse * 0.48})`
+        : "rgba(0,0,0,0.16)";
+      ctx.shadowBlur = isActive ? 10 + pulse * 6 : 7;
+      ctx.shadowOffsetX = isActive ? 0 : 2;
+      ctx.shadowOffsetY = isActive ? 0 : 3;
       ctx.fillStyle = "#f8f6f2";
       ctx.fillRect(-PW / 2, -PH / 2, PW, PH);
       ctx.shadowColor = "transparent";
@@ -3719,6 +3721,11 @@ export function initSfMLiDAR() {
       } else {
         ctx.fillStyle = "#d8d4ce";
         ctx.fillRect(-PW / 2 + m, -PH / 2 + m, PW - m * 2, PH - m - bot);
+      }
+      if (isActive) {
+        ctx.strokeStyle = `rgba(255,90,54,${pulse * 0.88})`;
+        ctx.lineWidth = 2.2;
+        ctx.strokeRect(-PW / 2 + 1.5, -PH / 2 + 1.5, PW - 3, PH - 3);
       }
       ctx.restore();
     };
@@ -3762,7 +3769,7 @@ export function initSfMLiDAR() {
     // frustum geometry: apex at the camera, 4 corners of the far image plane
     // between the camera and the bunny. The view spreads outward from the
     // apex toward the scene.
-    const frustumOf = (camPos) => {
+    const frustumOf = (camPos, index) => {
       const [cx, cy, cz] = camPos;
       const len = Math.hypot(cx, cy, cz) || 1;
       const lx = -cx / len,
@@ -3793,21 +3800,32 @@ export function initSfMLiDAR() {
         ccz + rzv * (fw / 2) * sR + uzv * (fh / 2) * sU,
       ];
       return {
+        index,
         apex: [cx, cy, cz],
         corners: [corner(-1, -1), corner(-1, 1), corner(1, 1), corner(1, -1)],
         worldZ: cz,
       };
     };
 
-    const allFrustums = polaroidCameras.map(frustumOf);
+    const allFrustums = polaroidCameras.map((camPos, index) =>
+      frustumOf(camPos, index),
+    );
     const backFrustums = allFrustums.filter((f) => f.worldZ <= 0);
     const frontFrustums = allFrustums.filter((f) => f.worldZ > 0);
 
-    const drawFrustum = (f, alpha) => {
+    const drawFrustum = (f, alpha, isActive = false, pulse = 0) => {
+      ctx.save();
       const a = project(f.apex[0], f.apex[1], f.apex[2]);
       const cs = f.corners.map((c) => project(c[0], c[1], c[2]));
-      ctx.strokeStyle = `rgba(220,40,30,${alpha})`;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = isActive
+        ? `rgba(255,64,39,${pulse * 0.92})`
+        : `rgba(220,40,30,${alpha})`;
+      ctx.lineWidth = isActive ? 1.5 + pulse * 0.45 : 1;
+      ctx.lineJoin = "round";
+      if (isActive) {
+        ctx.shadowColor = `rgba(255,90,54,${pulse * 0.52})`;
+        ctx.shadowBlur = 5 + pulse * 7;
+      }
       // apex → each corner of the far plane
       for (const c of cs) {
         ctx.beginPath();
@@ -3823,13 +3841,29 @@ export function initSfMLiDAR() {
       }
       ctx.closePath();
       ctx.stroke();
+      ctx.restore();
     };
 
+    let highlightT = 0;
+
     return (_dtScale = 1) => {
+      highlightT += _dtScale;
+      const highlightCycle = 150;
+      const fadeTicks = 36;
+      const cycleT = highlightT % highlightCycle;
+      const activeIdx = Math.floor(highlightT / highlightCycle) % photos.length;
+      const fadeIn = Math.min(1, cycleT / fadeTicks);
+      const fadeOut = Math.min(1, (highlightCycle - cycleT) / fadeTicks);
+      const fade = Math.min(fadeIn, fadeOut);
+      const easedFade = fade * fade * (3 - 2 * fade);
+      const breathe = 0.76 + 0.24 * Math.sin(highlightT * 0.035) ** 2;
+      const pulse = easedFade * breathe;
       ctx.clearRect(0, 0, W, H);
 
       // Polaroid photos (input)
-      photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
+      photos.forEach(([x, y, a], i) =>
+        drawPolaroid(x, y, a, polaroidImgs[i], i === activeIdx, pulse),
+      );
 
       // Arrow
       const ax = 240,
@@ -3849,7 +3883,9 @@ export function initSfMLiDAR() {
       ctx.fill();
 
       // Back-half frustums (behind the bunny) — drawn first, slightly faded
-      backFrustums.forEach((f) => drawFrustum(f, 0.32));
+      backFrustums
+        .filter((f) => f.index !== activeIdx)
+        .forEach((f) => drawFrustum(f, 0.26));
 
       // Still bunny render in the centre
       if (bunnyTopImg.complete && bunnyTopImg.naturalWidth > 0) {
@@ -3864,7 +3900,12 @@ export function initSfMLiDAR() {
       }
 
       // Front-half frustums (in front of the bunny) — drawn over it, fully opaque
-      frontFrustums.forEach((f) => drawFrustum(f, 0.82));
+      frontFrustums
+        .filter((f) => f.index !== activeIdx)
+        .forEach((f) => drawFrustum(f, 0.58));
+
+      const activeFrustum = allFrustums[activeIdx];
+      if (activeFrustum) drawFrustum(activeFrustum, 1, true, pulse);
     };
   })();
 
