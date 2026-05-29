@@ -2925,8 +2925,8 @@ code {
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-content,
 .compare-split[data-active="lidar"] .cp-lidar .cp-content {
-  width: min(100%, 760px);
-  max-width: 760px;
+  width: min(100%, 1200px);
+  max-width: 1200px;
   gap: clamp(1.4rem, 2.2vh, 1.9rem);
   transform: none;
 }
@@ -2943,7 +2943,7 @@ code {
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-cols,
 .compare-split[data-active="lidar"] .cp-lidar .cp-cols {
-  gap: clamp(1rem, 1.4vw, 1.25rem);
+  gap: clamp(2rem, 3vw, 3.5rem);
   margin-top: 0.25rem;
 }
 
@@ -3106,15 +3106,15 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar {
   flex-direction: row-reverse;
   align-items: center;
-  gap: clamp(1rem, 2vw, 2rem);
 }
 .compare-split[data-active="lidar"] .cp-vis-lf {
   position: absolute;
   top: 50%;
-  left: clamp(1.2rem, 3vw, 3.2rem);
+  left: 0;
   right: auto;
   transform: translateY(-50%);
-  width: clamp(330px, 40vw, 540px);
+  margin-left: clamp(1.2rem, 3vw, 3.2rem);
+  width: clamp(280px, 28vw, 420px);
   height: auto;
   opacity: 1;
   z-index: 2;
@@ -3125,7 +3125,7 @@ code {
   min-width: 0;
   width: auto;
   max-width: none;
-  padding-left: clamp(330px, 40vw, 540px);
+  padding-left: clamp(280px, 28vw, 420px);
 }
 
 .slide[data-id="7"] {
