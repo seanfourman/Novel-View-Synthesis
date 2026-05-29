@@ -4097,9 +4097,14 @@ export function initSfMLiDAR() {
       const e = subT < moveStart ? 0 : (subT - moveStart) / (1 - moveStart);
       const blend = e * e * (3 - 2 * e); // smoothstep
 
-      // Highlight: exactly one tile orange — fades out just before next step starts
-      const fadeStart = 0.85;
-      const curH = subT < fadeStart ? 1 : 1 - (subT - fadeStart) / (1 - fadeStart);
+      // Highlight: exactly one tile orange — fades in at step start, out at step end
+      const fadeIn = 0.18;
+      const fadeOut = 0.82;
+      let curH;
+      if (subT < fadeIn) curH = subT / fadeIn;
+      else if (subT > fadeOut) curH = 1 - (subT - fadeOut) / (1 - fadeOut);
+      else curH = 1;
+      curH = curH * curH * (3 - 2 * curH); // smoothstep
       tiles.forEach((tile, i) => {
         tile.highlight = i === curTileIdx ? curH : 0;
       });
