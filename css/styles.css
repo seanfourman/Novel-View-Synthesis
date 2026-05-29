@@ -447,8 +447,18 @@ code {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.25) 35%, #000 70%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.25) 35%, #000 70%);
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.25) 35%,
+    #000 70%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.25) 35%,
+    #000 70%
+  );
 }
 
 .spatial-slide {
@@ -486,8 +496,12 @@ code {
   transform: translateY(8px);
   animation: spatial-fade-up 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
-.spatial-lead p:nth-child(1) { animation-delay: 0.15s; }
-.spatial-lead p:nth-child(2) { animation-delay: 0.35s; }
+.spatial-lead p:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.spatial-lead p:nth-child(2) {
+  animation-delay: 0.35s;
+}
 
 .spatial-domains-label {
   font-size: clamp(1rem, 1vw, 1rem);
@@ -497,7 +511,8 @@ code {
   color: var(--muted);
   margin-top: clamp(2.2rem, 3.8vh, 3.2rem);
   opacity: 0;
-  animation: spatial-fade-up 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) 0.55s forwards;
+  animation: spatial-fade-up 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) 0.55s
+    forwards;
 }
 
 .spatial-domains {
@@ -526,21 +541,45 @@ code {
 .domain-card:hover .domain-icon {
   filter: drop-shadow(0 4px 10px rgba(255, 90, 54, 0.35));
 }
-.domain-card:nth-child(1) { animation-delay: 0.65s; }
-.domain-card:nth-child(2) { animation-delay: 0.78s; }
-.domain-card:nth-child(3) { animation-delay: 0.91s; }
-.domain-card:nth-child(4) { animation-delay: 1.04s; }
-.domain-card:nth-child(5) { animation-delay: 1.17s; }
-.domain-card:nth-child(6) { animation-delay: 1.30s; }
+.domain-card:nth-child(1) {
+  animation-delay: 0.65s;
+}
+.domain-card:nth-child(2) {
+  animation-delay: 0.78s;
+}
+.domain-card:nth-child(3) {
+  animation-delay: 0.91s;
+}
+.domain-card:nth-child(4) {
+  animation-delay: 1.04s;
+}
+.domain-card:nth-child(5) {
+  animation-delay: 1.17s;
+}
+.domain-card:nth-child(6) {
+  animation-delay: 1.3s;
+}
 
 @keyframes spatial-card-enter {
-  from { opacity: 0; transform: translateY(14px) scale(0.94); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes spatial-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .domain-icon {
@@ -548,7 +587,9 @@ code {
   height: clamp(52px, 5.5vw, 68px);
   color: var(--accent);
   stroke: var(--accent);
-  transition: filter 0.3s ease, transform 0.3s ease;
+  transition:
+    filter 0.3s ease,
+    transform 0.3s ease;
   filter: drop-shadow(0 2px 6px rgba(255, 90, 54, 0.18));
 }
 
@@ -560,11 +601,22 @@ code {
   fill-opacity: 0;
   animation: vr-eye-blink 2.6s ease-in-out infinite;
 }
-.icon-vr .vr-eye-l { animation-delay: 0s; }
-.icon-vr .vr-eye-r { animation-delay: 1.3s; }
+.icon-vr .vr-eye-l {
+  animation-delay: 0s;
+}
+.icon-vr .vr-eye-r {
+  animation-delay: 1.3s;
+}
 @keyframes vr-eye-blink {
-  0%, 70%, 100% { fill-opacity: 0; }
-  30%, 55%      { fill-opacity: 0.55; }
+  0%,
+  70%,
+  100% {
+    fill-opacity: 0;
+  }
+  30%,
+  55% {
+    fill-opacity: 0.55;
+  }
 }
 
 /* Games — gentle controller "rumble" wiggle */
@@ -573,21 +625,48 @@ code {
   transform-origin: center;
 }
 @keyframes game-rumble {
-  0%, 88%, 100% { transform: translate(0, 0) rotate(0); }
-  90%           { transform: translate(-0.6px, 0) rotate(-1.2deg); }
-  92%           { transform: translate(0.6px, 0) rotate(1.2deg); }
-  94%           { transform: translate(-0.6px, 0) rotate(-1deg); }
-  96%           { transform: translate(0.6px, 0) rotate(0.8deg); }
-  98%           { transform: translate(0, 0) rotate(0); }
+  0%,
+  88%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  90% {
+    transform: translate(-0.6px, 0) rotate(-1.2deg);
+  }
+  92% {
+    transform: translate(0.6px, 0) rotate(1.2deg);
+  }
+  94% {
+    transform: translate(-0.6px, 0) rotate(-1deg);
+  }
+  96% {
+    transform: translate(0.6px, 0) rotate(0.8deg);
+  }
+  98% {
+    transform: translate(0, 0) rotate(0);
+  }
 }
 .icon-game .game-btn {
   animation: game-btn-press 1.6s ease-in-out infinite;
 }
-.icon-game .game-btn-1 { animation-delay: 0s; }
-.icon-game .game-btn-2 { animation-delay: 0.8s; }
+.icon-game .game-btn-1 {
+  animation-delay: 0s;
+}
+.icon-game .game-btn-2 {
+  animation-delay: 0.8s;
+}
 @keyframes game-btn-press {
-  0%, 80%, 100% { stroke-width: 1.5; opacity: 0.8; }
-  40%, 60%      { stroke-width: 2.8; opacity: 1; }
+  0%,
+  80%,
+  100% {
+    stroke-width: 1.5;
+    opacity: 0.8;
+  }
+  40%,
+  60% {
+    stroke-width: 2.8;
+    opacity: 1;
+  }
 }
 
 /* Robot — head bobs, antenna sways, eyes blink */
@@ -597,16 +676,30 @@ code {
   animation: robot-bob 2s ease-in-out infinite;
 }
 @keyframes robot-bob {
-  0%, 100% { transform: translateY(0)    rotate(-10deg); }
-  50%      { transform: translateY(-1px) rotate(10deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-10deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(10deg);
+  }
 }
 .icon-robot .robot-eye {
   animation: robot-eye-blink 3.2s ease-in-out infinite;
 }
-.icon-robot .robot-eye-r { animation-delay: 0.05s; }
+.icon-robot .robot-eye-r {
+  animation-delay: 0.05s;
+}
 @keyframes robot-eye-blink {
-  0%, 92%, 100% { stroke-width: 1.5; }
-  94%, 96%      { stroke-width: 0.1; }
+  0%,
+  92%,
+  100% {
+    stroke-width: 1.5;
+  }
+  94%,
+  96% {
+    stroke-width: 0.1;
+  }
 }
 
 /* Car — wheels spin (dashed stroke makes the rotation visible), radar pulses overhead */
@@ -617,16 +710,28 @@ code {
   animation: car-wheel-spin 1.6s linear infinite;
 }
 @keyframes car-wheel-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .icon-car .car-radar {
   animation: car-radar-pulse 2.2s ease-out infinite;
 }
-.icon-car .car-radar-2 { animation-delay: 0.7s; }
+.icon-car .car-radar-2 {
+  animation-delay: 0.7s;
+}
 @keyframes car-radar-pulse {
-  0%   { opacity: 0; transform: translateY(2px); }
-  30%  { opacity: 0.7; }
-  100% { opacity: 0; transform: translateY(-2px); }
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
 }
 
 /* Digital Twins — data flows back and forth between the screens */
@@ -634,18 +739,31 @@ code {
   stroke-dashoffset: 7;
   animation: twins-flow-anim 1.4s linear infinite;
 }
-.icon-twins .twins-flow:nth-of-type(2) { animation-delay: -0.5s; }
-.icon-twins .twins-flow:nth-of-type(3) { animation-delay: -1s; }
+.icon-twins .twins-flow:nth-of-type(2) {
+  animation-delay: -0.5s;
+}
+.icon-twins .twins-flow:nth-of-type(3) {
+  animation-delay: -1s;
+}
 @keyframes twins-flow-anim {
-  to { stroke-dashoffset: 0; }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 .icon-twins .twins-screen {
   animation: twins-sync-pulse 2.8s ease-in-out infinite;
 }
-.icon-twins .twins-screen-r { animation-delay: 0.4s; }
+.icon-twins .twins-screen-r {
+  animation-delay: 0.4s;
+}
 @keyframes twins-sync-pulse {
-  0%, 100% { stroke-opacity: 0.55; }
-  50%      { stroke-opacity: 1; }
+  0%,
+  100% {
+    stroke-opacity: 0.55;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
 }
 
 /* Spatial Computing — floating UI panels in 3D, with parallax shift */
@@ -654,13 +772,27 @@ code {
   transform-origin: center;
   animation: spatial-panel-drift 4.4s ease-in-out infinite;
 }
-.icon-spatial .spatial-panel-back  { stroke-opacity: 0.4;  animation-delay: 0s;    }
-.icon-spatial .spatial-panel-mid   { stroke-opacity: 0.7;  animation-delay: -0.6s; }
-.icon-spatial .spatial-panel-front { stroke-opacity: 1;    animation-delay: -1.2s; }
+.icon-spatial .spatial-panel-back {
+  stroke-opacity: 0.4;
+  animation-delay: 0s;
+}
+.icon-spatial .spatial-panel-mid {
+  stroke-opacity: 0.7;
+  animation-delay: -0.6s;
+}
+.icon-spatial .spatial-panel-front {
+  stroke-opacity: 1;
+  animation-delay: -1.2s;
+}
 
 @keyframes spatial-panel-drift {
-  0%, 100% { transform: translate(-0.8px, 0.4px); }
-  50%      { transform: translate(0.8px, -0.4px); }
+  0%,
+  100% {
+    transform: translate(-0.8px, 0.4px);
+  }
+  50% {
+    transform: translate(0.8px, -0.4px);
+  }
 }
 
 .domain-label {
@@ -679,7 +811,8 @@ code {
   line-height: 1.55;
   margin-top: clamp(5rem, 8vh, 7rem);
   opacity: 0;
-  animation: spatial-fade-up 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 1.5s forwards;
+  animation: spatial-fade-up 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 1.5s
+    forwards;
 }
 
 /* ========== SLIDE 4: STATIC → SPATIAL ========== */
@@ -705,13 +838,13 @@ code {
   gap: 0.3rem;
 }
 .sts-sub {
-  font-size: clamp(1rem, 1.1vw, 1.08rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.55;
   margin: 0;
 }
 .sts-pre {
-  font-size: clamp(1rem, 1.1vw, 1.08rem);
+  font-size: 21px;
   color: var(--muted);
   font-weight: 600;
   margin: 0;
@@ -741,8 +874,8 @@ code {
 /* Arc labels curving around the orb */
 .sts-arc-item {
   position: absolute;
-  width: 148px;
-  font-size: clamp(1rem, 1.15vw, 1.15rem);
+  width: 220px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--ink);
   text-align: center;
@@ -760,19 +893,19 @@ code {
 }
 .sts-arc-tr {
   top: 20%;
-  right: -163px;
+  right: -220px;
 }
 .sts-arc-br {
   bottom: 20%;
-  right: -163px;
+  right: -220px;
 }
 .sts-arc-tl {
   top: 20%;
-  left: -163px;
+  left: -220px;
 }
 .sts-arc-bl {
   bottom: 20%;
-  left: -163px;
+  left: -220px;
 }
 /* Phase layers - only the active one is visible */
 .sts-layer {
@@ -813,7 +946,7 @@ code {
   background: #fafafa;
 }
 .sts-footer {
-  font-size: clamp(1.05rem, 1.2vw, 1.2rem);
+  font-size: 21px;
   color: var(--ink-soft);
   line-height: 1.6;
   white-space: nowrap;
@@ -4331,7 +4464,9 @@ code {
 }
 
 .srn-learn-slide
-  > *:not(.srn-zoom-bg):not(.srn-zoom-svg):not(.srn-zoom-square):not(.srn-output-thumbs) {
+  > *:not(.srn-zoom-bg):not(.srn-zoom-svg):not(.srn-zoom-square):not(
+    .srn-output-thumbs
+  ) {
   position: relative;
   z-index: 1;
 }
@@ -4476,8 +4611,16 @@ code {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 30% 38% at 75% 50%, rgba(0, 184, 148, 0.12), transparent 78%),
-    radial-gradient(ellipse 30% 38% at 38% 50%, rgba(255, 90, 54, 0.12), transparent 78%);
+    radial-gradient(
+      ellipse 30% 38% at 75% 50%,
+      rgba(0, 184, 148, 0.12),
+      transparent 78%
+    ),
+    radial-gradient(
+      ellipse 30% 38% at 38% 50%,
+      rgba(255, 90, 54, 0.12),
+      transparent 78%
+    );
   filter: blur(8px);
 }
 
@@ -4542,7 +4685,8 @@ code {
   left: 8%;
   background: var(--accent);
   mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
-  -webkit-mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick) no-repeat;
+  -webkit-mask: linear-gradient(#000 0 0) center / 100% var(--mark-thick)
+    no-repeat;
 }
 
 /* ---- Side title with soft underline ---- */
