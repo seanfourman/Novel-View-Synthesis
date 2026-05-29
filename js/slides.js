@@ -5907,6 +5907,9 @@ export function initNeRFVideo() {
   let decelStartT = 0;
   let decelTargetT = 0;
   let decelElapsed = 0;
+  // If true, the chapter advances automatically the moment decel finishes —
+  // turns the two-step "click to finish, click to advance" into one click.
+  let autoAdvanceAfterDecel = false;
 
   function chapterDur(i) {
     return chapters[i].end - chapters[i].start;
@@ -5926,6 +5929,7 @@ export function initNeRFVideo() {
     paused = false;
     pausePulse = 0;
     decelMode = false;
+    autoAdvanceAfterDecel = false;
     updateCaption();
   }
 
@@ -6299,9 +6303,13 @@ export function initNeRFVideo() {
       decelElapsed += dt;
       if (decelElapsed >= DECEL) {
         chapterT = decelTargetT;
-        paused = true;
         decelMode = false;
-        updateCaption();
+        if (autoAdvanceAfterDecel) {
+          advanceChapter();
+        } else {
+          paused = true;
+          updateCaption();
+        }
       } else {
         // Position curve f(k) = k + sin(π·k)/π. Properties:
         //   f(0)=0, f(1)=1, f'(0)=2, f'(1)=0.
@@ -6380,11 +6388,11 @@ export function initNeRFVideo() {
       // (left-to-right) rather than head-on.
       extraYaw = -0.35 * heroFocus;
       extraPitch = 0.12 * heroFocus;
-      // Zoom in tightest while the ray is firing, then ease out as samples
-      // appear so we can see the full line of beads.
+      // Zoom in really tight on the hero frustum while the ray is firing,
+      // then ease back gently as samples appear so we can see the whole ray.
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.2));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(1.85, 1.1, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(3.2, 1.4, pullBack), heroFocus * closeIn);
     }
 
     const finalYaw = orbitYaw * (1 - heroFocus * 0.7) + extraYaw + driftYaw;
@@ -6534,13 +6542,15 @@ export function initNeRFVideo() {
     ctx.restore();
   }
 
-  // Click during playback triggers the same smooth cosine decel from the
-  // current chapterT to the chapter end (fast-forward with graceful stop —
-  // never a snap). Click while paused advances to the next chapter.
+  // One click = "go to the next chapter". Behaviour depends on state:
+  //   - paused at chapter end → advance immediately
+  //   - playing or decelerating → run/finish the smooth decel and then
+  //     auto-advance once it lands (so the user never has to click twice).
   slide.addEventListener("click", () => {
     if (paused) {
       advanceChapter();
     } else {
+      autoAdvanceAfterDecel = true;
       beginDecel();
     }
   });
