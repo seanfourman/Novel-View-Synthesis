@@ -2949,12 +2949,16 @@ code {
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-col,
 .compare-split[data-active="lidar"] .cp-lidar .cp-col {
+  overflow: visible;
   padding: clamp(1rem, 0.9vw, 1rem) clamp(1rem, 1.2vw, 1rem);
+  z-index: 2;
 }
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-open-nowrap,
 .compare-split[data-active="lidar"] .cp-lidar .cp-open-nowrap {
+  position: relative;
   white-space: nowrap;
+  z-index: 3;
 }
 
 .compare-split[data-active="sfm"] .cp-sfm .cp-open-nowrap br,
