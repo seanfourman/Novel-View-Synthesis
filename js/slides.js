@@ -6361,24 +6361,37 @@ export function initNeRFVideo() {
     let cx = 0, cy = 0, cz = 0;
     let extraYaw = 0, extraPitch = 0, extraZoom = 1;
 
-    // Blend in the "fly to hero" behaviour starting at the converge phase —
-    // the very first click pays off with a clearly visible leftward camera
-    // move — then decay it once the MLP/query phase takes over.
-    const heroApproach = easeInOut(clamp01((t - P.introEnd) / 2.4));
+    // Hero focus ramps up at the converge → hero handoff, then decays once
+    // the MLP/query phase takes over.
+    const heroApproach = easeInOut(clamp01((t - P.convergeEnd) / 1.4));
     const heroRelease = easeInOut(clamp01((t - (P.samplesEnd + 0.8)) / 1.6));
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
-      // No focal shift, no extra yaw/pitch — leave the orbiting camera where
-      // it is and just zoom in on the centre of the scene. The user explicitly
-      // didn't want a translational fly-to-hero, only a closer view.
+      // Pan the focal centre onto HERO so the zoom actually targets the
+      // hero frustum (no extra rotation — the orbit is the only swing).
+      let aimD = 0.0;
+      if (t > P.heroEnd) {
+        const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
+        aimD = lerp(0.0, 4.0, easeInOut(k));
+      }
+      const aim = {
+        x: HERO.x + heroDir.x * aimD,
+        y: HERO.y + heroDir.y * aimD,
+        z: HERO.z + heroDir.z * aimD,
+      };
+      cx = lerp(0, aim.x, heroFocus);
+      cy = lerp(0, aim.y, heroFocus);
+      cz = lerp(0, aim.z, heroFocus);
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.2));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(2.6, 1.4, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(2.6, 1.3, pullBack), heroFocus * closeIn);
     }
 
-    const finalYaw = orbitYaw + driftYaw;
-    const finalPitch = orbitPitch + driftPitch;
+    // Dampen the orbit while zoomed in so the close-up on the hero frustum
+    // stays stable (small ambient drift is added back below).
+    const finalYaw = orbitYaw * (1 - heroFocus * 0.75) + driftYaw;
+    const finalPitch = orbitPitch * (1 - heroFocus * 0.75) + driftPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
@@ -6398,8 +6411,9 @@ export function initNeRFVideo() {
       };
       const tg = targets[i];
       // Once converged, add a subtle breathing offset so the sphere of cameras
-      // keeps drifting in place during pauses.
-      const settledOffset = eConverge * 0.06;
+      // keeps drifting in place during pauses. The hero camera is exempt so
+      // the ray stays perfectly aligned with the frustum apex.
+      const settledOffset = i === HERO_IDX ? 0 : eConverge * 0.06;
       const breathe = {
         x: Math.sin(wallT * 0.5 + i * 0.7) * settledOffset,
         y: Math.cos(wallT * 0.4 + i * 1.1) * settledOffset,
