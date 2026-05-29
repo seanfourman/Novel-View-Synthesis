@@ -4127,11 +4127,47 @@ export function initSfMLiDAR() {
       const newColor = "rgba(255, 120, 60, 0.94)";
       const imageX = overlay.x - overlay.w / 2;
       const imageY = overlay.y - overlay.h / 2;
-      const targetPoints = [
-        { x: imageX + overlay.w * 0.3, y: imageY + overlay.h * 0.32 },
-        { x: imageX + overlay.w * 0.5, y: imageY + overlay.h * 0.48 },
-        { x: imageX + overlay.w * 0.7, y: imageY + overlay.h * 0.64 },
+      const leftOffset = -8 + Math.sin(pulse * 0.035) * 2;
+      const rightOffset = 8 + Math.cos(pulse * 0.033) * 2;
+      const pairSpread = Math.min(
+        1.45,
+        Math.abs(tileB.u - tileA.u) + Math.abs(tileB.v - tileA.v) * 0.55,
+      );
+      const verticalSkew = (tileB.v - tileA.v) * 9;
+      const pairBias = ((tileA.u + tileB.u) / 2) * 0.035;
+      const landmarks = [
+        { nx: 0.34 + pairBias, ny: 0.29, depth: 0.82 },
+        { nx: 0.48 + pairBias * 0.4, ny: 0.43, depth: 0.5 },
+        { nx: 0.63 + pairBias, ny: 0.57, depth: 0.72 },
+        { nx: 0.43 - pairBias, ny: 0.68, depth: 0.38 },
+        { nx: 0.58 - pairBias * 0.6, ny: 0.25, depth: 0.95 },
       ];
+      const featureStart =
+        (Math.round((tileA.u + 1) * 3 + (tileB.v + 1) * 5) + landmarks.length) %
+        landmarks.length;
+      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+      const targetPoints = Array.from({ length: 3 }, (_, i) => {
+        const lm = landmarks[(featureStart + i) % landmarks.length];
+        const baseX = imageX + overlay.w * lm.nx;
+        const baseY = imageY + overlay.h * lm.ny;
+        const parallax = (9 + pairSpread * 8) * lm.depth;
+        const left = {
+          x: clamp(baseX + leftOffset - parallax * 0.5, imageX + 12, imageX + overlay.w - 12),
+          y: clamp(baseY - verticalSkew * 0.5, imageY + 12, imageY + overlay.h - 12),
+        };
+        const right = {
+          x: clamp(baseX + rightOffset + parallax * 0.5, imageX + 12, imageX + overlay.w - 12),
+          y: clamp(baseY + verticalSkew * 0.5, imageY + 12, imageY + overlay.h - 12),
+        };
+        return {
+          left,
+          right,
+          mid: {
+            x: (left.x + right.x) / 2,
+            y: (left.y + right.y) / 2,
+          },
+        };
+      });
       const activePoint = targetPoints[Math.floor((pulse / 48) % targetPoints.length)];
 
       drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
@@ -4142,15 +4178,25 @@ export function initSfMLiDAR() {
       targetPoints.forEach((pt, i) => {
         const alpha = pt === activePoint ? 0.88 : 0.34;
         const width = pt === activePoint ? 2.4 : 1.15;
-        drawLightRay(camA.x, camA.y, pt.x, pt.y, "rgba(92, 92, 92, 0.62)", alpha, width);
-        drawLightRay(camB.x, camB.y, pt.x, pt.y, "rgba(164, 164, 164, 0.66)", alpha, width);
-        if (i === 1) drawLightRay(virtualCam.x, virtualCam.y, pt.x, pt.y, newColor, 0.86, 2.8);
+        drawLightRay(camA.x, camA.y, pt.left.x, pt.left.y, "rgba(92, 92, 92, 0.62)", alpha, width);
+        drawLightRay(
+          camB.x,
+          camB.y,
+          pt.right.x,
+          pt.right.y,
+          "rgba(164, 164, 164, 0.66)",
+          alpha,
+          width,
+        );
+        if (pt === activePoint) {
+          drawLightRay(virtualCam.x, virtualCam.y, pt.mid.x, pt.mid.y, newColor, 0.88, 2.9);
+        }
       });
 
       ctx.save();
       ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
       ctx.beginPath();
-      ctx.arc(activePoint.x, activePoint.y, 7 + Math.sin(pulse * 0.12) * 1.2, 0, Math.PI * 2);
+      ctx.arc(activePoint.mid.x, activePoint.mid.y, 7 + Math.sin(pulse * 0.12) * 1.2, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = newColor;
       ctx.lineWidth = 2;
