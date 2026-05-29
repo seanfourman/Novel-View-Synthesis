@@ -6548,7 +6548,7 @@ export function initNeRFVideo() {
       // Camera turns right and tilts down toward the centre of the scene
       // (origin) — the direction the hero frustum points.
       extraYaw = -0.8 * heroFocus;
-      extraPitch = -0.2 * heroFocus;
+      extraPitch = -0.36 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
       extraZoom = lerp(1, lerp(6.6, 1.7, pullBack), heroFocus * closeIn);
