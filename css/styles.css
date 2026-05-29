@@ -3106,7 +3106,6 @@ code {
 .compare-split[data-active="lidar"] .cp-lidar {
   flex-direction: row-reverse;
   align-items: center;
-  gap: clamp(1rem, 2vw, 2rem);
 }
 .compare-split[data-active="lidar"] .cp-vis-lf {
   position: absolute;
