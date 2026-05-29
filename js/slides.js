@@ -6535,11 +6535,13 @@ export function initNeRFVideo() {
         aimD = lerp(0.0, 4.0, easeInOut(k));
       }
       // Leftward nudge of the focal point so the hero frustum sits well over
-      // to the right of frame.
+      // to the right of frame. Downward shift lowers the whole viewing camera
+      // in world space (translation, not rotation).
       const nudge = -0.55;
+      const drop = 0.3;
       const aim = {
         x: HERO.x + heroDir.x * aimD - nudge,
-        y: HERO.y + heroDir.y * aimD,
+        y: HERO.y + heroDir.y * aimD - drop,
         z: HERO.z + heroDir.z * aimD,
       };
       cx = lerp(0, aim.x, heroFocus);
