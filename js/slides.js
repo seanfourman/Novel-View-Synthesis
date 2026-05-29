@@ -3976,15 +3976,7 @@ export function initSfMLiDAR() {
       .sort((a, b) => tiles[b].v - tiles[a].v);
 
     // ── Synthesised novel view (bottom region) ─────────────────────────────
-    const OUT_W = 174;
-    const OUT_H = OUT_W * POL_AR;
     const OUT_CX = W / 2;
-    const OUT_CY = H - OUT_H / 2 - 18;
-    const MINI_W = 70;
-    const MINI_H = MINI_W * POL_AR;
-    const MINI_CY = OUT_CY + 8;
-    const MINI_LEFT_CX = OUT_CX - 182;
-    const MINI_RIGHT_CX = OUT_CX + 182;
 
     function drawImageInRect(img, x, y, w, h, alpha = 1) {
       if (!img.complete || !img.naturalWidth) return;
@@ -4028,119 +4020,156 @@ export function initSfMLiDAR() {
       ctx.restore();
     }
 
-    function drawMiniCard(img, cx, cy, w, alpha, strokeStyle, label) {
-      const h = w * POL_AR;
-      const x = cx - w / 2;
-      const y = cy - h / 2;
+    function drawLightRay(fromX, fromY, toX, toY, color, alpha = 1, width = 1.6) {
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.shadowColor = "rgba(40, 30, 20, 0.16)";
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetY = 3;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
-      drawImageInRect(img, x, y, w, h, 1);
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = 1.6;
-      ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
-      ctx.restore();
-      drawTinyLabel(label, cx, y + h + 13, strokeStyle);
-    }
-
-    function drawBlendArrow(fromX, fromY, toX, toY, color, alpha = 1) {
-      const dir = Math.sign(toX - fromX) || 1;
-      ctx.save();
-      ctx.globalAlpha = alpha;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = width > 2 ? 12 : 5;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.7;
+      ctx.lineWidth = width;
       ctx.beginPath();
       ctx.moveTo(fromX, fromY);
-      ctx.bezierCurveTo(
-        fromX + dir * 36,
-        fromY - 4,
-        toX - dir * 36,
-        toY + 4,
-        toX,
-        toY,
-      );
+      ctx.lineTo(toX, toY);
       ctx.stroke();
-
+      ctx.shadowBlur = 0;
       ctx.fillStyle = color;
-      ctx.translate(toX, toY);
-      ctx.rotate(Math.atan2(toY - fromY, toX - fromX));
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(-8, -4);
-      ctx.lineTo(-8, 4);
-      ctx.closePath();
+      ctx.arc(toX, toY, 3.8, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
 
-    function drawSamplerDiagram(leftIdx, rightIdx) {
-      const outputX = OUT_CX - OUT_W / 2;
-      const outputY = OUT_CY - OUT_H / 2;
-      const baselineY = outputY - 23;
+    function drawCameraGlyph(cx, cy, color, label, active = false) {
+      ctx.save();
+      ctx.fillStyle = active ? "rgba(255, 255, 255, 0.96)" : "rgba(255, 255, 255, 0.86)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = active ? 2.2 : 1.4;
+      roundRectPath(cx - 12, cy - 8, 24, 16, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, active ? 4.2 : 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+      if (label) drawTinyLabel(label, cx, cy - 18, color);
+    }
 
-      drawMiniCard(
-        polaroids[leftIdx],
-        MINI_LEFT_CX,
-        MINI_CY,
-        MINI_W,
-        0.94,
-        "rgba(255, 120, 60, 0.82)",
-        "sample A",
-      );
-      drawMiniCard(
-        polaroids[rightIdx],
-        MINI_RIGHT_CX,
-        MINI_CY,
-        MINI_W,
-        0.86,
-        "rgba(44, 142, 176, 0.76)",
-        "sample B",
-      );
-
-      drawBlendArrow(
-        MINI_LEFT_CX + MINI_W / 2 + 6,
-        MINI_CY,
-        outputX - 8,
-        OUT_CY - OUT_H * 0.06,
-        "rgba(255, 120, 60, 0.78)",
-        0.72,
-      );
-      drawBlendArrow(
-        MINI_RIGHT_CX - MINI_W / 2 - 6,
-        MINI_CY,
-        outputX + OUT_W + 8,
-        OUT_CY - OUT_H * 0.06,
-        "rgba(44, 142, 176, 0.74)",
-        0.7,
-      );
+    function drawOverlayImage(leftImg, rightImg, cx, cy, w, h, pulse) {
+      const x = cx - w / 2;
+      const y = cy - h / 2;
+      const leftOffset = -8 + Math.sin(pulse * 0.035) * 2;
+      const rightOffset = 8 + Math.cos(pulse * 0.033) * 2;
 
       ctx.save();
-      ctx.strokeStyle = "rgba(78, 60, 50, 0.25)";
-      ctx.lineWidth = 1.4;
+      ctx.shadowColor = "rgba(40, 30, 20, 0.2)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+      ctx.fillRect(x - 10, y - 10, w + 20, h + 20);
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
       ctx.beginPath();
-      ctx.moveTo(MINI_LEFT_CX, baselineY);
-      ctx.lineTo(MINI_RIGHT_CX, baselineY);
-      ctx.stroke();
-      [
-        [MINI_LEFT_CX, "rgba(255, 120, 60, 0.9)"],
-        [OUT_CX, "rgba(70, 168, 104, 0.95)"],
-        [MINI_RIGHT_CX, "rgba(44, 142, 176, 0.9)"],
-      ].forEach(([x, color]) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(x, baselineY, x === OUT_CX ? 4.8 : 3.7, 0, Math.PI * 2);
-        ctx.fill();
-      });
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      drawImageInRect(leftImg, x + leftOffset, y, w, h, 0.62);
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "rgb(255, 120, 60)";
+      ctx.fillRect(x, y, w, h);
+      drawImageInRect(rightImg, x + rightOffset, y, w, h, 0.62);
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "rgb(44, 142, 176)";
+      ctx.fillRect(x, y, w, h);
       ctx.restore();
 
-      drawTinyLabel("interpolate", OUT_CX, baselineY - 13);
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 120, 60, 0.72)";
+      ctx.lineWidth = 1.8;
+      ctx.strokeRect(x + leftOffset - 4, y - 4, w + 8, h + 8);
+      ctx.strokeStyle = "rgba(44, 142, 176, 0.72)";
+      ctx.strokeRect(x + rightOffset - 4, y - 4, w + 8, h + 8);
+      ctx.strokeStyle = "rgba(70, 168, 104, 0.82)";
+      ctx.lineWidth = 2.3;
+      ctx.strokeRect(x - 10, y - 10, w + 20, h + 20);
+      ctx.restore();
+
+      drawTinyLabel("overlaid views", cx, y - 18, "rgba(70, 168, 104, 0.86)");
+    }
+
+    function drawGuideFromTile(tile, toX, toY, color) {
+      const fromX = tile.cx;
+      const fromY = tile.cy + tile.th / 2 + 5;
+      const midY = (fromY + toY) / 2;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.35;
+      ctx.setLineDash([4, 5]);
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.bezierCurveTo(fromX, midY, toX, midY, toX, toY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    function drawTwoCameraOverlayDiagram(tileA, tileB, imgA, imgB, pulse) {
+      const overlay = { x: OUT_CX, y: 450, w: 164, h: 148 };
+      const cameraY = 562;
+      const camA = { x: tileA.cx, y: cameraY };
+      const camB = { x: tileB.cx, y: cameraY };
+      const virtualCam = {
+        x: camA.x + (camB.x - camA.x) * 0.5,
+        y: cameraY - 26,
+      };
+      const leftColor = "rgba(255, 120, 60, 0.82)";
+      const rightColor = "rgba(44, 142, 176, 0.78)";
+      const newColor = "rgba(70, 168, 104, 0.92)";
+      const imageX = overlay.x - overlay.w / 2;
+      const imageY = overlay.y - overlay.h / 2;
+      const targetPoints = [
+        { x: imageX + overlay.w * 0.3, y: imageY + overlay.h * 0.32 },
+        { x: imageX + overlay.w * 0.5, y: imageY + overlay.h * 0.48 },
+        { x: imageX + overlay.w * 0.7, y: imageY + overlay.h * 0.64 },
+      ];
+      const activePoint = targetPoints[Math.floor((pulse / 48) % targetPoints.length)];
+
+      drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
+      drawGuideFromTile(tileB, camB.x, camB.y - 15, rightColor);
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(78, 60, 50, 0.22)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(Math.min(camA.x, camB.x) - 30, cameraY + 12);
+      ctx.lineTo(Math.max(camA.x, camB.x) + 30, cameraY + 12);
+      ctx.stroke();
+      ctx.restore();
+
+      drawOverlayImage(imgA, imgB, overlay.x, overlay.y, overlay.w, overlay.h, pulse);
+
+      targetPoints.forEach((pt, i) => {
+        const alpha = pt === activePoint ? 0.88 : 0.34;
+        const width = pt === activePoint ? 2.4 : 1.15;
+        drawLightRay(camA.x, camA.y, pt.x, pt.y, "rgba(255, 120, 60, 0.72)", alpha, width);
+        drawLightRay(camB.x, camB.y, pt.x, pt.y, "rgba(44, 142, 176, 0.66)", alpha, width);
+        if (i === 1) drawLightRay(virtualCam.x, virtualCam.y, pt.x, pt.y, newColor, 0.86, 2.8);
+      });
+
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.beginPath();
+      ctx.arc(activePoint.x, activePoint.y, 7 + Math.sin(pulse * 0.12) * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = newColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      drawCameraGlyph(camA.x, camA.y, leftColor, "view A", true);
+      drawCameraGlyph(camB.x, camB.y, rightColor, "view B", true);
+      drawCameraGlyph(virtualCam.x, virtualCam.y, newColor, "between", true);
     }
 
     function drawTile(tile, highlight) {
@@ -4166,75 +4195,22 @@ export function initSfMLiDAR() {
 
       // Active glow + border
       if (highlight > 0.02) {
+        const accent = tile.highlightColor || "255, 120, 60";
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(tilt);
-        ctx.strokeStyle = `rgba(255, 120, 60, ${0.5 + highlight * 0.5})`;
+        ctx.strokeStyle = `rgba(${accent}, ${0.5 + highlight * 0.5})`;
         ctx.lineWidth = 2 + highlight * 1.5;
         ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
         if (highlight > 0.4) {
-          ctx.shadowColor = "rgba(255, 130, 70, 0.85)";
+          ctx.shadowColor = `rgba(${accent}, 0.85)`;
           ctx.shadowBlur = 16 * highlight;
-          ctx.strokeStyle = `rgba(255, 170, 110, ${0.5 * highlight})`;
+          ctx.strokeStyle = `rgba(${accent}, ${0.5 * highlight})`;
           ctx.lineWidth = 1.2;
           ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
         }
         ctx.restore();
       }
-    }
-
-    function drawOutputFrame(outputIdx) {
-      const x = OUT_CX - OUT_W / 2;
-      const y = OUT_CY - OUT_H / 2;
-      const img = polaroids[outputIdx];
-      ctx.save();
-      ctx.shadowColor = "rgba(40, 30, 20, 0.2)";
-      ctx.shadowBlur = 13;
-      ctx.shadowOffsetY = 5;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x - 7, y - 7, OUT_W + 14, OUT_H + 14);
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
-      drawImageInRect(img, x, y, OUT_W, OUT_H, 1);
-      ctx.strokeStyle = "rgba(70, 168, 104, 0.78)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x - 7, y - 7, OUT_W + 14, OUT_H + 14);
-      ctx.restore();
-
-      drawTinyLabel("new midpoint view", OUT_CX, y + OUT_H - 18);
-    }
-
-    function drawPairConnectors(tileA, tileB) {
-      const pairs = [
-        {
-          tile: tileA,
-          x: MINI_LEFT_CX,
-          y: MINI_CY - MINI_H / 2 - 7,
-          color: "rgba(255, 120, 60, 0.48)",
-        },
-        {
-          tile: tileB,
-          x: MINI_RIGHT_CX,
-          y: MINI_CY - MINI_H / 2 - 7,
-          color: "rgba(44, 142, 176, 0.42)",
-        },
-      ];
-      ctx.save();
-      ctx.lineWidth = 1.4;
-      ctx.setLineDash([4, 5]);
-      pairs.forEach(({ tile, x, y, color }) => {
-        const fromX = tile.cx;
-        const fromY = tile.cy + tile.th / 2 + 2;
-        const midY = (fromY + y) / 2;
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(fromX, fromY);
-        ctx.bezierCurveTo(fromX, midY, x, midY, x, y);
-        ctx.stroke();
-      });
-      ctx.setLineDash([]);
-      ctx.restore();
     }
 
     // Snake sweep through the dome — one tile at a time, in row-major snake order
@@ -4246,6 +4222,11 @@ export function initSfMLiDAR() {
       }
     }
     const STEP_FRAMES = 75; // ~1.25 s per tile at 60 fps
+    const viewPairs = [
+      [3, 5],
+      [0, 2],
+      [6, 8],
+    ];
 
     let t = 0;
     return (dtScale = 1) => {
@@ -4257,9 +4238,9 @@ export function initSfMLiDAR() {
       const stepIdx = Math.floor(phase / STEP_FRAMES);
       const subT = (phase - stepIdx * STEP_FRAMES) / STEP_FRAMES;
 
-      const leftTileIdx = sweepOrder[stepIdx];
-      const midTileIdx = sweepOrder[(stepIdx + 1) % sweepOrder.length];
-      const rightTileIdx = sweepOrder[(stepIdx + 2) % sweepOrder.length];
+      const [tileAIdx, tileBIdx] = viewPairs[stepIdx % viewPairs.length];
+      const tileA = tiles[tileAIdx];
+      const tileB = tiles[tileBIdx];
 
       // Highlight: exactly one tile orange — fades in at step start, out at step end
       const fadeIn = 0.18;
@@ -4270,18 +4251,20 @@ export function initSfMLiDAR() {
       else curH = 1;
       curH = curH * curH * (3 - 2 * curH); // smoothstep
       tiles.forEach((tile, i) => {
-        tile.highlight = i === leftTileIdx ? curH : 0;
+        tile.highlight = i === tileAIdx || i === tileBIdx ? curH : 0;
+        tile.highlightColor =
+          i === tileAIdx ? "255, 120, 60" : i === tileBIdx ? "44, 142, 176" : null;
       });
 
       tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
 
-      drawPairConnectors(tiles[leftTileIdx], tiles[rightTileIdx]);
-      drawSamplerDiagram(
-        tileToPolaroid[leftTileIdx],
-        tileToPolaroid[rightTileIdx],
+      drawTwoCameraOverlayDiagram(
+        tileA,
+        tileB,
+        polaroids[tileToPolaroid[tileAIdx]],
+        polaroids[tileToPolaroid[tileBIdx]],
+        t,
       );
-
-      drawOutputFrame(tileToPolaroid[midTileIdx]);
     };
   })();
 
