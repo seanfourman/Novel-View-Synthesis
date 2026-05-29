@@ -5723,14 +5723,15 @@ export function initNeRFVideo() {
   const P = {
     introEnd: 3.2,
     convergeEnd: 4.7,
-    heroEnd: 5.5,
-    rayEnd: 6.8,
-    samplesEnd: 9.5,
-    mlpEnd: 11.0,
-    queryEnd: 20.5,
-    fillEnd: 22.5,
-    pixelEnd: 25.5,
-    holdEnd: 27.5,
+    zoomEnd: 6.8, // close-up on the hero frustum (no ray yet)
+    heroEnd: 7.3,
+    rayEnd: 8.6,
+    samplesEnd: 11.3,
+    mlpEnd: 12.8,
+    queryEnd: 22.3,
+    fillEnd: 24.3,
+    pixelEnd: 27.3,
+    holdEnd: 29.3,
   };
 
   let _seed = 0xc0ffee;
@@ -5889,12 +5890,13 @@ export function initNeRFVideo() {
   const chapters = [
     { start: 0.0,  end: 3.0,  title: "מצלמות תופסות את אותה סצנה מזוויות רבות" },
     { start: 3.0,  end: 4.7,  title: "המצלמות מתכנסות סביב הסצנה" },
-    { start: 4.7,  end: 6.8,  title: "מצלמה אחת שולחת קרן אל תוך הסצנה" },
-    { start: 6.8,  end: 9.5,  title: "דוגמים נקודות לאורך הקרן" },
-    { start: 9.5,  end: 11.0, title: "הרשת F_Θ מחכה לקבל כל נקודה" },
-    { start: 11.0, end: 20.5, title: "כל (x,y,z,θ,φ) עוברת דרך הרשת ומקבלת (RGB,σ)" },
-    { start: 20.5, end: 22.5, title: "הרשת מחזירה לכל הנקודות צבע וצפיפות" },
-    { start: 22.5, end: 26.0, title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה" },
+    { start: 4.7,  end: 6.8,  title: "מתקרבים לאחת המצלמות" },
+    { start: 6.8,  end: 8.6,  title: "המצלמה שולחת קרן אל תוך הסצנה" },
+    { start: 8.6,  end: 11.3, title: "דוגמים נקודות לאורך הקרן" },
+    { start: 11.3, end: 12.8, title: "הרשת F_Θ מחכה לקבל כל נקודה" },
+    { start: 12.8, end: 22.3, title: "כל (x,y,z,θ,φ) עוברת דרך הרשת ומקבלת (RGB,σ)" },
+    { start: 22.3, end: 24.3, title: "הרשת מחזירה לכל הנקודות צבע וצפיפות" },
+    { start: 24.3, end: 27.8, title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה" },
   ];
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
@@ -6383,15 +6385,15 @@ export function initNeRFVideo() {
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.2));
+      const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(2.6, 1.3, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(4.0, 1.5, pullBack), heroFocus * closeIn);
     }
 
-    // Dampen the orbit while zoomed in so the close-up on the hero frustum
-    // stays stable (small ambient drift is added back below).
-    const finalYaw = orbitYaw * (1 - heroFocus * 0.75) + driftYaw;
-    const finalPitch = orbitPitch * (1 - heroFocus * 0.75) + driftPitch;
+    // Dampen the orbit hard while zoomed in so the tight close-up on the
+    // hero frustum stays stable (driftYaw/Pitch add a faint breathing motion).
+    const finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw;
+    const finalPitch = orbitPitch * (1 - heroFocus * 0.88) + driftPitch;
     const finalZoom = orbitZoom * extraZoom;
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
