@@ -3837,7 +3837,7 @@ export function initSfMLiDAR() {
       photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
       // Arrow
-      const ax = 210,
+      const ax = 235,
         ay = H * 0.5,
         aw = 32,
         ah = 8;
