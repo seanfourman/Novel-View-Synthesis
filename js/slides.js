@@ -3705,12 +3705,10 @@ export function initSfMLiDAR() {
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(angle);
-      ctx.shadowColor = isActive
-        ? `rgba(255,90,54,${pulse * 0.48})`
-        : "rgba(0,0,0,0.16)";
-      ctx.shadowBlur = isActive ? 10 + pulse * 6 : 7;
-      ctx.shadowOffsetX = isActive ? 0 : 2;
-      ctx.shadowOffsetY = isActive ? 0 : 3;
+      ctx.shadowColor = "rgba(0,0,0,0.16)";
+      ctx.shadowBlur = 7;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 3;
       ctx.fillStyle = "#f8f6f2";
       ctx.fillRect(-PW / 2, -PH / 2, PW, PH);
       ctx.shadowColor = "transparent";
@@ -3723,6 +3721,10 @@ export function initSfMLiDAR() {
         ctx.fillRect(-PW / 2 + m, -PH / 2 + m, PW - m * 2, PH - m - bot);
       }
       if (isActive) {
+        ctx.shadowColor = `rgba(255,90,54,${pulse * 0.42})`;
+        ctx.shadowBlur = 9 + pulse * 7;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
         ctx.strokeStyle = `rgba(255,90,54,${pulse * 0.88})`;
         ctx.lineWidth = 2.2;
         ctx.strokeRect(-PW / 2 + 1.5, -PH / 2 + 1.5, PW - 3, PH - 3);
