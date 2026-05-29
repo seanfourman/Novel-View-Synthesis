@@ -6534,21 +6534,22 @@ export function initNeRFVideo() {
         const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
         aimD = lerp(0.0, 4.0, easeInOut(k));
       }
-      const leftNudge = 0.45;
       const aim = {
-        x: HERO.x + heroDir.x * aimD - leftNudge,
+        x: HERO.x + heroDir.x * aimD,
         y: HERO.y + heroDir.y * aimD,
         z: HERO.z + heroDir.z * aimD,
       };
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      // Extra yaw turns the camera slightly to the right so we see the hero
-      // frustum from a 3/4 angle.
-      extraYaw = -0.22 * heroFocus;
+      // Camera turns right toward the centre of the scene (origin) — the
+      // direction the hero frustum points. Hero stays dead-centre because
+      // view.center == HERO.
+      extraYaw = -0.55 * heroFocus;
+      extraPitch = 0.16 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(5.5, 1.6, pullBack), heroFocus * closeIn);
+      extraZoom = lerp(1, lerp(7.5, 1.7, pullBack), heroFocus * closeIn);
     }
 
     // Dampen the orbit hard while zoomed in so the tight close-up on the
