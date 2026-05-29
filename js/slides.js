@@ -3794,12 +3794,7 @@ export function initSfMLiDAR() {
       ];
       return {
         apex: [cx, cy, cz],
-        corners: [
-          corner(-1, -1),
-          corner(-1, 1),
-          corner(1, 1),
-          corner(1, -1),
-        ],
+        corners: [corner(-1, -1), corner(-1, 1), corner(1, 1), corner(1, -1)],
         worldZ: cz,
       };
     };
@@ -3837,7 +3832,7 @@ export function initSfMLiDAR() {
       photos.forEach(([x, y, a], i) => drawPolaroid(x, y, a, polaroidImgs[i]));
 
       // Arrow
-      const ax = 235,
+      const ax = 240,
         ay = H * 0.5,
         aw = 32,
         ah = 8;
@@ -4661,7 +4656,8 @@ export function initSRNNetAnim() {
   const ctx = canvas.getContext("2d");
 
   const dpr = window.devicePixelRatio || 1;
-  let W = 0, H = 0;
+  let W = 0,
+    H = 0;
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
@@ -4677,8 +4673,11 @@ export function initSRNNetAnim() {
   }
 
   // ---- Input scene image (sampled from pixelated.png) ----
-  const IMG_COLS = 20, IMG_ROWS = 20;
-  function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+  const IMG_COLS = 20,
+    IMG_ROWS = 20;
+  function clamp255(v) {
+    return Math.max(0, Math.min(255, Math.round(v)));
+  }
   const imgPixels = [];
   // pre-fill with neutral grey so the grid renders before the image loads
   for (let i = 0; i < IMG_COLS * IMG_ROWS; i++) {
@@ -4805,8 +4804,8 @@ export function initSRNNetAnim() {
 
     const netX1 = W * 0.32;
     const netX2 = W * 0.83;
-    const layerXs = layerCounts.map((_, i) =>
-      netX1 + (netX2 - netX1) * (i / (layerCounts.length - 1))
+    const layerXs = layerCounts.map(
+      (_, i) => netX1 + (netX2 - netX1) * (i / (layerCounts.length - 1)),
     );
     const padTop = H * 0.16;
     const padBot = H * 0.16;
@@ -5170,7 +5169,8 @@ export function initSpatialTransition() {
   const ctx = canvas.getContext("2d");
 
   const dpr = window.devicePixelRatio || 1;
-  let W = 0, H = 0;
+  let W = 0,
+    H = 0;
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
