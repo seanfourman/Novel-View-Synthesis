@@ -3976,10 +3976,15 @@ export function initSfMLiDAR() {
       .sort((a, b) => tiles[b].v - tiles[a].v);
 
     // ── Synthesised novel view (bottom region) ─────────────────────────────
-    const OUT_W = 245;
+    const OUT_W = 174;
     const OUT_H = OUT_W * POL_AR;
     const OUT_CX = W / 2;
     const OUT_CY = H - OUT_H / 2 - 18;
+    const MINI_W = 70;
+    const MINI_H = MINI_W * POL_AR;
+    const MINI_CY = OUT_CY + 8;
+    const MINI_LEFT_CX = OUT_CX - 182;
+    const MINI_RIGHT_CX = OUT_CX + 182;
 
     function drawImageInRect(img, x, y, w, h, alpha = 1) {
       if (!img.complete || !img.naturalWidth) return;
@@ -3992,6 +3997,150 @@ export function initSfMLiDAR() {
       const drawH = w * iAR;
       ctx.drawImage(img, x, y - (drawH - h) / 2, w, drawH);
       ctx.restore();
+    }
+
+    function roundRectPath(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+      ctx.lineTo(x + w, y + h - rr);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+      ctx.lineTo(x + rr, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+      ctx.lineTo(x, y + rr);
+      ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
+    }
+
+    function drawTinyLabel(text, cx, y, tone = "rgba(70, 52, 42, 0.78)") {
+      ctx.save();
+      ctx.font = "600 11px Inter, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const width = ctx.measureText(text).width + 14;
+      roundRectPath(cx - width / 2, y - 8, width, 16, 8);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+      ctx.fill();
+      ctx.fillStyle = tone;
+      ctx.fillText(text, cx, y + 0.5);
+      ctx.restore();
+    }
+
+    function drawMiniCard(img, cx, cy, w, alpha, strokeStyle, label) {
+      const h = w * POL_AR;
+      const x = cx - w / 2;
+      const y = cy - h / 2;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = "rgba(40, 30, 20, 0.16)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 4, y - 4, w + 8, h + 8);
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      drawImageInRect(img, x, y, w, h, 1);
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 1.6;
+      ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+      ctx.restore();
+      drawTinyLabel(label, cx, y + h + 13, strokeStyle);
+    }
+
+    function drawBlendArrow(fromX, fromY, toX, toY, color, alpha = 1) {
+      const dir = Math.sign(toX - fromX) || 1;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.7;
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.bezierCurveTo(
+        fromX + dir * 36,
+        fromY - 4,
+        toX - dir * 36,
+        toY + 4,
+        toX,
+        toY,
+      );
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.translate(toX, toY);
+      ctx.rotate(Math.atan2(toY - fromY, toX - fromX));
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-8, -4);
+      ctx.lineTo(-8, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSamplerDiagram(leftIdx, rightIdx) {
+      const outputX = OUT_CX - OUT_W / 2;
+      const outputY = OUT_CY - OUT_H / 2;
+      const baselineY = outputY - 23;
+
+      drawMiniCard(
+        polaroids[leftIdx],
+        MINI_LEFT_CX,
+        MINI_CY,
+        MINI_W,
+        0.94,
+        "rgba(255, 120, 60, 0.82)",
+        "sample A",
+      );
+      drawMiniCard(
+        polaroids[rightIdx],
+        MINI_RIGHT_CX,
+        MINI_CY,
+        MINI_W,
+        0.86,
+        "rgba(44, 142, 176, 0.76)",
+        "sample B",
+      );
+
+      drawBlendArrow(
+        MINI_LEFT_CX + MINI_W / 2 + 6,
+        MINI_CY,
+        outputX - 8,
+        OUT_CY - OUT_H * 0.06,
+        "rgba(255, 120, 60, 0.78)",
+        0.72,
+      );
+      drawBlendArrow(
+        MINI_RIGHT_CX - MINI_W / 2 - 6,
+        MINI_CY,
+        outputX + OUT_W + 8,
+        OUT_CY - OUT_H * 0.06,
+        "rgba(44, 142, 176, 0.74)",
+        0.7,
+      );
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(78, 60, 50, 0.25)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(MINI_LEFT_CX, baselineY);
+      ctx.lineTo(MINI_RIGHT_CX, baselineY);
+      ctx.stroke();
+      [
+        [MINI_LEFT_CX, "rgba(255, 120, 60, 0.9)"],
+        [OUT_CX, "rgba(70, 168, 104, 0.95)"],
+        [MINI_RIGHT_CX, "rgba(44, 142, 176, 0.9)"],
+      ].forEach(([x, color]) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, baselineY, x === OUT_CX ? 4.8 : 3.7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      drawTinyLabel("interpolate", OUT_CX, baselineY - 13);
     }
 
     function drawTile(tile, highlight) {
@@ -4034,38 +4183,57 @@ export function initSfMLiDAR() {
       }
     }
 
-    function drawOutputFrame(curIdx, nxtIdx, blend) {
+    function drawOutputFrame(outputIdx) {
       const x = OUT_CX - OUT_W / 2;
       const y = OUT_CY - OUT_H / 2;
-      const fromImg = polaroids[curIdx];
-      const toImg = polaroids[nxtIdx];
-      if (blend < 1) drawImageInRect(fromImg, x, y, OUT_W, OUT_H, 1 - blend);
-      if (blend > 0) drawImageInRect(toImg, x, y, OUT_W, OUT_H, blend);
+      const img = polaroids[outputIdx];
+      ctx.save();
+      ctx.shadowColor = "rgba(40, 30, 20, 0.2)";
+      ctx.shadowBlur = 13;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 7, y - 7, OUT_W + 14, OUT_H + 14);
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      drawImageInRect(img, x, y, OUT_W, OUT_H, 1);
+      ctx.strokeStyle = "rgba(70, 168, 104, 0.78)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 7, y - 7, OUT_W + 14, OUT_H + 14);
+      ctx.restore();
+
+      drawTinyLabel("new midpoint view", OUT_CX, y + OUT_H - 18);
     }
 
-    function drawConnector(sourceTile) {
-      const fromX = sourceTile.cx;
-      const fromY = sourceTile.cy + sourceTile.th / 2 + 2;
-      const toX = OUT_CX;
-      const toY = OUT_CY - OUT_H / 2 - 6;
-      const midY = (fromY + toY) / 2;
+    function drawPairConnectors(tileA, tileB) {
+      const pairs = [
+        {
+          tile: tileA,
+          x: MINI_LEFT_CX,
+          y: MINI_CY - MINI_H / 2 - 7,
+          color: "rgba(255, 120, 60, 0.48)",
+        },
+        {
+          tile: tileB,
+          x: MINI_RIGHT_CX,
+          y: MINI_CY - MINI_H / 2 - 7,
+          color: "rgba(44, 142, 176, 0.42)",
+        },
+      ];
       ctx.save();
-      ctx.strokeStyle = "rgba(255, 120, 60, 0.55)";
       ctx.lineWidth = 1.4;
       ctx.setLineDash([4, 5]);
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.bezierCurveTo(fromX, midY, toX, midY, toX, toY);
-      ctx.stroke();
+      pairs.forEach(({ tile, x, y, color }) => {
+        const fromX = tile.cx;
+        const fromY = tile.cy + tile.th / 2 + 2;
+        const midY = (fromY + y) / 2;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.bezierCurveTo(fromX, midY, x, midY, x, y);
+        ctx.stroke();
+      });
       ctx.setLineDash([]);
-      // Arrowhead
-      ctx.fillStyle = "rgba(255, 120, 60, 0.85)";
-      ctx.beginPath();
-      ctx.moveTo(toX, toY + 4);
-      ctx.lineTo(toX - 5, toY - 4);
-      ctx.lineTo(toX + 5, toY - 4);
-      ctx.closePath();
-      ctx.fill();
       ctx.restore();
     }
 
@@ -4089,13 +4257,9 @@ export function initSfMLiDAR() {
       const stepIdx = Math.floor(phase / STEP_FRAMES);
       const subT = (phase - stepIdx * STEP_FRAMES) / STEP_FRAMES;
 
-      const curTileIdx = sweepOrder[stepIdx];
-      const nxtTileIdx = sweepOrder[(stepIdx + 1) % sweepOrder.length];
-
-      // Dwell on the tile for ~70 % of the step, then crossfade output to next
-      const moveStart = 0.72;
-      const e = subT < moveStart ? 0 : (subT - moveStart) / (1 - moveStart);
-      const blend = e * e * (3 - 2 * e); // smoothstep
+      const leftTileIdx = sweepOrder[stepIdx];
+      const midTileIdx = sweepOrder[(stepIdx + 1) % sweepOrder.length];
+      const rightTileIdx = sweepOrder[(stepIdx + 2) % sweepOrder.length];
 
       // Highlight: exactly one tile orange — fades in at step start, out at step end
       const fadeIn = 0.18;
@@ -4106,18 +4270,18 @@ export function initSfMLiDAR() {
       else curH = 1;
       curH = curH * curH * (3 - 2 * curH); // smoothstep
       tiles.forEach((tile, i) => {
-        tile.highlight = i === curTileIdx ? curH : 0;
+        tile.highlight = i === leftTileIdx ? curH : 0;
       });
 
       tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
 
-      drawConnector(tiles[curTileIdx]);
-
-      drawOutputFrame(
-        tileToPolaroid[curTileIdx],
-        tileToPolaroid[nxtTileIdx],
-        blend,
+      drawPairConnectors(tiles[leftTileIdx], tiles[rightTileIdx]);
+      drawSamplerDiagram(
+        tileToPolaroid[leftTileIdx],
+        tileToPolaroid[rightTileIdx],
       );
+
+      drawOutputFrame(tileToPolaroid[midTileIdx]);
     };
   })();
 
