@@ -5757,12 +5757,39 @@ export function initNeRFVideo() {
     };
   }
 
+  // Virtual viewing camera (orbits the scene). Updated once per frame from
+  // updateViewState() so all projections share the same matrix.
+  const view = {
+    yaw: 0,
+    pitch: 0,
+    zoom: 1,
+    cYaw: 1, sYaw: 0,
+    cPit: 1, sPit: 0,
+  };
+
+  function setView(yaw, pitch, zoom) {
+    view.yaw = yaw;
+    view.pitch = pitch;
+    view.zoom = zoom;
+    view.cYaw = Math.cos(yaw);
+    view.sYaw = Math.sin(yaw);
+    view.cPit = Math.cos(pitch);
+    view.sPit = Math.sin(pitch);
+  }
+  setView(0, 0, 1);
+
   function project(x, y, z) {
-    const f = Math.min(W, H) * 0.95;
-    const denom = z + CAM_DIST;
+    // yaw around Y axis
+    const x1 = view.cYaw * x + view.sYaw * z;
+    const z1 = -view.sYaw * x + view.cYaw * z;
+    // pitch around X axis
+    const y2 = view.cPit * y - view.sPit * z1;
+    const z2 = view.sPit * y + view.cPit * z1;
+    const f = Math.min(W, H) * 0.95 * view.zoom;
+    const denom = z2 + CAM_DIST;
     return {
-      x: W / 2 + (f * x) / denom,
-      y: H / 2 - (f * y) / denom,
+      x: W / 2 + (f * x1) / denom,
+      y: H / 2 - (f * y2) / denom,
       depth: denom,
       scale: f / denom,
     };
@@ -6212,6 +6239,17 @@ export function initNeRFVideo() {
     const fadeOut = clamp01((t - P.holdEnd) / (CYCLE - P.holdEnd));
     const fadeIn = clamp01(t / 0.4);
     const globalAlpha = Math.min(fadeIn, 1 - fadeOut);
+
+    // Virtual camera: continuous slow orbit so the scene reads as 3D,
+    // with a gentle zoom-in once the cameras have converged.
+    const orbit = t * 0.18; // ~35s per oscillation
+    const yaw = Math.sin(orbit) * 0.45 + Math.sin(orbit * 0.37 + 1.3) * 0.12;
+    const pitch =
+      Math.sin(orbit * 0.71 + 0.6) * 0.13 -
+      0.05 * easeInOut(clamp01((t - P.convergeEnd) / 3));
+    const zoom = 1 + 0.12 * easeInOut(clamp01((t - P.introEnd) / 4))
+      - 0.05 * Math.sin(orbit * 0.5);
+    setView(yaw, pitch, zoom);
 
     ctx.save();
     ctx.globalAlpha = globalAlpha;
