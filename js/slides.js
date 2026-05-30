@@ -7309,17 +7309,14 @@ export function initNeRFVideo() {
     updateCaption();
   }
 
-  // One click = "go to the next chapter". Behaviour depends on state:
-  //   - paused at chapter end → advance immediately
-  //   - playing or decelerating → run/finish the smooth decel and then
-  //     auto-advance once it lands (so the user never has to click twice).
+  // One click = "go to the next chapter", but only when paused at a chapter
+  // end. Clicks during playback are ignored (you can't skip ahead — once a
+  // chapter starts it plays to the end), and the final chapter is a dead end:
+  // clicking there does nothing, so it never loops back to the start.
   slide.addEventListener("click", () => {
-    if (paused) {
-      advanceChapter();
-    } else {
-      autoAdvanceAfterDecel = true;
-      beginDecel();
-    }
+    if (!paused) return;
+    if (chapterIdx >= chapters.length - 1) return;
+    advanceChapter();
   });
 
   return {
