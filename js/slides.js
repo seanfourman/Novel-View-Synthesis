@@ -5841,6 +5841,7 @@ export function initNeRFVideo() {
     pixelEnd: 25.0,
     returnEnd: 28.0, // pull back out to the wide "all cameras" establishing view
     raysEnd: 31.0, // every camera fires light rays into the scene
+    soloEnd: 34.0, // rays + cameras fade away, leaving only the 3D model
     holdEnd: 22.8,
   };
 
@@ -6129,6 +6130,12 @@ export function initNeRFVideo() {
     start: P.returnEnd,
     end: P.raysEnd,
     title: "כל מצלמה יורה קרני אור אל תוך הסצנה",
+  });
+  // Final click: rays + cameras fade away, leaving only the reconstructed model.
+  chapters.push({
+    start: P.raysEnd,
+    end: P.soloEnd,
+    title: "וזה המודל התלת-ממדי שהתקבל",
   });
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
@@ -6925,6 +6932,9 @@ export function initNeRFVideo() {
     const returnFade = easeInOut(clamp01((t - P.pixelEnd) / 1.2));
     // Final chapter: every camera fires a burst of light rays into the scene.
     const rayCastT = chapterIdx >= 9 ? clamp01((t - P.returnEnd) / 1.4) : 0;
+    // Last chapter: fade the rays + camera frustums away, leaving only the model.
+    const soloT =
+      chapterIdx >= 10 ? easeInOut(clamp01((t - P.raysEnd) / 1.1)) : 0;
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -7098,9 +7108,9 @@ export function initNeRFVideo() {
         const inHeroScreenZone = screenDist < Math.min(W, H) * 0.34;
         if (inHeroWorldZone || inHeroScreenZone) continue;
       }
-      const camAlpha = isHero
-        ? 1.0
-        : Math.max(1 - formulaCameraFadeOut, cameraReturn);
+      const camAlpha =
+        (isHero ? 1.0 : Math.max(1 - formulaCameraFadeOut, cameraReturn)) *
+        (1 - soloT);
       if (camAlpha <= 0.02) continue;
       // On the final wide view every frustum shows its own captured image and
       // the hero is no longer singled out in bold black.
@@ -7147,7 +7157,7 @@ export function initNeRFVideo() {
         strokeLine3(
           c.pos,
           end,
-          `rgba(255,90,42,${(0.9 * eCast).toFixed(3)})`,
+          `rgba(255,90,42,${(0.9 * eCast * (1 - soloT)).toFixed(3)})`,
           2.0,
         );
       }
