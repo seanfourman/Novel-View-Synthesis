@@ -4089,7 +4089,9 @@ export function initSfMLiDAR() {
       ctx.textBaseline = "middle";
       const lineHeight = 16;
       const startY = y + h / 2 - ((lines.length - 1) * lineHeight) / 2;
-      lines.forEach((line, i) => ctx.fillText(line, x + w / 2, startY + i * lineHeight));
+      lines.forEach((line, i) =>
+        ctx.fillText(line, x + w / 2, startY + i * lineHeight),
+      );
       ctx.restore();
     }
 
@@ -4108,7 +4110,15 @@ export function initSfMLiDAR() {
       });
     }
 
-    function drawViewPlane(cx, cy, w, h, frameIdx, rotation, highlight = false) {
+    function drawViewPlane(
+      cx,
+      cy,
+      w,
+      h,
+      frameIdx,
+      rotation,
+      highlight = false,
+    ) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rotation);
@@ -4119,7 +4129,15 @@ export function initSfMLiDAR() {
       ctx.fill();
       ctx.stroke();
       ctx.clip();
-      drawSpriteFrame(frameIdx, 0, 2, w * 0.82, h * 0.9, highlight ? 0.98 : 0.72, "raw");
+      drawSpriteFrame(
+        frameIdx,
+        0,
+        2,
+        w * 0.82,
+        h * 0.9,
+        highlight ? 0.98 : 0.72,
+        "raw",
+      );
       ctx.restore();
     }
 
@@ -4128,7 +4146,9 @@ export function initSfMLiDAR() {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angle);
-      ctx.fillStyle = active ? "rgba(12, 18, 38, 0.96)" : "rgba(24, 24, 24, 0.9)";
+      ctx.fillStyle = active
+        ? "rgba(12, 18, 38, 0.96)"
+        : "rgba(24, 24, 24, 0.9)";
       ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
       ctx.lineWidth = 0.8;
       roundRectPath(-11, -7, 22, 14, 3);
@@ -4149,7 +4169,9 @@ export function initSfMLiDAR() {
 
     function drawFramedView(x, y, w, h, frameIdx, borderColor, active = false) {
       ctx.save();
-      ctx.fillStyle = active ? "rgba(255, 255, 255, 0.86)" : "rgba(255, 255, 255, 0.62)";
+      ctx.fillStyle = active
+        ? "rgba(255, 255, 255, 0.86)"
+        : "rgba(255, 255, 255, 0.62)";
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = active ? 2.6 : 1.6;
       if (active) {
@@ -4160,7 +4182,15 @@ export function initSfMLiDAR() {
       ctx.fill();
       ctx.stroke();
       ctx.clip();
-      drawSpriteFrame(frameIdx, x + w / 2, y + h / 2 + 1, w * 0.88, h * 0.88, 1, "raw");
+      drawSpriteFrame(
+        frameIdx,
+        x + w / 2,
+        y + h / 2 + 1,
+        w * 0.88,
+        h * 0.88,
+        1,
+        "raw",
+      );
       ctx.restore();
     }
 
@@ -4214,7 +4244,9 @@ export function initSfMLiDAR() {
         const active = sampleCameraIndices.includes(i);
         ctx.save();
         ctx.setLineDash([3, 5]);
-        ctx.strokeStyle = active ? "rgba(48, 82, 188, 0.54)" : "rgba(30, 30, 30, 0.23)";
+        ctx.strokeStyle = active
+          ? "rgba(48, 82, 188, 0.54)"
+          : "rgba(30, 30, 30, 0.23)";
         ctx.lineWidth = active ? 1.6 : 0.95;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
@@ -4251,17 +4283,30 @@ export function initSfMLiDAR() {
       captureFrames.forEach((frame, i) => {
         const x = capX + i * (cellW + gap);
         const active = i === activeSegment || i === activeSegment + 1;
-        drawFramedView(x, capY, cellW, cellH, frame, active ? diagramBlue : "rgba(20, 20, 20, 0.2)", active);
+        drawFramedView(
+          x,
+          capY,
+          cellW,
+          cellH,
+          frame,
+          active ? diagramBlue : "rgba(20, 20, 20, 0.2)",
+          active,
+        );
       });
 
-      const arrowY = capY + cellH + 34;
-      drawDoubleArrow(capX + 8, capX + gridW - 8, arrowY, "rgba(25, 25, 25, 0.58)");
+      const arrowY = capY + cellH + 48;
+      drawDoubleArrow(
+        capX + 8,
+        capX + gridW - 8,
+        arrowY,
+        "rgba(25, 25, 25, 0.58)",
+      );
       ctx.save();
       ctx.direction = "rtl";
       ctx.fillStyle = diagramInk;
       ctx.font = "600 15px Inter, Arial, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("אינטרפולציה בין מבטים", W / 2, arrowY - 10);
+      ctx.fillText("אינטרפולציה בין מבטים", W / 2, arrowY - 18);
       ctx.restore();
       drawDownArrow(W / 2, arrowY + 18, arrowY + 35, diagramArrowGrey);
 
@@ -4271,7 +4316,7 @@ export function initSfMLiDAR() {
       const novelGap = 8;
       const novelGridW = novelCount * novelW + (novelCount - 1) * novelGap;
       const novelX = (W - novelGridW) / 2;
-      const novelY = capY + 148;
+      const novelY = capY + 154;
       const fromFrame = captureFrames[activeSegment];
       const toFrame = captureFrames[activeSegment + 1];
 
@@ -4279,7 +4324,15 @@ export function initSfMLiDAR() {
         const mix = i / (novelCount - 1);
         const frame = Math.round(fromFrame + (toFrame - fromFrame) * mix);
         const x = novelX + i * (novelW + novelGap);
-        drawFramedView(x, novelY, novelW, novelH, frame, diagramOrange, i === 2);
+        drawFramedView(
+          x,
+          novelY,
+          novelW,
+          novelH,
+          frame,
+          diagramOrange,
+          i === 2,
+        );
       }
 
       ctx.save();
@@ -4287,7 +4340,11 @@ export function initSfMLiDAR() {
       ctx.fillStyle = diagramOrangeText;
       ctx.font = "600 16px Inter, Arial, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("מבטים חדשים (מצלמות וירטואליות)", W / 2, novelY + novelH + 24);
+      ctx.fillText(
+        "מבטים חדשים (מצלמות וירטואליות)",
+        W / 2,
+        novelY + novelH + 30,
+      );
       ctx.restore();
     }
 
