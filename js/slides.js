@@ -4195,11 +4195,10 @@ export function initSfMLiDAR() {
     }
 
     function drawLightFieldReferenceDiagram(pulse) {
-      const scene = { x: W / 2, y: 210 };
-      const arc = { cx: W / 2, cy: 218, rx: 292, ry: 128 };
-      const cameraCount = 13;
-      const start = (Math.PI * 165) / 180;
-      const end = (Math.PI * 15) / 180;
+      const scene = { x: W / 2, y: 190 };
+      const arc = { cx: W / 2, cy: 190, rx: 280, ry: 96 };
+      // Full ring of cameras around the scene.
+      const cameraCount = 18;
       const captureFrames = [2, 7, 12, 18, 24, 30];
       const capCount = captureFrames.length;
       const blendPos = (pulse / 70) % (capCount - 1);
@@ -4213,8 +4212,8 @@ export function initSfMLiDAR() {
       const cameraPoints = [];
 
       for (let i = 0; i < cameraCount; i++) {
-        const u = i / (cameraCount - 1);
-        const theta = start + (end - start) * u;
+        const u = i / cameraCount; // 0..1 evenly around the full ring
+        const theta = Math.PI / 2 - u * Math.PI * 2; // start at top, go around
         const x = arc.cx + Math.cos(theta) * arc.rx;
         const y = arc.cy - Math.sin(theta) * arc.ry;
         const outX = Math.cos(theta);
@@ -4237,6 +4236,7 @@ export function initSfMLiDAR() {
         if (i === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       });
+      ctx.closePath();
       ctx.stroke();
       ctx.restore();
 
@@ -4275,7 +4275,7 @@ export function initSfMLiDAR() {
       const gap = 4;
       const gridW = capCount * cellW + (capCount - 1) * gap;
       const capX = (W - gridW) / 2;
-      const capY = 318;
+      const capY = 338;
 
       drawEllipsis(76, capY + 31, "rgba(20, 20, 20, 0.84)");
       drawEllipsis(W - 76, capY + 31, "rgba(20, 20, 20, 0.84)");
