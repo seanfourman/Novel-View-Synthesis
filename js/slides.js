@@ -6868,6 +6868,10 @@ export function initNeRFVideo() {
   // Used for purely ambient motion (orbit drift, wild-camera wobble/spin) so
   // the view keeps floating during a pause.
   let wallT = 0;
+  // Anchors for the final-chapter slow orbit (captured on entry so the spin
+  // starts from the current angle instead of jumping).
+  let soloStartWall = -1;
+  let soloStartYaw = 0;
 
   function step(dtScale) {
     const dt = dtScale / 60;
@@ -7034,10 +7038,28 @@ export function initNeRFVideo() {
 
     // Dampen the orbit hard while zoomed in so the tight close-up on the
     // hero frustum stays stable (driftYaw/Pitch add a faint breathing motion).
-    const finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw + extraYaw;
-    const finalPitch =
+    let finalYaw = orbitYaw * (1 - heroFocus * 0.88) + driftYaw + extraYaw;
+    let finalPitch =
       orbitPitch * (1 - heroFocus * 0.88) + driftPitch + extraPitch;
-    const finalZoom = orbitZoom * extraZoom;
+    let finalZoom = orbitZoom * extraZoom;
+    // Last chapter: zoom in on the model and slowly orbit it. Uses wall-clock
+    // time so it keeps turning even while the slide is paused on the last frame.
+    // The spin is anchored to the angle at entry so it starts slow and smooth.
+    if (soloT > 0.001) {
+      if (soloStartWall < 0) {
+        soloStartWall = wallT;
+        soloStartYaw = finalYaw;
+      }
+      const spinYaw = soloStartYaw + (wallT - soloStartWall) * 0.25;
+      finalYaw = lerp(finalYaw, spinYaw, soloT);
+      finalPitch = lerp(finalPitch, -0.16, soloT);
+      finalZoom = lerp(finalZoom, 2.3, soloT);
+      cx = lerp(cx, 0, soloT);
+      cy = lerp(cy, 0, soloT);
+      cz = lerp(cz, 0, soloT);
+    } else {
+      soloStartWall = -1;
+    }
     setView(cx, cy, cz, finalYaw, finalPitch, finalZoom);
 
     ctx.save();
