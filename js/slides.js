@@ -3917,17 +3917,10 @@ export function initSfMLiDAR() {
     if (!cv) return () => {};
     const ctx = cv.getContext("2d");
     const W = cv.width,
-      H = cv.height; // 500 × 600
+      H = cv.height;
 
     // ── Genuine multi-angle captures of the Stanford bunny (orbital views) ──
     const BASE_RENDERS = "assets/generated/bunny_renders/";
-    const polaroids = [];
-    for (let i = 0; i < 9; i++) {
-      const img = new Image();
-      img.src = BASE_RENDERS + `polaroid_0${i}.png`;
-      polaroids.push(img);
-    }
-    const POL_AR = 290 / 260; // height / width
     const spriteSheet = new Image();
     spriteSheet.src = BASE_RENDERS + "sprite_sheet.png";
     const SPRITE_COLS = 6;
@@ -3938,80 +3931,6 @@ export function initSfMLiDAR() {
       right: { r: 54, g: 116, b: 235 },
     };
     const spriteFrameCache = new Map();
-
-    // ── Captured-view dome (top region) ─────────────────────────────────────
-    // 3 × 3 of "photo cards" with a slight spherical curve so the array reads
-    // as the inside of a capture dome (per Broxton et al.).
-    const COLS = 3,
-      ROWS = 3;
-    const TOP_CY = 140;
-    const SPREAD_X = 130;
-    const SPREAD_Y = 68;
-    const TILE_BASE_W = 80;
-
-    // Snake assignment: as the sweep walks row-by-row in boustrophedon order,
-    // the polaroid index advances 0 → 8, so the captured orbit reads as a
-    // continuous rotation around the bunny.
-    const tileToPolaroid = new Array(COLS * ROWS);
-    {
-      let p = 0;
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const col = r % 2 === 0 ? c : COLS - 1 - c;
-          tileToPolaroid[r * COLS + col] = p++;
-        }
-      }
-    }
-
-    const tiles = [];
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const u = (c - (COLS - 1) / 2) / ((COLS - 1) / 2);
-        const v = (r - (ROWS - 1) / 2) / ((ROWS - 1) / 2);
-        const d = Math.sqrt(u * u + v * v) / Math.SQRT2;
-        const depthScale = 1 - d * 0.18;
-        const tw = TILE_BASE_W * depthScale;
-        const th = tw * POL_AR;
-        const cx = W / 2 + u * SPREAD_X + Math.sign(u) * d * 6;
-        const cy = TOP_CY + v * SPREAD_Y - (1 - d) * 4;
-        const tilt = u * 0.16 + v * 0.04;
-        const idx = r * COLS + c;
-        const img = polaroids[tileToPolaroid[idx]];
-        tiles.push({ cx, cy, tw, th, tilt, depthScale, img, u, v });
-      }
-    }
-    // Render order: bottom row first → top row last, so the top row sits on top
-    const tileOrder = tiles
-      .map((_, i) => i)
-      .sort((a, b) => tiles[b].v - tiles[a].v);
-
-    // ── Synthesised novel view (bottom region) ─────────────────────────────
-    const OUT_CX = W / 2;
-
-    function drawImageInRect(img, x, y, w, h, alpha = 1) {
-      if (!img.complete || !img.naturalWidth) return;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(x, y, w, h);
-      ctx.clip();
-      ctx.globalAlpha = alpha;
-      const iAR = img.naturalHeight / img.naturalWidth;
-      const drawH = w * iAR;
-      ctx.drawImage(img, x, y - (drawH - h) / 2, w, drawH);
-      ctx.restore();
-    }
-
-    function spriteFrameForPolaroid(polaroidIdx) {
-      return Math.round(
-        (polaroidIdx / (polaroids.length - 1)) * (SPRITE_TOTAL - 1),
-      );
-    }
-
-    function midpointSpriteFrame(a, b) {
-      const half = SPRITE_TOTAL / 2;
-      const diff = ((b - a + SPRITE_TOTAL + half) % SPRITE_TOTAL) - half;
-      return (Math.round(a + diff * 0.5) + SPRITE_TOTAL) % SPRITE_TOTAL;
-    }
 
     function getSpriteFrame(frameIdx, tintName = "raw") {
       if (!spriteSheet.complete || !spriteSheet.naturalWidth) return null;
@@ -4094,420 +4013,285 @@ export function initSfMLiDAR() {
       ctx.closePath();
     }
 
-    function drawTinyLabel(text, cx, y, tone = "rgba(70, 52, 42, 0.78)") {
+    const diagramBlue = "rgba(48, 82, 188, 0.92)";
+    const diagramOrange = "rgba(226, 104, 72, 0.68)";
+    const diagramOrangeText = "rgba(255, 90, 54, 0.92)";
+    const diagramArrowGrey = "rgba(120, 120, 120, 0.72)";
+    const diagramInk = "rgba(25, 25, 25, 0.88)";
+
+    function drawArrowHead(x, y, angle, size, color) {
       ctx.save();
-      ctx.font = "600 11px Inter, Arial, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const width = ctx.measureText(text).width + 14;
-      roundRectPath(cx - width / 2, y - 8, width, 16, 8);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-size, -size * 0.48);
+      ctx.lineTo(-size, size * 0.48);
+      ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = tone;
-      ctx.fillText(text, cx, y + 0.5);
       ctx.restore();
     }
 
-    function drawLightRay(
-      fromX,
-      fromY,
-      toX,
-      toY,
-      color,
-      alpha = 1,
-      width = 1.6,
-    ) {
+    function drawLineArrow(x1, y1, x2, y2, color, width = 1.4) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
       ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = width > 2 ? 12 : 5;
       ctx.strokeStyle = color;
       ctx.lineWidth = width;
+      ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(toX, toY);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(toX, toY, 3.8, 0, Math.PI * 2);
-      ctx.fill();
       ctx.restore();
+      drawArrowHead(x2, y2, angle, 8, color);
     }
 
-    function drawCameraGlyph(cx, cy, color, label, active = false) {
+    function drawDoubleArrow(x1, x2, y, color) {
       ctx.save();
-      ctx.fillStyle = active
-        ? "rgba(255, 255, 255, 0.96)"
-        : "rgba(255, 255, 255, 0.86)";
       ctx.strokeStyle = color;
-      ctx.lineWidth = active ? 2.2 : 1.4;
-      roundRectPath(cx - 12, cy - 8, 24, 16, 3);
-      ctx.fill();
-      ctx.stroke();
+      ctx.lineWidth = 1.45;
+      ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.arc(cx, cy, active ? 4.2 : 3.2, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
       ctx.restore();
-      if (label) drawTinyLabel(label, cx, cy - 18, color);
+      drawArrowHead(x2, y, 0, 8, color);
+      drawArrowHead(x1, y, Math.PI, 8, color);
     }
 
-    function drawBunnySynthesis(frameA, frameB, frameMid, cx, cy, w, h, pulse) {
-      const x = cx - w / 2;
-      const y = cy - h / 2;
-      const leftOffset = -18 + Math.sin(pulse * 0.035) * 2.2;
-      const rightOffset = 18 + Math.cos(pulse * 0.033) * 2.2;
-
+    function drawDownArrow(x, y1, y2, color) {
       ctx.save();
-      ctx.shadowColor = "rgba(40, 30, 20, 0.2)";
-      ctx.shadowBlur = 14;
-      ctx.shadowOffsetY = 5;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
-      roundRectPath(x - 10, y - 10, w + 20, h + 20, 7);
-      ctx.fill();
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetY = 0;
-
-      roundRectPath(x, y, w, h, 5);
-      ctx.fillStyle = "rgba(252, 251, 247, 0.92)";
-      ctx.fill();
-      ctx.clip();
-
-      const bunnyW = w * 0.82;
-      const bunnyH = h * 0.88;
-      drawSpriteFrame(
-        frameA,
-        cx + leftOffset,
-        cy + 4,
-        bunnyW,
-        bunnyH,
-        0.6,
-        "left",
-      );
-      drawSpriteFrame(
-        frameB,
-        cx + rightOffset,
-        cy + 4,
-        bunnyW,
-        bunnyH,
-        0.6,
-        "right",
-      );
-      drawSpriteFrame(
-        frameMid,
-        cx,
-        cy + 2,
-        bunnyW * 0.95,
-        bunnyH * 0.95,
-        0.96,
-        "raw",
-      );
-      ctx.restore();
-
-      ctx.save();
-      ctx.strokeStyle = "rgba(235, 62, 77, 0.62)";
-      ctx.lineWidth = 1.8;
-      roundRectPath(x + leftOffset - 4, y - 4, w + 8, h + 8, 5);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(54, 116, 235, 0.64)";
-      roundRectPath(x + rightOffset - 4, y - 4, w + 8, h + 8, 5);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(145, 145, 145, 0.84)";
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2.3;
-      roundRectPath(x - 10, y - 10, w + 20, h + 20, 7);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2 - 9);
       ctx.stroke();
       ctx.restore();
+      drawArrowHead(x, y2, Math.PI / 2, 9, color);
     }
 
-    function drawGuideFromTile(tile, toX, toY, color) {
-      const fromX = tile.cx;
-      const fromY = tile.cy + tile.th / 2 + 5;
-      const midY = (fromY + toY) / 2;
+    function drawLabelBox(lines, x, y, w, h, color = diagramBlue) {
       ctx.save();
+      ctx.direction = "rtl";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.78)";
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.35;
-      ctx.setLineDash([4, 5]);
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.bezierCurveTo(fromX, midY, toX, midY, toX, toY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-    }
-
-    function drawTwoCameraOverlayDiagram(
-      tileA,
-      tileB,
-      frameA,
-      frameB,
-      frameMid,
-      pulse,
-    ) {
-      const overlay = { x: OUT_CX, y: 450, w: 164, h: 148 };
-      const cameraY = 562;
-      const camA = { x: tileA.cx, y: cameraY };
-      const camB = { x: tileB.cx, y: cameraY };
-      const virtualCam = {
-        x: camA.x + (camB.x - camA.x) * 0.5,
-        y: cameraY - 26,
-      };
-      const leftColor = "rgba(235, 62, 77, 0.76)";
-      const rightColor = "rgba(54, 116, 235, 0.78)";
-      const newColor = "rgba(145, 145, 145, 0.94)";
-      const imageX = overlay.x - overlay.w / 2;
-      const imageY = overlay.y - overlay.h / 2;
-      const leftOffset = -18 + Math.sin(pulse * 0.035) * 2.2;
-      const rightOffset = 18 + Math.cos(pulse * 0.033) * 2.2;
-      const pairSpread = Math.min(
-        1.45,
-        Math.abs(tileB.u - tileA.u) + Math.abs(tileB.v - tileA.v) * 0.55,
-      );
-      const verticalSkew = (tileB.v - tileA.v) * 9;
-      const pairBias = ((tileA.u + tileB.u) / 2) * 0.035;
-      const landmarks = [
-        { nx: 0.34 + pairBias, ny: 0.29, depth: 0.82 },
-        { nx: 0.48 + pairBias * 0.4, ny: 0.43, depth: 0.5 },
-        { nx: 0.63 + pairBias, ny: 0.57, depth: 0.72 },
-        { nx: 0.43 - pairBias, ny: 0.68, depth: 0.38 },
-        { nx: 0.58 - pairBias * 0.6, ny: 0.25, depth: 0.95 },
-      ];
-      const featureStart =
-        (Math.round((tileA.u + 1) * 3 + (tileB.v + 1) * 5) + landmarks.length) %
-        landmarks.length;
-      const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-      const targetPoints = Array.from({ length: 3 }, (_, i) => {
-        const lm = landmarks[(featureStart + i) % landmarks.length];
-        const baseX = imageX + overlay.w * lm.nx;
-        const baseY = imageY + overlay.h * lm.ny;
-        const parallax = (9 + pairSpread * 8) * lm.depth;
-        const left = {
-          x: clamp(
-            baseX + leftOffset - parallax * 0.5,
-            imageX + 12,
-            imageX + overlay.w - 12,
-          ),
-          y: clamp(
-            baseY - verticalSkew * 0.5,
-            imageY + 12,
-            imageY + overlay.h - 12,
-          ),
-        };
-        const right = {
-          x: clamp(
-            baseX + rightOffset + parallax * 0.5,
-            imageX + 12,
-            imageX + overlay.w - 12,
-          ),
-          y: clamp(
-            baseY + verticalSkew * 0.5,
-            imageY + 12,
-            imageY + overlay.h - 12,
-          ),
-        };
-        return {
-          left,
-          right,
-          mid: {
-            x: (left.x + right.x) / 2,
-            y: (left.y + right.y) / 2,
-          },
-        };
-      });
-      const activePoint =
-        targetPoints[Math.floor((pulse / 48) % targetPoints.length)];
-
-      drawGuideFromTile(tileA, camA.x, camA.y - 15, leftColor);
-      drawGuideFromTile(tileB, camB.x, camB.y - 15, rightColor);
-
-      drawBunnySynthesis(
-        frameA,
-        frameB,
-        frameMid,
-        overlay.x,
-        overlay.y,
-        overlay.w,
-        overlay.h,
-        pulse,
-      );
-
-      targetPoints.forEach((pt, i) => {
-        const alpha = pt === activePoint ? 0.88 : 0.34;
-        const width = pt === activePoint ? 2.4 : 1.15;
-        drawLightRay(
-          camA.x,
-          camA.y,
-          pt.left.x,
-          pt.left.y,
-          "rgba(235, 62, 77, 0.64)",
-          alpha,
-          width,
-        );
-        drawLightRay(
-          camB.x,
-          camB.y,
-          pt.right.x,
-          pt.right.y,
-          "rgba(54, 116, 235, 0.66)",
-          alpha,
-          width,
-        );
-        if (pt === activePoint) {
-          drawLightRay(
-            virtualCam.x,
-            virtualCam.y,
-            pt.mid.x,
-            pt.mid.y,
-            newColor,
-            0.88,
-            2.9,
-          );
-        }
-      });
-
-      ctx.save();
-      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
-      ctx.beginPath();
-      ctx.arc(
-        activePoint.mid.x,
-        activePoint.mid.y,
-        7 + Math.sin(pulse * 0.12) * 1.2,
-        0,
-        Math.PI * 2,
-      );
+      ctx.lineWidth = 1.5;
+      roundRectPath(x, y, w, h, 3);
       ctx.fill();
-      ctx.strokeStyle = newColor;
-      ctx.lineWidth = 2;
       ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = "600 12px Inter, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const lineHeight = 16;
+      const startY = y + h / 2 - ((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((line, i) => ctx.fillText(line, x + w / 2, startY + i * lineHeight));
       ctx.restore();
-
-      drawCameraGlyph(camA.x, camA.y, leftColor, "", true);
-      drawCameraGlyph(camB.x, camB.y, rightColor, "", true);
-      drawCameraGlyph(virtualCam.x, virtualCam.y, newColor, "", true);
     }
 
-    function drawTile(tile, highlight) {
-      const { cx, cy, tw, th, tilt, img } = tile;
+    function drawEllipsis(cx, cy, color = diagramInk) {
+      ctx.save();
+      ctx.fillStyle = color;
+      [-12, 0, 12].forEach((dx) => {
+        ctx.beginPath();
+        ctx.arc(cx + dx, cy, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawViewPlane(cx, cy, w, h, frameIdx, rotation, highlight = false) {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(tilt);
-      // Card shadow
-      ctx.shadowColor = "rgba(40, 30, 20, 0.22)";
-      ctx.shadowBlur = 7;
-      ctx.shadowOffsetX = 1;
-      ctx.shadowOffsetY = 3;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-tw / 2 - 3, -th / 2 - 3, tw + 6, th + 6);
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      // Photo content
-      ctx.translate(-tw / 2, -th / 2);
-      drawImageInRect(img, 0, 0, tw, th, 1);
+      ctx.rotate(rotation);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.strokeStyle = highlight ? diagramBlue : "rgba(20, 20, 20, 0.72)";
+      ctx.lineWidth = highlight ? 2 : 1.2;
+      roundRectPath(-w / 2, -h / 2, w, h, 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.clip();
+      drawSpriteFrame(frameIdx, 0, 2, w * 0.82, h * 0.9, highlight ? 0.98 : 0.72, "raw");
+      ctx.restore();
+    }
+
+    function drawCameraBody(cx, cy, targetX, targetY, active = false) {
+      const angle = Math.atan2(targetY - cy, targetX - cx);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.fillStyle = active ? "rgba(12, 18, 38, 0.96)" : "rgba(24, 24, 24, 0.9)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+      ctx.lineWidth = 0.8;
+      roundRectPath(-11, -7, 22, 14, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(4, 4, 4, 0.94)";
+      ctx.beginPath();
+      ctx.arc(8, 0, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = active ? diagramBlue : "rgba(230, 230, 230, 0.5)";
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      ctx.fillStyle = "rgba(22, 22, 22, 0.9)";
+      roundRectPath(-6, -11, 9, 4, 1.5);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawFramedView(x, y, w, h, frameIdx, borderColor, active = false) {
+      ctx.save();
+      ctx.fillStyle = active ? "rgba(255, 255, 255, 0.86)" : "rgba(255, 255, 255, 0.62)";
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = active ? 2.6 : 1.6;
+      if (active) {
+        ctx.shadowColor = borderColor;
+        ctx.shadowBlur = 12;
+      }
+      roundRectPath(x, y, w, h, 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.clip();
+      drawSpriteFrame(frameIdx, x + w / 2, y + h / 2 + 1, w * 0.88, h * 0.88, 1, "raw");
+      ctx.restore();
+    }
+
+    function drawLightFieldReferenceDiagram(pulse) {
+      const scene = { x: W / 2, y: 210 };
+      const arc = { cx: W / 2, cy: 218, rx: 292, ry: 128 };
+      const cameraCount = 13;
+      const start = (Math.PI * 165) / 180;
+      const end = (Math.PI * 15) / 180;
+      const captureFrames = [2, 7, 12, 18, 24, 30];
+      const capCount = captureFrames.length;
+      const blendPos = (pulse / 70) % (capCount - 1);
+      const activeSegment = Math.floor(blendPos);
+      const sampleCameraIndices = [
+        captureFrames[activeSegment],
+        captureFrames[activeSegment + 1],
+      ].map((frame) =>
+        Math.round((frame / (SPRITE_TOTAL - 1)) * (cameraCount - 1)),
+      );
+      const cameraPoints = [];
+
+      for (let i = 0; i < cameraCount; i++) {
+        const u = i / (cameraCount - 1);
+        const theta = start + (end - start) * u;
+        const x = arc.cx + Math.cos(theta) * arc.rx;
+        const y = arc.cy - Math.sin(theta) * arc.ry;
+        const outX = Math.cos(theta);
+        const outY = -Math.sin(theta);
+        cameraPoints.push({
+          x,
+          y,
+          outX,
+          outY,
+          frame: Math.round(u * (SPRITE_TOTAL - 1)),
+          rotation: -(theta - Math.PI / 2) * 0.34,
+        });
+      }
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(40, 40, 40, 0.34)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      cameraPoints.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
       ctx.restore();
 
-      // Active glow + border
-      if (highlight > 0.02) {
-        const accent = tile.highlightColor || "118, 118, 118";
+      cameraPoints.forEach((p, i) => {
+        const active = sampleCameraIndices.includes(i);
         ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(tilt);
-        ctx.strokeStyle = `rgba(${accent}, ${0.5 + highlight * 0.5})`;
-        ctx.lineWidth = 2 + highlight * 1.5;
-        ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
-        if (highlight > 0.4) {
-          ctx.shadowColor = `rgba(${accent}, 0.85)`;
-          ctx.shadowBlur = 16 * highlight;
-          ctx.strokeStyle = `rgba(${accent}, ${0.5 * highlight})`;
-          ctx.lineWidth = 1.2;
-          ctx.strokeRect(-tw / 2 - 2, -th / 2 - 2, tw + 4, th + 4);
-        }
+        ctx.setLineDash([3, 5]);
+        ctx.strokeStyle = active ? "rgba(48, 82, 188, 0.54)" : "rgba(30, 30, 30, 0.23)";
+        ctx.lineWidth = active ? 1.6 : 0.95;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(scene.x, scene.y + 3);
+        ctx.stroke();
         ctx.restore();
-      }
-    }
+      });
 
-    // Snake sweep through the dome — one tile at a time, in row-major snake order
-    const sweepOrder = [];
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const col = r % 2 === 0 ? c : COLS - 1 - c;
-        sweepOrder.push(r * COLS + col);
-      }
-    }
-    const STEP_FRAMES = 75; // ~1.25 s per tile at 60 fps
+      ctx.save();
+      ctx.shadowColor = "rgba(45, 38, 28, 0.22)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 9;
+      drawSpriteFrame(32, scene.x, scene.y + 5, 136, 124, 0.98, "raw");
+      ctx.restore();
 
-    function chooseRandomPair(previousPair) {
-      for (let attempt = 0; attempt < 24; attempt++) {
-        let a = Math.floor(Math.random() * tiles.length);
-        let b = Math.floor(Math.random() * tiles.length);
-        if (a === b) continue;
-        if (Math.abs(tiles[a].cx - tiles[b].cx) < 85) continue;
-        if (
-          previousPair &&
-          ((a === previousPair[0] && b === previousPair[1]) ||
-            (a === previousPair[1] && b === previousPair[0]))
-        ) {
-          continue;
-        }
-        if (tiles[a].cx > tiles[b].cx) [a, b] = [b, a];
-        return [a, b];
+      cameraPoints.forEach((p, i) => {
+        const active = sampleCameraIndices.includes(i);
+        const bodyX = p.x + p.outX * 22;
+        const bodyY = p.y + p.outY * 22;
+        drawViewPlane(p.x, p.y, 42, 32, p.frame, p.rotation, active);
+        drawCameraBody(bodyX, bodyY, scene.x, scene.y, active);
+      });
+
+      const cellW = 75;
+      const cellH = 62;
+      const gap = 4;
+      const gridW = capCount * cellW + (capCount - 1) * gap;
+      const capX = (W - gridW) / 2;
+      const capY = 346;
+
+      drawEllipsis(76, capY + 31, "rgba(20, 20, 20, 0.84)");
+      drawEllipsis(W - 76, capY + 31, "rgba(20, 20, 20, 0.84)");
+
+      captureFrames.forEach((frame, i) => {
+        const x = capX + i * (cellW + gap);
+        const active = i === activeSegment || i === activeSegment + 1;
+        drawFramedView(x, capY, cellW, cellH, frame, active ? diagramBlue : "rgba(20, 20, 20, 0.2)", active);
+      });
+
+      const arrowY = capY + cellH + 34;
+      drawDoubleArrow(capX + 8, capX + gridW - 8, arrowY, "rgba(25, 25, 25, 0.58)");
+      ctx.save();
+      ctx.direction = "rtl";
+      ctx.fillStyle = diagramInk;
+      ctx.font = "600 15px Inter, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("אינטרפולציה בין מבטים", W / 2, arrowY - 10);
+      ctx.restore();
+      drawDownArrow(W / 2, arrowY + 18, arrowY + 35, diagramArrowGrey);
+
+      const novelCount = 5;
+      const novelW = 80;
+      const novelH = 62;
+      const novelGap = 8;
+      const novelGridW = novelCount * novelW + (novelCount - 1) * novelGap;
+      const novelX = (W - novelGridW) / 2;
+      const novelY = 494;
+      const fromFrame = captureFrames[activeSegment];
+      const toFrame = captureFrames[activeSegment + 1];
+
+      for (let i = 0; i < novelCount; i++) {
+        const mix = i / (novelCount - 1);
+        const frame = Math.round(fromFrame + (toFrame - fromFrame) * mix);
+        const x = novelX + i * (novelW + novelGap);
+        drawFramedView(x, novelY, novelW, novelH, frame, diagramOrange, i === 2);
       }
-      return [0, 5];
+
+      ctx.save();
+      ctx.direction = "rtl";
+      ctx.fillStyle = diagramOrangeText;
+      ctx.font = "600 16px Inter, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("מבטים חדשים (מצלמות וירטואליות)", W / 2, novelY + novelH + 24);
+      ctx.restore();
     }
 
     let t = 0;
-    let pairStep = -1;
-    let currentPair = chooseRandomPair(null);
     return (dtScale = 1) => {
       t += dtScale;
       ctx.clearRect(0, 0, W, H);
-
-      const totalFrames = STEP_FRAMES * sweepOrder.length;
-      const phase = ((t % totalFrames) + totalFrames) % totalFrames;
-      const stepIdx = Math.floor(phase / STEP_FRAMES);
-      const subT = (phase - stepIdx * STEP_FRAMES) / STEP_FRAMES;
-
-      if (stepIdx !== pairStep) {
-        currentPair = chooseRandomPair(currentPair);
-        pairStep = stepIdx;
-      }
-
-      const [tileAIdx, tileBIdx] = currentPair;
-      const tileA = tiles[tileAIdx];
-      const tileB = tiles[tileBIdx];
-
-      // Highlight the two sampled tiles as the pair changes.
-      const fadeIn = 0.18;
-      const fadeOut = 0.82;
-      let curH;
-      if (subT < fadeIn) curH = subT / fadeIn;
-      else if (subT > fadeOut) curH = 1 - (subT - fadeOut) / (1 - fadeOut);
-      else curH = 1;
-      curH = curH * curH * (3 - 2 * curH); // smoothstep
-      tiles.forEach((tile, i) => {
-        tile.highlight = i === tileAIdx || i === tileBIdx ? curH : 0;
-        tile.highlightColor =
-          i === tileAIdx
-            ? "235, 62, 77"
-            : i === tileBIdx
-              ? "54, 116, 235"
-              : null;
-      });
-
-      tileOrder.forEach((i) => drawTile(tiles[i], tiles[i].highlight));
-
-      const frameA = spriteFrameForPolaroid(tileToPolaroid[tileAIdx]);
-      const frameB = spriteFrameForPolaroid(tileToPolaroid[tileBIdx]);
-      drawTwoCameraOverlayDiagram(
-        tileA,
-        tileB,
-        frameA,
-        frameB,
-        midpointSpriteFrame(frameA, frameB),
-        t,
-      );
+      drawLightFieldReferenceDiagram(t);
     };
   })();
 

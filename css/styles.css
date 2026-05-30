@@ -3124,11 +3124,12 @@ code {
 .compare-split[data-active="lidar"] .cp-vis-lf {
   position: absolute;
   top: 50%;
-  left: clamp(1.2rem, 3vw, 3.2rem);
+  left: clamp(0.8rem, 2vw, 2.4rem);
   right: auto;
   transform: translateY(-50%);
-  width: 500px;
-  height: 600px;
+  width: clamp(500px, 43vw, 620px);
+  height: auto;
+  aspect-ratio: 680 / 610;
   opacity: 1;
   z-index: 2;
   pointer-events: auto;
