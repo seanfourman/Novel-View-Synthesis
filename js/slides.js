@@ -5840,6 +5840,7 @@ export function initNeRFVideo() {
     fillEnd: 18.2,
     pixelEnd: 25.0,
     returnEnd: 28.0, // pull back out to the wide "all cameras" establishing view
+    raysEnd: 31.0, // every camera fires light rays into the scene
     holdEnd: 22.8,
   };
 
@@ -6088,6 +6089,12 @@ export function initNeRFVideo() {
     start: P.pixelEnd,
     end: P.returnEnd,
     title: "חוזרים למבט הרחב — כל המצלמות שוב סביב הסצנה",
+  });
+  // One more click: every camera fires a burst of light rays into the scene.
+  chapters.push({
+    start: P.returnEnd,
+    end: P.raysEnd,
+    title: "כל מצלמה יורה קרני אור אל תוך הסצנה",
   });
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
@@ -6827,6 +6834,8 @@ export function initNeRFVideo() {
     // fade the ray / samples / merged bubble away as we return to the wide view.
     const cameraReturn = easeInOut(clamp01((t - P.pixelEnd) / 1.5));
     const returnFade = easeInOut(clamp01((t - P.pixelEnd) / 1.2));
+    // Final chapter: every camera fires a burst of light rays into the scene.
+    const rayCastT = chapterIdx >= 9 ? clamp01((t - P.returnEnd) / 1.4) : 0;
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -7029,6 +7038,31 @@ export function initNeRFVideo() {
         baseImageAlpha,
         heroHighlightFade,
       );
+    }
+
+    // Final chapter: every camera fires one small red ray out toward the scene
+    // centre, just like the hero ray from the beginning.
+    if (rayCastT > 0) {
+      const eCast = easeOut(rayCastT);
+      const rayLen = DOME_RADIUS * 1.15;
+      for (const c of camData) {
+        const f = normalize3(c.dir);
+        // Slight per-camera stagger so they fly out in a quick ripple.
+        const grow = easeOut(clamp01(eCast * 1.4 - (c.idx % 12) * 0.02));
+        if (grow <= 0.01) continue;
+        const len = rayLen * grow;
+        const end = {
+          x: c.pos.x + f.x * len,
+          y: c.pos.y + f.y * len,
+          z: c.pos.z + f.z * len,
+        };
+        strokeLine3(
+          c.pos,
+          end,
+          `rgba(255,90,42,${(0.9 * eCast).toFixed(3)})`,
+          2.0,
+        );
+      }
     }
 
     // From here on we draw the ray / samples / merged bubble. On the final
