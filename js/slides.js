@@ -6656,6 +6656,22 @@ export function initNeRFVideo() {
     ctx.restore();
   }
 
+  // Move point p a distance d toward point q (used to stop arrows short of the
+  // bubble instead of ending inside it).
+  function shortenToward(p, q, d) {
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: p.x + (dx / len) * d, y: p.y + (dy / len) * d };
+  }
+
+  // Screen radius of a projected sample sphere (matches drawSamples), so callers
+  // can leave a gap around the bubble.
+  function sampleScreenRadius(proj) {
+    const sizeScale = Math.max(0.55, Math.min(1.7, CAM_DIST / proj.depth));
+    return Math.min(W, H) * 0.012 * sizeScale;
+  }
+
   // Front-to-back volume composite of the sample palette → the single colour
   // this ray contributes to the final pixel.
   function pixelColor() {
@@ -7103,8 +7119,10 @@ export function initNeRFVideo() {
     if (mlpInfo && formulaIntroT > 0.01) {
       const p = samplePos(formulaSampleIdx);
       const proj = project(p.x, p.y, p.z);
+      const bubblePt = { x: proj.x, y: proj.y - 4 };
+      const gap = sampleScreenRadius(proj) + 5;
       drawCurvedArrow(
-        { x: proj.x, y: proj.y - 4 },
+        shortenToward(bubblePt, mlpInfo.inputAnchor, gap),
         mlpInfo.inputAnchor,
         easeOut(formulaIntroT),
         "rgba(255,90,42,0.9)",
@@ -7114,9 +7132,11 @@ export function initNeRFVideo() {
     if (mlpInfo && returnArrowAlpha > 0.01) {
       const p = samplePos(formulaSampleIdx);
       const proj = project(p.x, p.y, p.z);
+      const bubblePt = { x: proj.x, y: proj.y - 4 };
+      const gap = sampleScreenRadius(proj) + 5;
       drawCurvedArrow(
         mlpInfo.outputAnchor,
-        { x: proj.x, y: proj.y - 4 },
+        shortenToward(bubblePt, mlpInfo.outputAnchor, gap),
         returnArrowAlpha,
         "rgba(255,90,42,0.9)",
         0.45,
