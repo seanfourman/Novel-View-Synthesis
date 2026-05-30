@@ -6541,7 +6541,13 @@ export function initNeRFVideo() {
     return bestIdx;
   }
 
-  function drawCurvedArrow(from, to, alpha, color = "rgba(24,26,32,0.86)") {
+  function drawCurvedArrow(
+    from,
+    to,
+    alpha,
+    color = "rgba(24,26,32,0.86)",
+    bend = -0.45,
+  ) {
     if (alpha <= 0.01) return;
     ctx.save();
     ctx.globalAlpha *= alpha;
@@ -6552,7 +6558,7 @@ export function initNeRFVideo() {
     const midY = (from.y + to.y) / 2;
     const dy = Math.abs(to.y - from.y);
     const cpX = midX + (to.x - from.x) * 0.05;
-    const cpY = midY - dy * 0.45;
+    const cpY = midY + dy * bend;
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.quadraticCurveTo(cpX, cpY, to.x, to.y);
@@ -6926,6 +6932,7 @@ export function initNeRFVideo() {
         { x: proj.x, y: proj.y - 4 },
         easeOut(returnArrowT),
         "rgba(255,90,42,0.9)",
+        0.45,
       );
     }
     if (pixelT > 0) drawPixelChip(easeOut(pixelT));
