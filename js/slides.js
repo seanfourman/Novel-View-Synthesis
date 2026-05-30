@@ -6639,7 +6639,7 @@ export function initNeRFVideo() {
       // While following the samples, keep zooming in and add only a tiny
       // leftward view drift. In this projection, less-negative yaw is left.
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
-      extraPitch = lerp(-0.36, -0.39, bubbleFollowT) * heroFocus;
+      extraPitch = lerp(-0.36, -0.31, bubbleFollowT) * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const followZoom = lerp(6.8, 25.0, bubbleFollowT);
       extraZoom = lerp(1, followZoom, heroFocus * closeIn);
