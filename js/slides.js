@@ -6288,7 +6288,7 @@ export function initNeRFVideo() {
 
       // Glow halo (drawn first, under the sphere)
       if (glow > 0.05) {
-        const glowBreath = 0.82 + 0.18 * Math.sin(wallT * 6);
+        const glowBreath = 0.82 + 0.18 * Math.sin(wallT * 0.55);
         const haloR = r * (3.6 + glowBreath * 0.9);
         const halo = ctx.createRadialGradient(
           proj.x,
@@ -6416,25 +6416,15 @@ export function initNeRFVideo() {
     const barsTotalW = barCount * barW + (barCount - 1) * barGap;
     const barsX0 = cx - barsTotalW / 2;
     const barsY = rowY - barH / 2;
-    const pulse = networkPulse * (0.5 + 0.5 * Math.sin(wallT * 12));
-    ctx.fillStyle = `rgba(126,201,179,${(0.72 + pulse * 0.28).toFixed(3)})`;
-    if (networkPulse > 0.01) {
-      ctx.save();
-      ctx.globalAlpha *= 0.18 + pulse * 0.26;
-      ctx.fillStyle = "#7ec9b3";
-      roundRect(
-        ctx,
-        barsX0 - barW * 0.65,
-        barsY - barW * 0.75,
-        barsTotalW + barW * 1.3,
-        barH + barW * 1.5,
-        8,
-      );
-      ctx.fill();
-      ctx.restore();
-    }
+    const pulse = networkPulse * (0.5 + 0.5 * Math.sin(wallT * 1.05));
     for (let i = 0; i < barCount; i++) {
       const x = barsX0 + i * (barW + barGap);
+      const localPulse =
+        networkPulse * (0.5 + 0.5 * Math.sin(wallT * 1.05 + i * 0.55));
+      const rr = Math.round(lerp(126, 108, localPulse));
+      const gg = Math.round(lerp(201, 226, localPulse));
+      const bb = Math.round(lerp(179, 202, localPulse));
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},${(0.76 + pulse * 0.2).toFixed(3)})`;
       roundRect(ctx, x, barsY, barW, barH, 3);
       ctx.fill();
     }
