@@ -5985,9 +5985,9 @@ export function initNeRFVideo() {
   // Rendered at the scene centre with the slide's own projector, so it is a
   // genuine 3D object that rotates with the view.
   let legoCloud = null;
-  const TRACTOR_SCALE = 2.6; // world size of the cloud (normalised radius ≈ 1)
+  const TRACTOR_SCALE = 2.5; // world size of the cloud (normalised radius ≈ 1)
   const TRACTOR_Y = 0; // vertical offset of the object centre
-  const TRACTOR_ROT_Y = Math.PI / 2; // spin so a good 3/4 side faces the camera
+  const TRACTOR_ROT_Y = (3 * Math.PI) / 2; // spin so the bucket-arm 3/4 faces us
   const TRACTOR_POINT = 1.0; // point-size multiplier
   fetch(new URL("../assets/generated/lego_points.json", import.meta.url).href)
     .then((r) => r.json())
@@ -6316,16 +6316,23 @@ export function initNeRFVideo() {
   // Render the reconstructed tractor point cloud at the scene centre. Each point
   // goes through the same project() as everything else, so the object rotates
   // correctly as the camera orbits — a genuine 3D render, not a billboard.
+  let _cloudSX = null;
+  let _cloudSY = null;
+  let _cloudSD = null;
   let _cloudOrder = null;
   function drawLegoCloud(alpha) {
     if (!legoCloud || alpha <= 0.01) return;
     const { n, x, y, z, cr, cg, cb } = legoCloud;
+    if (!_cloudSX || _cloudSX.length !== n) {
+      _cloudSX = new Float32Array(n);
+      _cloudSY = new Float32Array(n);
+      _cloudSD = new Float32Array(n);
+      _cloudOrder = new Int32Array(n);
+      for (let i = 0; i < n; i++) _cloudOrder[i] = i;
+    }
     const cY = Math.cos(TRACTOR_ROT_Y);
     const sY = Math.sin(TRACTOR_ROT_Y);
     const sc = TRACTOR_SCALE;
-    const sx = new Float32Array(n);
-    const sy = new Float32Array(n);
-    const sd = new Float32Array(n);
     let scaleAccum = 0;
     for (let i = 0; i < n; i++) {
       const X = x[i];
@@ -6333,26 +6340,24 @@ export function initNeRFVideo() {
       const rx = cY * X + sY * Z;
       const rz = -sY * X + cY * Z;
       const p = project(rx * sc, y[i] * sc + TRACTOR_Y, rz * sc);
-      sx[i] = p.x;
-      sy[i] = p.y;
-      sd[i] = p.depth;
+      _cloudSX[i] = p.x;
+      _cloudSY[i] = p.y;
+      _cloudSD[i] = p.depth;
       scaleAccum += p.scale;
     }
-    // Depth sort (far → near) so nearer points overwrite. Reuse the index array.
-    if (!_cloudOrder || _cloudOrder.length !== n) {
-      _cloudOrder = Array.from({ length: n }, (_, i) => i);
-    }
+    // Depth sort (far → near) so nearer points overwrite.
+    const sd = _cloudSD;
     _cloudOrder.sort((a, b) => sd[b] - sd[a]);
     // Point size from the average on-screen scale so the cloud reads as solid.
     const ptHalf =
-      Math.max(0.8, (scaleAccum / n) * sc * 0.02) * TRACTOR_POINT;
+      Math.max(0.7, (scaleAccum / n) * sc * 0.014) * TRACTOR_POINT;
     const sizePx = ptHalf * 2;
     ctx.save();
     ctx.globalAlpha *= clamp01(alpha);
     for (let k = 0; k < n; k++) {
       const i = _cloudOrder[k];
       ctx.fillStyle = `rgb(${cr[i]},${cg[i]},${cb[i]})`;
-      ctx.fillRect(sx[i] - ptHalf, sy[i] - ptHalf, sizePx, sizePx);
+      ctx.fillRect(_cloudSX[i] - ptHalf, _cloudSY[i] - ptHalf, sizePx, sizePx);
     }
     ctx.restore();
   }
