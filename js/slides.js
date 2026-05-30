@@ -6264,7 +6264,13 @@ export function initNeRFVideo() {
     strokeLine3(HERO, end, "rgba(255,90,42,0.95)", 2.6);
   }
 
-  function drawSamples(appearT, colorMix, queriedIdx, queryFlash) {
+  function drawSamples(
+    appearT,
+    colorMix,
+    queriedIdx,
+    queryFlash,
+    forcedColors = null,
+  ) {
     for (let i = 0; i < NUM_SAMPLES; i++) {
       const threshold = i / NUM_SAMPLES;
       const local = clamp01((appearT - threshold) / (1 / NUM_SAMPLES + 0.04));
@@ -6277,7 +6283,7 @@ export function initNeRFVideo() {
       const r = baseR * easeOut(local);
 
       const mix = colorMix[i];
-      const target = samplePalette[i];
+      const target = forcedColors?.[i] || samplePalette[i];
       // Neutral (un-queried) reads as a cool light gray; queried fades to palette.
       const cr = lerp(218, target[0], mix);
       const cg = lerp(222, target[1], mix);
@@ -6652,8 +6658,8 @@ export function initNeRFVideo() {
     const samplesT = clamp01((t - P.rayEnd) / (P.samplesEnd - P.rayEnd));
     const mlpT = clamp01((t - P.samplesEnd) / (P.mlpEnd - P.samplesEnd));
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
-    const fillT = clamp01((t - P.queryEnd) / (P.fillEnd - P.queryEnd));
-    const pixelT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
+    const fillT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
+    const pixelT = clamp01((t - (P.fillEnd + 1.0)) / (P.pixelEnd - P.fillEnd - 1.0));
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -6716,8 +6722,7 @@ export function initNeRFVideo() {
       // leftward view drift. In this projection, less-negative yaw is left.
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
       const formulaPoseT = easeInOut(mlpT);
-      const formulaIntroZoomT =
-        chapterIdx === 3 ? easeInOut(clamp01(chapterT / chapterDur(3))) : 0;
+      const formulaIntroZoomT = easeInOut(mlpT);
       extraPitch =
         (lerp(-0.36, -0.31, bubbleFollowT) +
           formulaPoseT * 0.08 +
@@ -6831,7 +6836,7 @@ export function initNeRFVideo() {
     const outputRgbT = clamp01(
       (t - P.formulaMidEnd) / (P.queryEnd - P.formulaMidEnd),
     );
-    const returnArrowT = clamp01((outputRgbT - 0.45) / 0.45);
+    const returnArrowT = clamp01((t - P.queryEnd) / (P.fillEnd - P.queryEnd));
     const formulaAnchor = getMLPInputAnchor();
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
@@ -6852,11 +6857,15 @@ export function initNeRFVideo() {
           Math.max(inputNetworkT, formulaIntroT),
       );
     }
-    const resultColorT = easeInOut(clamp01((returnArrowT - 0.62) / 0.28));
+    const resultColorT = easeInOut(clamp01((returnArrowT - 0.68) / 0.18));
     if (resultColorT > 0.01) {
       colorMix[formulaSampleIdx] = resultColorT;
       currentQueriedIdx = formulaSampleIdx;
       queryFlash = Math.max(queryFlash, 0.7 * (1 - resultColorT));
+    }
+    const forcedColors = [];
+    if (resultColorT > 0.01) {
+      forcedColors[formulaSampleIdx] = [255, 214, 64, 0.9];
     }
 
     if (fillT > 0) {
@@ -6868,7 +6877,7 @@ export function initNeRFVideo() {
       }
     }
 
-    drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash);
+    drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash, forcedColors);
 
     const mlpFadeOut = clamp01((t - P.queryEnd - 0.6) / 1.5);
     const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut), {
