@@ -6659,6 +6659,12 @@ export function initNeRFVideo() {
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
     const fillT = clamp01((t - P.queryEnd) / (P.fillEnd - P.queryEnd));
     const pixelT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
+    if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
+      selectedFormulaSampleIdx = Math.min(
+        pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
+        NUM_SAMPLES - 1,
+      );
+    }
     // No auto-loop fade: the deck stays on the current chapter's last frame
     // until the user clicks. Only the initial fade-in remains.
     const fadeIn = clamp01(t / 0.4);
@@ -6715,10 +6721,18 @@ export function initNeRFVideo() {
       // leftward view drift. In this projection, less-negative yaw is left.
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
       const formulaPoseT = easeInOut(mlpT);
+      const formulaIntroZoomT =
+        chapterIdx === 3 ? easeInOut(clamp01(chapterT / chapterDur(3))) : 0;
       extraPitch =
-        (lerp(-0.36, -0.31, bubbleFollowT) + formulaPoseT * 0.08) * heroFocus;
+        (lerp(-0.36, -0.31, bubbleFollowT) +
+          formulaPoseT * 0.08 +
+          formulaIntroZoomT * 0.05) *
+        heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
-      const followZoom = lerp(6.8, 25.0, bubbleFollowT) + formulaPoseT * 3.5;
+      const followZoom =
+        lerp(6.8, 25.0, bubbleFollowT) +
+        formulaPoseT * 3.5 +
+        formulaIntroZoomT * 24.0;
       extraZoom = lerp(1, followZoom, heroFocus * closeIn);
     }
 
@@ -6783,6 +6797,7 @@ export function initNeRFVideo() {
     const neighborhoodReturn = easeInOut(clamp01((t - P.samplesEnd) / 0.75));
     const heroNeighborhoodClear = neighborhoodHideIn * (1 - neighborhoodReturn);
     const hp = project(HERO.x, HERO.y, HERO.z);
+    const formulaCameraFadeOut = easeInOut(clamp01((t - P.samplesEnd) / 0.75));
     for (const c of camData) {
       const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
       if (!isHero && heroNeighborhoodClear > 0.01) {
@@ -6797,10 +6812,12 @@ export function initNeRFVideo() {
         const inHeroScreenZone = screenDist < Math.min(W, H) * 0.34;
         if (inHeroWorldZone || inHeroScreenZone) continue;
       }
+      const camAlpha = isHero ? 1.0 : 1 - formulaCameraFadeOut;
+      if (camAlpha <= 0.02) continue;
       drawFrustum(
         c.pos,
         c.dir,
-        1.0,
+        camAlpha,
         isHero,
         isHero ? legoViewImg : null,
         isHero ? legoImageFade : 0,
@@ -6813,17 +6830,24 @@ export function initNeRFVideo() {
     let currentQueriedIdx = -1;
     let queryFlash = 0;
     const formulaIntroT = chapterIdx === 3 ? mlpT : 0;
-    const inputNetworkT = clamp01((t - P.mlpEnd) / (P.formulaMidEnd - P.mlpEnd));
-    const outputRgbT = clamp01((t - P.formulaMidEnd) / (P.queryEnd - P.formulaMidEnd));
+    const inputNetworkT = clamp01(
+      (t - P.mlpEnd) / (P.formulaMidEnd - P.mlpEnd),
+    );
+    const outputRgbT = clamp01(
+      (t - P.formulaMidEnd) / (P.queryEnd - P.formulaMidEnd),
+    );
     const returnArrowT = clamp01((outputRgbT - 0.45) / 0.45);
     const formulaAnchor = getMLPInputAnchor();
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
-      selectedFormulaSampleIdx = pickFormulaSampleIdx(formulaAnchor);
+      selectedFormulaSampleIdx = Math.min(
+        pickFormulaSampleIdx(formulaAnchor) + 1,
+        NUM_SAMPLES - 1,
+      );
     }
     const formulaSampleIdx =
       selectedFormulaSampleIdx >= 0
         ? selectedFormulaSampleIdx
-        : pickFormulaSampleIdx(formulaAnchor);
+        : Math.min(pickFormulaSampleIdx(formulaAnchor) + 1, NUM_SAMPLES - 1);
 
     if (formulaIntroT > 0.01 || queryT > 0) {
       currentQueriedIdx = formulaSampleIdx;
