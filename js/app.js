@@ -15,7 +15,6 @@ import {
   initSRNNetAnim,
   initNeRFIntro,
   initNeRFVideo,
-  initRayDemo,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -146,9 +145,8 @@ const sceneRegistry = {
   // slide 12 (SRN pros & cons) - no canvas
   12: initNeRFIntro, // slide 13 (NeRF)
   13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
-  14: initRayDemo, // slide 15 (NeRF ray sampling)
-  15: initDepthBasedNVS, // slide 16
-  16: initEndBg, // slide 17 (final recap)
+  14: initDepthBasedNVS, // slide 15
+  15: initEndBg, // slide 16 (final recap)
 };
 
 const sceneInstances = {};

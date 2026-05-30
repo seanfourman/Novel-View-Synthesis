@@ -1041,72 +1041,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 15: HOW NERF WORKS ============ -->
-      <section class="slide" data-id="15" id="nerf-work">
-        <div class="nerf-work-slide">
-          <div class="nerf-work-head">
-            <div class="kicker">עקרון הפעולה של NeRF</div>
-            <h2>כיצד <span class="accent">NeRF</span> מצייר פיקסל?</h2>
-            <p class="lead small">
-              לכל פיקסל במצלמה החדשה שולחים קרן לתוך הסצנה, דוגמים עליה נקודות, והרשת מחזירה לכל נקודה צבע וצפיפות.
-            </p>
-          </div>
-
-          <div class="nerf-work-grid">
-            <div class="nerf-ray-panel">
-              <div id="ray-stage" class="nerf-ray-stage" aria-label="הדמיית קרן NeRF ודגימות בתוך שדה נפחי"></div>
-              <div class="nerf-ray-stats">
-                <div class="nerf-stat">
-                  <span>דגימות פעילות</span>
-                  <strong id="rd-samples">0</strong>
-                </div>
-                <div class="nerf-stat nerf-color-stat">
-                  <span>צבע הפיקסל</span>
-                  <span id="rd-color" class="nerf-color-chip"></span>
-                </div>
-              </div>
-            </div>
-
-            <div class="nerf-flow">
-              <div class="nerf-flow-step">
-                <span class="nerf-flow-num">1</span>
-                <div>
-                  <h3>שולחים קרן</h3>
-                  <p>מהמצלמה, דרך פיקסל אחד במסך, אל תוך הסצנה.</p>
-                </div>
-              </div>
-              <div class="nerf-flow-step">
-                <span class="nerf-flow-num">2</span>
-                <div>
-                  <h3>דוגמים נקודות</h3>
-                  <p>לאורך הקרן בודקים הרבה מיקומים: <code dir="ltr">(x, y, z)</code>.</p>
-                </div>
-              </div>
-              <div class="nerf-flow-step">
-                <span class="nerf-flow-num">3</span>
-                <div>
-                  <h3>מריצים MLP</h3>
-                  <p>הרשת מחזירה לכל נקודה <code dir="ltr">(color, density)</code>.</p>
-                </div>
-              </div>
-              <div class="nerf-flow-step">
-                <span class="nerf-flow-num">4</span>
-                <div>
-                  <h3>מחברים לאורך הקרן</h3>
-                  <p>נקודות צפופות מסתירות נקודות מאחוריהן, והצבע המצטבר הופך לפיקסל.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p class="nerf-work-tagline">
-            זה ההבדל המרכזי מ-SRN: NeRF לא שואל רק "איזה צבע יש לפיקסל", אלא "מה נמצא לאורך הקרן שמייצרת אותו".
-          </p>
-        </div>
-      </section>
-
-      <!-- ============ SLIDE 16: MODEL PROCESS ============ -->
-      <section class="slide" data-id="16">
+      <!-- ============ SLIDE 15: MODEL PROCESS ============ -->
+      <section class="slide" data-id="15">
         <div class="nvs-process-slide" id="nvs-slide">
           <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
           <h2>מה באמת עובר דרך המודל?</h2>
@@ -1137,8 +1073,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 17: FINAL RECAP ============ -->
-      <section class="slide" data-id="17">
+      <!-- ============ SLIDE 16: FINAL RECAP ============ -->
+      <section class="slide" data-id="16">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>
