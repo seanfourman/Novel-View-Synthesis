@@ -5980,6 +5980,38 @@ export function initNeRFVideo() {
     legoViews.push(im);
   }
 
+  // Real 3D point cloud of the tractor, reconstructed offline (visual hull from
+  // the multi-view captures) and baked to assets/generated/lego_points.json.
+  // Rendered at the scene centre with the slide's own projector, so it is a
+  // genuine 3D object that rotates with the view.
+  let legoCloud = null;
+  const TRACTOR_SCALE = 2.6; // world size of the cloud (normalised radius ≈ 1)
+  const TRACTOR_Y = 0; // vertical offset of the object centre
+  const TRACTOR_ROT_Y = Math.PI / 2; // spin so a good 3/4 side faces the camera
+  const TRACTOR_POINT = 1.0; // point-size multiplier
+  fetch(new URL("../assets/generated/lego_points.json", import.meta.url).href)
+    .then((r) => r.json())
+    .then((d) => {
+      const n = d.count;
+      const u = d.scaleUnit;
+      const x = new Float32Array(n);
+      const y = new Float32Array(n);
+      const z = new Float32Array(n);
+      const cr = new Uint8Array(n);
+      const cg = new Uint8Array(n);
+      const cb = new Uint8Array(n);
+      for (let i = 0; i < n; i++) {
+        x[i] = d.pos[i * 3] * u;
+        y[i] = d.pos[i * 3 + 1] * u;
+        z[i] = d.pos[i * 3 + 2] * u;
+        cr[i] = d.col[i * 3];
+        cg[i] = d.col[i * 3 + 1];
+        cb[i] = d.col[i * 3 + 2];
+      }
+      legoCloud = { n, x, y, z, cr, cg, cb };
+    })
+    .catch(() => {});
+
   const sampleDists = [];
   {
     const minD = 1.3;
@@ -6279,6 +6311,50 @@ export function initNeRFVideo() {
 
     // Project the base corners so the caller can paint a texture on the square.
     return projectedCorners;
+  }
+
+  // Render the reconstructed tractor point cloud at the scene centre. Each point
+  // goes through the same project() as everything else, so the object rotates
+  // correctly as the camera orbits — a genuine 3D render, not a billboard.
+  let _cloudOrder = null;
+  function drawLegoCloud(alpha) {
+    if (!legoCloud || alpha <= 0.01) return;
+    const { n, x, y, z, cr, cg, cb } = legoCloud;
+    const cY = Math.cos(TRACTOR_ROT_Y);
+    const sY = Math.sin(TRACTOR_ROT_Y);
+    const sc = TRACTOR_SCALE;
+    const sx = new Float32Array(n);
+    const sy = new Float32Array(n);
+    const sd = new Float32Array(n);
+    let scaleAccum = 0;
+    for (let i = 0; i < n; i++) {
+      const X = x[i];
+      const Z = z[i];
+      const rx = cY * X + sY * Z;
+      const rz = -sY * X + cY * Z;
+      const p = project(rx * sc, y[i] * sc + TRACTOR_Y, rz * sc);
+      sx[i] = p.x;
+      sy[i] = p.y;
+      sd[i] = p.depth;
+      scaleAccum += p.scale;
+    }
+    // Depth sort (far → near) so nearer points overwrite. Reuse the index array.
+    if (!_cloudOrder || _cloudOrder.length !== n) {
+      _cloudOrder = Array.from({ length: n }, (_, i) => i);
+    }
+    _cloudOrder.sort((a, b) => sd[b] - sd[a]);
+    // Point size from the average on-screen scale so the cloud reads as solid.
+    const ptHalf =
+      Math.max(0.8, (scaleAccum / n) * sc * 0.02) * TRACTOR_POINT;
+    const sizePx = ptHalf * 2;
+    ctx.save();
+    ctx.globalAlpha *= clamp01(alpha);
+    for (let k = 0; k < n; k++) {
+      const i = _cloudOrder[k];
+      ctx.fillStyle = `rgb(${cr[i]},${cg[i]},${cb[i]})`;
+      ctx.fillRect(sx[i] - ptHalf, sy[i] - ptHalf, sizePx, sizePx);
+    }
+    ctx.restore();
   }
 
   function drawCenterObject(alpha) {
@@ -7063,6 +7139,11 @@ export function initNeRFVideo() {
         );
       }
     }
+
+    // Once all the rays have converged on the centre, reveal the reconstructed
+    // tractor there as a real 3D point cloud (drawn over the ray tips).
+    const legoRevealT = easeInOut(clamp01((rayCastT - 0.82) / 0.18));
+    if (legoRevealT > 0.01) drawLegoCloud(legoRevealT);
 
     // From here on we draw the ray / samples / merged bubble. On the final
     // pull-back these fade out so the wide "all cameras" view is left clean.
