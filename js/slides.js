@@ -4094,14 +4094,18 @@ export function initSfMLiDAR() {
     }
 
     function drawEllipsis(cx, cy, color = diagramInk) {
-      ctx.save();
-      ctx.fillStyle = color;
-      [-12, 0, 12].forEach((dx) => {
+      // Dots trail off toward the screen edge: innermost full, then 50%, 25%.
+      const dxs = cx < W / 2 ? [12, 0, -12] : [-12, 0, 12];
+      const fades = [1, 0.5, 0.25];
+      dxs.forEach((dx, i) => {
+        ctx.save();
+        ctx.globalAlpha = fades[i];
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(cx + dx, cy, 2.4, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       });
-      ctx.restore();
     }
 
     function drawViewPlane(cx, cy, w, h, frameIdx, rotation, highlight = false) {
