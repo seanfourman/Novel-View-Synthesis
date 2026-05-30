@@ -6023,11 +6023,10 @@ export function initNeRFVideo() {
       title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה",
     },
   ];
-  // Merge the close-up and ray-fire beats into one click: the chapter first
-  // lands on the hero camera, waits briefly, then emits the ray automatically.
-  chapters[2].end = P.rayEnd;
-  chapters.splice(3, 1);
-  chapters[3].start = P.rayEnd;
+  // Merge close-up, ray-fire, and ray-follow/sampling into one click: the
+  // chapter lands on the hero camera, emits the ray, then tracks along it.
+  chapters[2].end = P.samplesEnd;
+  chapters.splice(3, 2);
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
   let chapterT = 0; // storyboard time within chapter (0 → dur)
