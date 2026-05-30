@@ -7126,6 +7126,7 @@ export function initNeRFVideo() {
         mlpInfo.inputAnchor,
         easeOut(formulaIntroT),
         "rgba(255,90,42,0.9)",
+        0.25,
       );
     }
     const returnArrowAlpha = chapterIdx >= 7 ? 0 : easeOut(returnArrowT);
