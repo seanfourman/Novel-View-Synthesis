@@ -5839,6 +5839,7 @@ export function initNeRFVideo() {
     queryEnd: 16.2,
     fillEnd: 18.2,
     pixelEnd: 25.0,
+    returnEnd: 28.0, // pull back out to the wide "all cameras" establishing view
     holdEnd: 22.8,
   };
 
@@ -6067,6 +6068,13 @@ export function initNeRFVideo() {
   chapters[6].end = P.fillEnd;
   chapters[7].start = P.fillEnd;
   chapters[7].end = P.pixelEnd;
+  // Final click: pull back out to the original wide viewpoint and bring every
+  // camera frustum back into view, all around the scene.
+  chapters.push({
+    start: P.pixelEnd,
+    end: P.returnEnd,
+    title: "חוזרים למבט הרחב — כל המצלמות שוב סביב הסצנה",
+  });
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
   let chapterT = 0; // storyboard time within chapter (0 → dur)
@@ -6785,6 +6793,10 @@ export function initNeRFVideo() {
     const mlpT = clamp01((t - P.samplesEnd) / (P.mlpEnd - P.samplesEnd));
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
     const fillT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
+    // Final "pull back out" chapter: bring every camera frustum back in and
+    // fade the ray / samples / merged bubble away as we return to the wide view.
+    const cameraReturn = easeInOut(clamp01((t - P.pixelEnd) / 1.5));
+    const returnFade = easeInOut(clamp01((t - P.pixelEnd) / 1.2));
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -6958,7 +6970,9 @@ export function initNeRFVideo() {
         const inHeroScreenZone = screenDist < Math.min(W, H) * 0.34;
         if (inHeroWorldZone || inHeroScreenZone) continue;
       }
-      const camAlpha = isHero ? 1.0 : 1 - formulaCameraFadeOut;
+      const camAlpha = isHero
+        ? 1.0
+        : Math.max(1 - formulaCameraFadeOut, cameraReturn);
       if (camAlpha <= 0.02) continue;
       const heroHighlightFade = isHero
         ? easeInOut(clamp01((heroT - 0.05) / 0.65))
@@ -6973,6 +6987,10 @@ export function initNeRFVideo() {
         heroHighlightFade,
       );
     }
+
+    // From here on we draw the ray / samples / merged bubble. On the final
+    // pull-back these fade out so the wide "all cameras" view is left clean.
+    ctx.globalAlpha *= 1 - returnFade;
 
     if (rayT > 0) drawRay(rayT);
 
