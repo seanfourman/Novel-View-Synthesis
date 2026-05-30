@@ -7040,21 +7040,20 @@ export function initNeRFVideo() {
       );
     }
 
-    // Final chapter: every camera fires one small red ray out toward the scene
-    // centre, just like the hero ray from the beginning.
+    // Final chapter: every camera fires one small red ray toward the scene
+    // centre, all of them stopping at the same shared point in the middle.
     if (rayCastT > 0) {
       const eCast = easeOut(rayCastT);
-      const rayLen = DOME_RADIUS * 1.15;
+      const center = { x: 0, y: 0, z: 0 };
       for (const c of camData) {
-        const f = normalize3(c.dir);
         // Slight per-camera stagger so they fly out in a quick ripple.
         const grow = easeOut(clamp01(eCast * 1.4 - (c.idx % 12) * 0.02));
         if (grow <= 0.01) continue;
-        const len = rayLen * grow;
+        // Grow from the apex until the tip lands on the shared centre point.
         const end = {
-          x: c.pos.x + f.x * len,
-          y: c.pos.y + f.y * len,
-          z: c.pos.z + f.z * len,
+          x: lerp(c.pos.x, center.x, grow),
+          y: lerp(c.pos.y, center.y, grow),
+          z: lerp(c.pos.z, center.z, grow),
         };
         strokeLine3(
           c.pos,
