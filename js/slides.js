@@ -5965,6 +5965,20 @@ export function initNeRFVideo() {
     import.meta.url,
   ).href;
 
+  // One genuine multi-angle capture per camera (NeRF lego train set, r_0..r_95)
+  // so every frustum on the final wide view shows the scene from its own angle.
+  // Preloaded here (long before the last chapter) so they snap in with no fade.
+  const legoViews = [];
+  for (let i = 0; i < NUM_CAMERAS; i++) {
+    const im = new Image();
+    im.decoding = "async";
+    im.src = new URL(
+      `../assets/nerf/nerf video/lego/train/r_${i}.png`,
+      import.meta.url,
+    ).href;
+    legoViews.push(im);
+  }
+
   const sampleDists = [];
   {
     const minD = 1.3;
@@ -6974,16 +6988,29 @@ export function initNeRFVideo() {
         ? 1.0
         : Math.max(1 - formulaCameraFadeOut, cameraReturn);
       if (camAlpha <= 0.02) continue;
-      const heroHighlightFade = isHero
+      // On the final wide view every frustum shows its own captured image and
+      // the hero is no longer singled out in bold black.
+      const inReturn = chapterIdx >= 8;
+      const doHighlight = isHero && !inReturn;
+      const heroHighlightFade = doHighlight
         ? easeInOut(clamp01((heroT - 0.05) / 0.65))
         : 0;
+      let baseImage = null;
+      let baseImageAlpha = 0;
+      if (inReturn) {
+        baseImage = c.idx === HERO_IDX ? legoViewImg : legoViews[c.idx];
+        baseImageAlpha = 1;
+      } else if (isHero) {
+        baseImage = legoViewImg;
+        baseImageAlpha = legoImageFade;
+      }
       drawFrustum(
         c.pos,
         c.dir,
         camAlpha,
-        isHero,
-        isHero ? legoViewImg : null,
-        isHero ? legoImageFade : 0,
+        doHighlight,
+        baseImage,
+        baseImageAlpha,
         heroHighlightFade,
       );
     }
