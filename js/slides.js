@@ -6433,6 +6433,29 @@ export function initNeRFVideo() {
       ctx.fillStyle = `rgba(${rr},${gg},${bb},${(0.76 + pulse * 0.2).toFixed(3)})`;
       roundRect(ctx, x, barsY, barW, barH, 3);
       ctx.fill();
+      if (networkPulse > 0.01) {
+        ctx.save();
+        roundRect(ctx, x, barsY, barW, barH, 3);
+        ctx.clip();
+        const travel = (wallT * 0.72 + i * 0.23) % 1;
+        const brightY = barsY + travel * barH;
+        const sweep = ctx.createLinearGradient(x, brightY - barH * 0.18, x, brightY + barH * 0.18);
+        sweep.addColorStop(0, "rgba(255,255,255,0)");
+        sweep.addColorStop(0.5, `rgba(255,255,255,${(0.5 * networkPulse).toFixed(3)})`);
+        sweep.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = sweep;
+        ctx.fillRect(x, brightY - barH * 0.18, barW, barH * 0.36);
+
+        const dotCount = 3;
+        ctx.fillStyle = `rgba(255,255,255,${(0.38 * networkPulse).toFixed(3)})`;
+        for (let d = 0; d < dotCount; d++) {
+          const y = barsY + (((travel + d / dotCount) % 1) * barH);
+          ctx.beginPath();
+          ctx.arc(x + barW * 0.5, y, Math.max(1.2, barW * 0.11), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
     }
 
     // F_Θ label centered below the bars, fully inside the box.
