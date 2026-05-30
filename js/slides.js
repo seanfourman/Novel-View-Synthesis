@@ -6365,7 +6365,7 @@ export function initNeRFVideo() {
     _cloudOrder.sort((a, b) => sd[b] - sd[a]);
     // Point size from the average on-screen scale so the cloud reads as solid.
     const ptHalf =
-      Math.max(0.7, (scaleAccum / n) * sc * 0.014) * TRACTOR_POINT;
+      Math.max(0.6, (scaleAccum / n) * sc * 0.012) * TRACTOR_POINT;
     const sizePx = ptHalf * 2;
     ctx.save();
     ctx.globalAlpha *= clamp01(alpha);
