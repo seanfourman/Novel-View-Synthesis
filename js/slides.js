@@ -5973,7 +5973,12 @@ export function initNeRFVideo() {
     }
   }
   function samplePos(i) {
-    const d = sampleDists[i];
+    return samplePosAt(i, 0);
+  }
+
+  function samplePosAt(i, returnT = 0) {
+    const gatherD = 0.22 + i * 0.016;
+    const d = lerp(sampleDists[i], gatherD, clamp01(returnT));
     return {
       x: HERO.x + heroDir.x * d,
       y: HERO.y + heroDir.y * d,
@@ -6006,6 +6011,19 @@ export function initNeRFVideo() {
     [220, 220, 220, 0.1],
     [220, 220, 220, 0.08],
   ];
+  const finalSampleColors = new Array(NUM_SAMPLES).fill(null);
+  [
+    [2, [255, 250, 232, 0.58]],
+    [4, [255, 214, 64, 0.92]],
+    [5, [255, 144, 28, 0.95]],
+    [7, [34, 31, 28, 0.92]],
+    [9, [255, 255, 250, 0.62]],
+    [12, [255, 176, 38, 0.88]],
+    [15, [246, 214, 78, 0.78]],
+    [18, [30, 28, 25, 0.72]],
+  ].forEach(([idx, color]) => {
+    if (idx < NUM_SAMPLES) finalSampleColors[idx] = color;
+  });
 
   // Chapter-based playback: animation plays inside each chapter, then pauses
   // at the chapter's end frame until the user clicks to advance.
@@ -6273,12 +6291,18 @@ export function initNeRFVideo() {
     queriedIdx,
     queryFlash,
     forcedColors = null,
+    sampleAlpha = null,
+    returnToHeroT = 0,
   ) {
     for (let i = 0; i < NUM_SAMPLES; i++) {
       const threshold = i / NUM_SAMPLES;
       const local = clamp01((appearT - threshold) / (1 / NUM_SAMPLES + 0.04));
       if (local <= 0) continue;
-      const p = samplePos(i);
+      const localReturnT =
+        returnToHeroT > 0
+          ? easeInOut(clamp01(returnToHeroT * 1.08 - i * 0.004))
+          : 0;
+      const p = samplePosAt(i, localReturnT);
       const proj = project(p.x, p.y, p.z);
       // Fixed on-screen radius with mild perspective scaling (clamped).
       const sizeScale = Math.max(0.55, Math.min(1.7, CAM_DIST / proj.depth));
@@ -6291,9 +6315,15 @@ export function initNeRFVideo() {
       const cr = lerp(218, target[0], mix);
       const cg = lerp(222, target[1], mix);
       const cb = lerp(230, target[2], mix);
+      const sampleOpacity =
+        (sampleAlpha?.[i] ?? 1) * lerp(1, target[3] ?? 1, mix);
+      if (sampleOpacity <= 0.01) continue;
 
       let glow = 0;
       if (i === queriedIdx) glow = queryFlash;
+
+      ctx.save();
+      ctx.globalAlpha *= sampleOpacity;
 
       // Glow halo (drawn first, under the sphere)
       if (glow > 0.05) {
@@ -6346,6 +6376,7 @@ export function initNeRFVideo() {
       ctx.lineWidth = 1.0;
       ctx.strokeStyle = `rgba(40,44,52,${(0.45 + glow * 0.5).toFixed(3)})`;
       ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -6728,7 +6759,7 @@ export function initNeRFVideo() {
     // Hero focus ramps up at the converge → hero handoff, then decays once
     // the MLP/query phase takes over.
     const heroApproach = easeInOut(clamp01((t - P.convergeEnd) / 1.4));
-    const heroRelease = easeInOut(clamp01((t - (P.fillEnd + 0.4)) / 1.6));
+    const heroRelease = easeInOut(clamp01((t - (P.pixelEnd + 0.4)) / 1.6));
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
@@ -6755,11 +6786,14 @@ export function initNeRFVideo() {
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
       const formulaPoseT = easeInOut(mlpT);
       const formulaIntroZoomT = easeInOut(mlpT);
+      const returnLookT = easeInOut(fillT);
       extraPitch =
         (lerp(-0.36, -0.31, bubbleFollowT) +
           formulaPoseT * 0.08 +
-          formulaIntroZoomT * 0.05) *
+          formulaIntroZoomT * 0.05 +
+          returnLookT * 0.1) *
         heroFocus;
+      extraYaw += returnLookT * 0.16 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const followZoom =
         lerp(6.8, 25.0, bubbleFollowT) +
@@ -6904,16 +6938,32 @@ export function initNeRFVideo() {
       forcedColors[formulaSampleIdx] = [255, 214, 64, 0.9];
     }
 
+    const sampleAlpha = new Array(NUM_SAMPLES).fill(1);
+    const sampleReturnT = easeInOut(fillT);
     if (fillT > 0) {
+      const finalColorT = easeOut(clamp01(fillT * 1.15));
+      const transparentT = easeInOut(clamp01(fillT * 1.25));
       for (let i = 0; i < NUM_SAMPLES; i++) {
-        if (colorMix[i] < 1) {
-          const stagger = clamp01(fillT * 1.4 - (i / NUM_SAMPLES) * 0.4);
-          colorMix[i] = Math.max(colorMix[i], easeOut(stagger));
+        const finalColor =
+          i === formulaSampleIdx ? [255, 214, 64, 0.92] : finalSampleColors[i];
+        if (finalColor) {
+          forcedColors[i] = finalColor;
+          colorMix[i] = Math.max(colorMix[i], finalColorT);
+        } else {
+          sampleAlpha[i] = lerp(1, 0.16, transparentT);
         }
       }
     }
 
-    drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash, forcedColors);
+    drawSamples(
+      samplesT,
+      colorMix,
+      currentQueriedIdx,
+      queryFlash,
+      forcedColors,
+      sampleAlpha,
+      sampleReturnT,
+    );
 
     const mlpFadeOut = clamp01((t - P.fillEnd - 0.6) / 1.5);
     const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut), {
@@ -6931,13 +6981,14 @@ export function initNeRFVideo() {
         "rgba(255,90,42,0.9)",
       );
     }
-    if (mlpInfo && returnArrowT > 0.01) {
+    const returnArrowAlpha = chapterIdx >= 7 ? 0 : easeOut(returnArrowT);
+    if (mlpInfo && returnArrowAlpha > 0.01) {
       const p = samplePos(formulaSampleIdx);
       const proj = project(p.x, p.y, p.z);
       drawCurvedArrow(
         mlpInfo.outputAnchor,
         { x: proj.x, y: proj.y - 4 },
-        easeOut(returnArrowT),
+        returnArrowAlpha,
         "rgba(255,90,42,0.9)",
         0.45,
       );
