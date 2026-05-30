@@ -1081,8 +1081,74 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 16: FINAL RECAP ============ -->
-      <section class="slide" data-id="16">
+      <!-- ============ SLIDE 16: 3D GAUSSIAN SPLATTING ============ -->
+      <section class="slide" data-id="16" id="gaussian-splatting">
+        <div class="gaussian-slide">
+          <div class="gaussian-head">
+            <div class="kicker">האלטרנטיבה המהירה ל-NeRF</div>
+            <h2>3D Gaussian Splatting</h2>
+          </div>
+
+          <div class="gaussian-body">
+            <p class="gaussian-paragraph">
+              NeRF הצליח לייצר תמונות חדשות באיכות גבוהה,
+              אבל דרש הרבה חישובים כדי ליצור כל תמונה.
+            </p>
+            <p class="gaussian-paragraph">
+              3D Gaussian Splatting מציע גישה אחרת:
+              במקום לדגום הרבה נקודות לאורך כל קרן מצלמה,
+              הוא מייצג את הסצנה באמצעות הרבה "כתמים" תלת-ממדיים קטנים במרחב.
+            </p>
+            <p class="gaussian-paragraph gaussian-paragraph-intro">
+              כל כתם כזה מתאר אזור קטן בסצנה, ושומר מידע כמו:
+            </p>
+
+            <div class="gaussian-grid" aria-label="מאפייני הכתמים התלת-ממדיים">
+              <div class="gaussian-card">
+                <svg class="gaussian-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/>
+                  <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                <div class="gaussian-card-title">מיקום</div>
+              </div>
+              <div class="gaussian-card">
+                <svg class="gaussian-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <div class="gaussian-card-title">כיוון</div>
+              </div>
+              <div class="gaussian-card">
+                <svg class="gaussian-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="gaussian-transparency-gradient" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#ff8a00" />
+                      <stop offset="100%" stop-color="#ffffff" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="4" y="4" width="16" height="16" rx="3" fill="url(#gaussian-transparency-gradient)" stroke="currentColor" stroke-width="1.2" />
+                </svg>
+                <div class="gaussian-card-title">שקיפות</div>
+              </div>
+              <div class="gaussian-card">
+                <svg class="gaussian-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="14" rx="2"/>
+                  <circle cx="8.5" cy="9.5" r="1.5"/>
+                  <path d="m3 16 5-5 4 4 3-3 6 6"/>
+                </svg>
+                <div class="gaussian-card-title">צבע</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="gaussian-tagline">
+            הרעיון המרכזי: להחליף את החישוב הכבד של NeRF בייצוג שאפשר לרנדר הרבה יותר מהר.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 17: FINAL RECAP ============ -->
+      <section class="slide" data-id="17">
         <div class="centered">
           <div class="kicker">השורה התחתונה</div>
           <h1 class="big-title small">Novel View Synthesis</h1>

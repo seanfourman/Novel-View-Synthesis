@@ -4788,6 +4788,114 @@ code {
   font-weight: 700;
 }
 
+/* ---- Slide 16: 3D Gaussian Splatting ---- */
+.gaussian-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: clamp(1.2rem, 2.5vw, 2.5rem) clamp(1.5rem, 4vw, 4rem);
+  box-sizing: border-box;
+  direction: rtl;
+  gap: clamp(0.7rem, 1.4vh, 1.2rem);
+  text-align: center;
+}
+
+.gaussian-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gaussian-head h2 {
+  font-size: clamp(2.6rem, 4.2vw, 4.4rem);
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.gaussian-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.55rem, 1.1vh, 0.95rem);
+  max-width: 90ch;
+  width: 100%;
+}
+
+.gaussian-paragraph {
+  margin: 0;
+  color: var(--ink-soft);
+  direction: rtl;
+  text-align: center;
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.gaussian-paragraph strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gaussian-paragraph-intro {
+  margin-top: 0.1rem;
+}
+
+.gaussian-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.35rem auto 0;
+  width: min(760px, 100%);
+}
+
+.gaussian-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 118px;
+  padding: 0.7rem 0.65rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.gaussian-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.gaussian-card-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.gaussian-tagline {
+  font-size: 23px;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+  margin: 1rem 0 0;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .gaussian-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
   .srn-verdict-stage {
