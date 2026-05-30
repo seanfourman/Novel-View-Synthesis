@@ -21,6 +21,8 @@ export function initGaussianPipeline() {
   const canvas = document.getElementById("gpipe-canvas");
   const captionEl = document.getElementById("gpipe-caption");
   const hintEl = document.getElementById("gpipe-hint");
+  const realImg = document.getElementById("gpipe-real");
+  let realImgLoaded = false;
   if (!canvas) return { tick() {}, enter() {} };
   const ctx = canvas.getContext("2d");
 
@@ -108,7 +110,7 @@ export function initGaussianPipeline() {
   }
   function adjColor(r, g, b) {
     const m = 0.299 * r + 0.587 * g + 0.114 * b;
-    const sat = 1.42;
+    const sat = 1.5;
     let R = m + (r - m) * sat;
     let G = m + (g - m) * sat;
     let B = m + (b - m) * sat;
@@ -131,7 +133,7 @@ export function initGaussianPipeline() {
 
   /* ---------- hotdog cloud (carved point cloud -> gaussians) ---------- */
   const OBJ_SIZE = 3.4;
-  const MAXG = 2200;
+  const MAXG = 5200;
   const gaussians = [];
   let gReady = false;
 
@@ -158,7 +160,7 @@ export function initGaussianPipeline() {
       const y = (p.y - cy) * sc;
       const z = (p.z - cz) * sc;
       const [cr, cg, cb] = adjColor(p.r, p.g, p.b);
-      const sz = OBJ_SIZE * (0.028 + rand() * 0.02);
+      const sz = OBJ_SIZE * (0.019 + rand() * 0.013); // finer -> smoother surface
       let ax = rand() * 2 - 1;
       let ay = rand() * 2 - 1;
       let az = rand() * 2 - 1;
@@ -177,8 +179,8 @@ export function initGaussianPipeline() {
       bx /= bl;
       by /= bl;
       bz /= bl;
-      const la = sz * (1.1 + rand() * 0.7);
-      const lb = sz * (0.6 + rand() * 0.4);
+      const la = sz * (1.0 + rand() * 0.4); // rounder (less spiky)
+      const lb = sz * (0.72 + rand() * 0.28);
       gaussians.push({
         x,
         y,
@@ -256,6 +258,7 @@ export function initGaussianPipeline() {
     im.src = new URL(`../assets/3dgs/hotdog/train/r_${n}.png`, import.meta.url).href;
     return im;
   });
+  const GIF_SRC = new URL("../assets/3dgs/hotdog.gif", import.meta.url).href;
 
   /* ---------- capture cameras on a dome (NeRF-style frustums) ---------- */
   const NCAM = 40;
@@ -414,21 +417,6 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  function groundShadow(cam, alpha) {
-    const p = proj(cam, 0, -OBJ_SIZE * 0.42, 0);
-    const rw = OBJ_SIZE * 1.05 * p.scale;
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.16;
-    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rw);
-    g.addColorStop(0, "rgba(30,37,51,1)");
-    g.addColorStop(1, "rgba(30,37,51,0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.ellipse(p.x, p.y, rw, rw * 0.34, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
   function drawDots(cam, count, alpha) {
     if (!gReady || alpha <= 0.01) return;
     ctx.globalAlpha = alpha;
@@ -496,49 +484,170 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // small top row: what a single Gaussian is made of (as little glyphs)
-  function drawPropsRow(alpha) {
-    const items = ["מיקום", "צורה וגודל", "צבע", "שקיפות"];
-    const n = items.length;
-    const gap = Math.min(W * 0.13, 170);
-    const x0 = W / 2 - (gap * (n - 1)) / 2;
-    const gy = H * 0.12;
+  // a small camera glyph at a fixed screen point (stable)
+  function drawCameraIcon(x, y, alpha) {
+    ctx.save();
     ctx.globalAlpha = alpha;
-    text("כל Gaussian מחזיק:", W / 2, gy - 34, 14, INK_SOFT, "center", 600);
+    ctx.lineJoin = "round";
+    const w = 30;
+    const h = 21;
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = ACCENT;
+    ctx.lineWidth = 2.2;
+    rr(x - w / 2, y - h / 2, w, h, 4);
+    ctx.fill();
+    ctx.stroke();
+    // little prism/lens poking toward the scene
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y - 4);
+    ctx.lineTo(x - w / 2 - 9, y);
+    ctx.lineTo(x - w / 2, y + 4);
+    ctx.closePath();
+    ctx.fillStyle = ACCENT;
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(x + 2, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = ACCENT;
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // clone / split / prune demo (the adaptive-density step, visualised)
+  function drawDensify(alpha, lt) {
+    const pulse = (Math.sin(lt * 1.9) + 1) / 2;
+    const G = "rgba(58,150,96,";
+    const blob = (x, y, r, a) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, G + 0.95 * a + ")");
+      g.addColorStop(0.6, G + 0.5 * a + ")");
+      g.addColorStop(1, G + "0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r, r * 0.82, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    const arr = (x, y) => {
+      ctx.strokeStyle = "#9aa3b2";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y);
+      ctx.lineTo(x + 4, y);
+      ctx.stroke();
+      arrowHead(x + 4, y, 0, 7, "#9aa3b2");
+    };
+    const demos = [["שכפול", "Clone"], ["פיצול", "Split"], ["גיזום", "Prune"]];
+    const dw = Math.min(W * 0.2, 240);
+    const gx = Math.min(W * 0.035, 36);
+    const total = dw * 3 + gx * 2;
+    const c0 = W / 2 - total / 2 + dw / 2;
+    const cy = H * 0.81;
+    ctx.globalAlpha = alpha;
+    for (let i = 0; i < 3; i++) {
+      const x = c0 + i * (dw + gx);
+      text(demos[i][0] + " · " + demos[i][1], x, cy - 40, 15, INK, "center", 700);
+      if (i === 0) {
+        blob(x - dw * 0.26, cy, 12, 1);
+        arr(x - 2, cy);
+        blob(x + dw * 0.16, cy, 12, 1);
+        blob(x + dw * 0.3, cy, 12, pulse);
+      } else if (i === 1) {
+        blob(x - dw * 0.26, cy, 17 - 5 * pulse, 1);
+        arr(x - 2, cy);
+        blob(x + dw * 0.16, cy - 5, 10, 1);
+        blob(x + dw * 0.3, cy + 6, 10, 1);
+      } else {
+        blob(x, cy, 14, 1 - 0.85 * pulse);
+        if (pulse > 0.55) {
+          ctx.strokeStyle = "rgba(220,70,55,0.85)";
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.moveTo(x - 9, cy - 9);
+          ctx.lineTo(x + 9, cy + 9);
+          ctx.moveTo(x + 9, cy - 9);
+          ctx.lineTo(x - 9, cy + 9);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // small top row: what a single Gaussian is made of (clear little icons)
+  function propIcon(kind, x, y) {
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    if (kind === "pos") {
+      // a point in 3D: dot + 3 little axes
+      ctx.strokeStyle = "#aab2c0";
+      ctx.beginPath();
+      ctx.moveTo(x, y); ctx.lineTo(x + 12, y);
+      ctx.moveTo(x, y); ctx.lineTo(x, y - 12);
+      ctx.moveTo(x, y); ctx.lineTo(x - 9, y + 8);
+      ctx.stroke();
+      ctx.fillStyle = INK;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (kind === "shape") {
+      // an oriented ellipse with a stretch arrow
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-0.5);
+      ctx.strokeStyle = "#66718a";
+      ctx.fillStyle = "rgba(120,135,160,0.25)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 13, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#66718a";
+      ctx.beginPath();
+      ctx.moveTo(-13, 0); ctx.lineTo(13, 0);
+      ctx.stroke();
+      ctx.restore();
+    } else if (kind === "color") {
+      // RGB dots
+      ctx.fillStyle = "#e23b3b";
+      ctx.beginPath(); ctx.arc(x - 6, y + 3, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#2fa84f";
+      ctx.beginPath(); ctx.arc(x + 6, y + 3, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#3b6fe2";
+      ctx.beginPath(); ctx.arc(x, y - 6, 5.5, 0, Math.PI * 2); ctx.fill();
+    } else {
+      // opacity: a disc fading from solid to transparent
+      const g = ctx.createLinearGradient(x - 12, y, x + 12, y);
+      g.addColorStop(0, "rgba(90,105,130,0.95)");
+      g.addColorStop(1, "rgba(90,105,130,0.05)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(90,105,130,0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawPropsRow(alpha) {
+    const items = [
+      ["מיקום", "pos"],
+      ["צורה וגודל", "shape"],
+      ["צבע", "color"],
+      ["שקיפות", "opacity"],
+    ];
+    const n = items.length;
+    const gap = Math.min(W * 0.15, 195);
+    const x0 = W / 2 - (gap * (n - 1)) / 2;
+    const gy = H * 0.14;
+    ctx.globalAlpha = alpha;
+    text("מה כל Gaussian מכיל:", W / 2, gy - 40, 17, INK, "center", 700);
     for (let i = 0; i < n; i++) {
       const x = x0 + i * gap;
-      if (i === 0) {
-        ctx.fillStyle = INK;
-        ctx.beginPath();
-        ctx.arc(x, gy, 5, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (i === 1) {
-        ctx.save();
-        ctx.translate(x, gy);
-        ctx.rotate(-0.5);
-        ctx.fillStyle = "rgba(120,130,150,0.85)";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      } else if (i === 2) {
-        const g = ctx.createLinearGradient(x - 8, gy, x + 8, gy);
-        g.addColorStop(0, "#ffb046");
-        g.addColorStop(1, "#e0563a");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, gy, 7, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const g = ctx.createRadialGradient(x, gy, 0, x, gy, 8);
-        g.addColorStop(0, "rgba(90,110,140,0.9)");
-        g.addColorStop(1, "rgba(90,110,140,0)");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, gy, 8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      text(items[i], x, gy + 20, 13, INK, "center", 600);
+      propIcon(items[i][1], x, gy);
+      text(items[i][0], x, gy + 27, 14.5, INK, "center", 600);
     }
     ctx.globalAlpha = 1;
   }
@@ -644,7 +753,7 @@ export function initGaussianPipeline() {
     const camAlpha = clamp01(1 - smooth(T.gauss - 1.0, T.gauss - 0.2, t));
     const dotsWin = smooth(T.points + 0.2, T.points + 1.4, t) * (1 - smooth(T.gauss + 0.5, T.gauss + 1.5, t));
     const splatGrow = smooth(T.gauss + 0.3, T.gauss + 1.9, t);
-    const propsWin = smooth(T.gauss + 0.5, T.gauss + 1.3, t) * (1 - smooth(T.splat - 0.6, T.splat + 0.2, t));
+    const propsWin = smooth(T.gauss + 0.5, T.gauss + 1.3, t) * (1 - smooth(T.splat + 0.2, T.splat + 1.0, t));
     const projWin = smooth(T.splat + 0.2, T.splat + 1.0, t) * (1 - smooth(T.compare - 0.3, T.compare + 0.4, t));
     const heroCamWin = smooth(T.splat, T.splat + 0.8, t) * (1 - smooth(T.compare - 0.4, T.compare + 0.3, t));
     const compareWin = smooth(T.compare, T.compare + 0.7, t) * (1 - smooth(T.optimize + 0.3, T.optimize + 1.0, t));
@@ -657,11 +766,16 @@ export function initGaussianPipeline() {
 
     const vpx = W * 0.5;
 
-    const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.5 + wallT * 0.04;
-    const pitch = 0.34 + Math.sin(wallT * 0.26) * 0.05 - resultWin * 0.06;
-    const zoom = 1 + 0.04 * Math.sin(wallT * 0.4);
-    const focal = Math.min(W, H) * 0.74;
-    const cam = makeCam(yaw, pitch, zoom, vpx, H * 0.5, focal);
+    // hold the view still while explaining splatting / compare / optimize;
+    // gentle life (no constant drift) elsewhere, slow spin at the result.
+    const still = smooth(T.splat - 0.4, T.splat + 0.6, t) * (1 - resultWin);
+    const motion = 1 - 0.92 * still;
+    const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.42 * motion + resultWin * Math.sin(wallT * 0.22) * 0.32;
+    const pitch = 0.46 + Math.sin(wallT * 0.26) * 0.05 * motion + resultWin * 0.16;
+    const zoom = 1 + 0.04 * Math.sin(wallT * 0.4) * motion;
+    const vpy = H * 0.5 - optimizeWin * H * 0.05;
+    const focal = Math.min(W, H) * (0.74 - optimizeWin * 0.07);
+    const cam = makeCam(yaw, pitch, zoom, vpx, vpy, focal);
 
     /* ---- steps 1-2: capture cameras that collapse into points ---- */
     if (camAlpha > 0.01) {
@@ -691,93 +805,54 @@ export function initGaussianPipeline() {
       }
     }
 
-    /* ---- ground shadow once the object exists ---- */
-    if (splatGrow > 0.02) groundShadow(cam, splatGrow);
-
     /* ---- sparse points / gaussians ---- */
     if (dotsWin > 0.01) drawDots(cam, 460, dotsWin);
     if (splatGrow > 0.01) {
       const jitter = optimizeWin * 0.05;
-      const sizeMul = splatGrow * lerp(1.0, 0.82, smooth(T.optimize, T.result, t));
+      const sizeMul = splatGrow * lerp(1.05, 0.62, smooth(T.optimize, T.result, t));
       drawGaussians(cam, count, sizeMul, 1, jitter);
     }
 
     /* ---- step 3: properties row up top ---- */
     if (propsWin > 0.01) drawPropsRow(propsWin);
 
-    /* ---- step 4: splatting (camera + projection lines) ---- */
+    /* ---- step 4: splatting — gaussians project onto a fixed camera ---- */
     if (heroCamWin > 0.01) {
-      const HERO = { x: OBJ_SIZE * 1.7, y: OBJ_SIZE * 1.0, z: OBJ_SIZE * 1.3 };
-      const pa = proj(cam, HERO.x, HERO.y, HERO.z);
-      ctx.globalAlpha = heroCamWin;
-      ctx.strokeStyle = ACCENT;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.arc(pa.x, pa.y, 10, 0, Math.PI * 2);
-      ctx.stroke();
+      const camX = W * 0.85;
+      const camY = H * 0.3;
       if (projWin > 0.01) {
-        ctx.globalAlpha = projWin * 0.4;
+        ctx.globalAlpha = projWin * 0.32;
         ctx.strokeStyle = "rgba(60,70,90,0.5)";
         ctx.lineWidth = 1;
-        for (let i = 0; i < gaussians.length; i += Math.max(1, (count / 20) | 0)) {
+        for (let i = 0; i < gaussians.length; i += Math.max(1, (count / 22) | 0)) {
           const g = gaussians[i];
           if (g.rank >= count) continue;
           const pg = proj(cam, g.x, g.y, g.z);
           ctx.beginPath();
           ctx.moveTo(pg.x, pg.y);
-          ctx.lineTo(pa.x, pa.y);
+          ctx.lineTo(camX, camY);
           ctx.stroke();
         }
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
+      drawCameraIcon(camX, camY, heroCamWin);
     }
 
-    /* ---- compare/optimize: small real-photo reference (top-right) ---- */
+    /* ---- compare/optimize: the real object reference is the <img> gif ---- */
     const refWin = Math.max(compareWin, optimizeWin);
-    let refRect = null;
-    if (refWin > 0.01) {
-      const ps = Math.min(W * 0.16, H * 0.24);
-      const rx = W - ps - W * 0.05;
-      const ry = H * 0.09;
-      refRect = { x: rx, y: ry, w: ps, h: ps };
-      ctx.save();
-      ctx.globalAlpha = refWin;
-      rr(rx, ry, ps, ps, 12);
-      ctx.fillStyle = "#f3f1ec";
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "rgba(0,0,0,0.12)";
-      ctx.stroke();
-      rr(rx, ry, ps, ps, 12);
-      ctx.clip();
-      const img = photos[0];
-      if (img.complete && img.naturalWidth) {
-        const ir = img.naturalWidth / img.naturalHeight;
-        let dw = ps;
-        let dh = ps / ir;
-        if (dh < ps) {
-          dh = ps;
-          dw = ps * ir;
-        }
-        ctx.drawImage(img, rx + (ps - dw) / 2, ry + (ps - dh) / 2, dw, dh);
-      }
-      ctx.restore();
-      text("התמונה האמיתית", rx + ps / 2, ry + ps + 13, 13, INK_SOFT, "center", 600);
+    if (realImg) realImg.style.opacity = refWin > 0.02 ? clamp01(refWin).toFixed(2) : "0";
+    if (refWin > 0.02) {
+      text("התמונה האמיתית", W / 2, H * 0.3, 14, INK_SOFT, "center", 600);
     }
 
-    /* ---- step 5: differences between our render (centre) and the photo ---- */
+    /* ---- step 5: differences between our render (centre) and the real object ---- */
     if (compareWin > 0.01) drawDiff(cam, count, compareWin * 0.9);
 
-    /* ---- step 6: optimize — error flows from the photo back to the gaussians ---- */
-    if (optimizeWin > 0.01 && refRect) {
+    /* ---- step 6: optimize — error flows back; gaussians clone/split/prune ---- */
+    if (optimizeWin > 0.01) {
       const phase = (wallT * 90) % 20;
-      curveArrow(refRect.x, refRect.y + refRect.h * 0.6, W * 0.5 + 50, H * 0.5, -80, CYAN, 2.6, phase);
-      text("מתקנים · מוסיפים · מפצלים · מסירים", W * 0.5, H * 0.13, 16, ACCENT, "center", 700);
-    }
-
-    /* ---- step 7: orbit ---- */
-    if (resultWin > 0.01) {
-      text("אפשר לטוס סביב הסצנה ולראות מכל זווית", W * 0.5, H * 0.12, 16, "rgba(40,150,90,0.95)", "center", 700);
+      curveArrow(W * 0.5, H * 0.31, W * 0.5, H * 0.46, 55, CYAN, 2.6, phase);
+      drawDensify(optimizeWin, t - T.optimize);
     }
 
     updateCaption();
@@ -799,12 +874,18 @@ export function initGaussianPipeline() {
       paused = false;
       decelMode = false;
       lastCaption = "";
+      // lazy-load the (large) gif only when the slide is reached
+      if (realImg && !realImgLoaded) {
+        realImg.src = GIF_SRC;
+        realImgLoaded = true;
+      }
       updateCaption();
     },
     tick(visible, dtScale) {
       if (!visible) {
         if (captionEl) captionEl.classList.remove("visible");
         if (hintEl) hintEl.classList.remove("visible");
+        if (realImg) realImg.style.opacity = "0";
         return;
       }
       if (!W || !H) resize();

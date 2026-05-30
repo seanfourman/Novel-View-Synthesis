@@ -5477,8 +5477,8 @@ code {
   bottom: clamp(1.8rem, 5vh, 3.4rem);
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
-  font-size: clamp(19px, 1.9vw, 27px);
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 400;
   color: #1f2533;
   letter-spacing: 0.01em;
   text-align: center;
@@ -5487,7 +5487,18 @@ code {
   transition: opacity 0.45s ease;
   direction: rtl;
   max-width: min(86%, 980px);
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95);
+}
+
+.gpipe-real {
+  position: absolute;
+  left: 50%;
+  top: 2.5vh;
+  transform: translateX(-50%);
+  height: 23vh;
+  width: auto;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
 }
 
 .gpipe-caption.visible {
