@@ -5474,20 +5474,20 @@ code {
 .gpipe-caption {
   position: absolute;
   left: 50%;
-  bottom: clamp(1.5rem, 4vh, 3rem);
+  bottom: clamp(1.8rem, 5vh, 3.4rem);
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
-  font-size: clamp(18px, 1.7vw, 24px);
+  font-size: clamp(19px, 1.9vw, 27px);
   font-weight: 600;
-  color: #2a2a2a;
+  color: #1f2533;
   letter-spacing: 0.01em;
   text-align: center;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.45s ease;
   direction: rtl;
   max-width: min(86%, 980px);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.95);
 }
 
 .gpipe-caption.visible {
@@ -5497,7 +5497,7 @@ code {
 .gpipe-hint {
   position: absolute;
   left: 50%;
-  bottom: clamp(0.5rem, 1.6vh, 1.1rem);
+  bottom: clamp(0.6rem, 1.8vh, 1.2rem);
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
   font-size: 14px;
