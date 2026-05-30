@@ -4927,6 +4927,7 @@ code {
 
 .gsplat-final {
   object-fit: contain;
+  transform: scale(0.85);
 }
 
 .gsplat-caption {
