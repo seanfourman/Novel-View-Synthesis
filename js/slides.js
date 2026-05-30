@@ -5977,8 +5977,9 @@ export function initNeRFVideo() {
   }
 
   // Single point (distance from the apex) where every sample finally collapses
-  // into one merged "pixel" bubble.
-  const MERGE_D = 0.38;
+  // into one merged "pixel" bubble. Sits out along the ray, in the sampled
+  // region, so it lands near the centre of the image rather than at the apex.
+  const MERGE_D = 0.5;
   function samplePosAt(i, returnT = 0, mergeT = 0) {
     const gatherD = 0.22 + i * 0.016;
     const d = lerp(sampleDists[i], gatherD, clamp01(returnT));
@@ -6225,8 +6226,7 @@ export function initNeRFVideo() {
     const wireR = Math.round(lerp(60, 20, h));
     const wireG = Math.round(lerp(64, 20, h));
     const wireB = Math.round(lerp(72, 24, h));
-    const baseAlpha =
-      lerp(0.55, 0.95, h) * alpha * (0.35 + depthFade * 0.65);
+    const baseAlpha = lerp(0.55, 0.95, h) * alpha * (0.35 + depthFade * 0.65);
     const color = `rgba(${wireR},${wireG},${wireB},${baseAlpha.toFixed(3)})`;
     const width = lerp(1.0, 2.2, h);
 
@@ -6483,9 +6483,17 @@ export function initNeRFVideo() {
         ctx.clip();
         const travel = (wallT * 0.72 + i * 0.23) % 1;
         const brightY = barsY + travel * barH;
-        const sweep = ctx.createLinearGradient(x, brightY - barH * 0.18, x, brightY + barH * 0.18);
+        const sweep = ctx.createLinearGradient(
+          x,
+          brightY - barH * 0.18,
+          x,
+          brightY + barH * 0.18,
+        );
         sweep.addColorStop(0, "rgba(255,255,255,0)");
-        sweep.addColorStop(0.5, `rgba(255,255,255,${(0.5 * networkPulse).toFixed(3)})`);
+        sweep.addColorStop(
+          0.5,
+          `rgba(255,255,255,${(0.5 * networkPulse).toFixed(3)})`,
+        );
         sweep.addColorStop(1, "rgba(255,255,255,0)");
         ctx.fillStyle = sweep;
         ctx.fillRect(x, brightY - barH * 0.18, barW, barH * 0.36);
@@ -6493,9 +6501,15 @@ export function initNeRFVideo() {
         const dotCount = 3;
         ctx.fillStyle = `rgba(255,255,255,${(0.38 * networkPulse).toFixed(3)})`;
         for (let d = 0; d < dotCount; d++) {
-          const y = barsY + (((travel + d / dotCount) % 1) * barH);
+          const y = barsY + ((travel + d / dotCount) % 1) * barH;
           ctx.beginPath();
-          ctx.arc(x + barW * 0.5, y, Math.max(1.2, barW * 0.11), 0, Math.PI * 2);
+          ctx.arc(
+            x + barW * 0.5,
+            y,
+            Math.max(1.2, barW * 0.11),
+            0,
+            Math.PI * 2,
+          );
           ctx.fill();
         }
         ctx.restore();
@@ -6825,7 +6839,11 @@ export function initNeRFVideo() {
       // home (drawSamples / sampleReturnT) so the view stays locked on the
       // cluster instead of racing ahead of it and snapping back at high zoom.
       const homeProgress = easeInOut(clamp01(returnAimT * 1.08));
-      const aimD = lerp(lerp(0.0, lastBubbleD, bubbleFollowT), 0.45, homeProgress);
+      const aimD = lerp(
+        lerp(0.0, lastBubbleD, bubbleFollowT),
+        0.45,
+        homeProgress,
+      );
       // Right-side framing during the follow, but ease the offsets out as the
       // bubbles come home so HERO settles closer to the centre of the screen.
       const nudge = lerp(-0.55, -0.1, homeProgress);
