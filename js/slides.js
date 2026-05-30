@@ -5838,7 +5838,7 @@ export function initNeRFVideo() {
     formulaMidEnd: 14.2,
     queryEnd: 16.2,
     fillEnd: 18.2,
-    pixelEnd: 21.2,
+    pixelEnd: 25.0,
     holdEnd: 22.8,
   };
 
@@ -6722,7 +6722,9 @@ export function initNeRFVideo() {
     const mlpT = clamp01((t - P.samplesEnd) / (P.mlpEnd - P.samplesEnd));
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
     const fillT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
-    const pixelT = clamp01((t - (P.fillEnd + 1.0)) / (P.pixelEnd - P.fillEnd - 1.0));
+    // Pixel chip forms as the bubbles arrive home, so key it to a fixed window
+    // near the end of the (long) return rather than stretching the whole phase.
+    const pixelT = clamp01((t - (P.pixelEnd - 2.6)) / 2.4);
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -6769,7 +6771,15 @@ export function initNeRFVideo() {
       // Follow the leading cluster of samples instead of drifting toward the
       // scene centre. Hold still while the ray fires; once bubbles appear,
       // the focal point travels with their visible front.
-      const aimD = lerp(0.0, lastBubbleD, bubbleFollowT);
+      // As the bubbles drift back home, track the focal point with them down
+      // the ray so the view ends framed on HERO (the engine always looks at
+      // view.center, so this is what actually "turns" the camera onto HERO).
+      const returnAimT = easeInOut(fillT);
+      // Track the focal point with the SAME curve the bubbles use to gather
+      // home (drawSamples / sampleReturnT) so the view stays locked on the
+      // cluster instead of racing ahead of it and snapping back at high zoom.
+      const homeProgress = easeInOut(clamp01(returnAimT * 1.08));
+      const aimD = lerp(lerp(0.0, lastBubbleD, bubbleFollowT), 0.45, homeProgress);
       // Keep the tuned right-side framing during the whole follow.
       const nudge = -0.55;
       const drop = 0.3;
@@ -6786,7 +6796,8 @@ export function initNeRFVideo() {
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
       const formulaPoseT = easeInOut(mlpT);
       const formulaIntroZoomT = easeInOut(mlpT);
-      const returnLookT = easeInOut(fillT);
+      // A gentle extra tilt/turn on top of the focal-point tracking above.
+      const returnLookT = homeProgress;
       extraPitch =
         (lerp(-0.36, -0.31, bubbleFollowT) +
           formulaPoseT * 0.08 +
@@ -6799,7 +6810,11 @@ export function initNeRFVideo() {
         lerp(6.8, 25.0, bubbleFollowT) +
         formulaPoseT * 3.5 +
         formulaIntroZoomT * 24.0;
-      extraZoom = lerp(1, followZoom, heroFocus * closeIn);
+      // Ease the very tight follow-zoom back to a moderate framing as the
+      // bubbles return, so HERO actually fits in frame. This is a gentle
+      // reframe (HERO still fills the view), not the wide establishing zoom.
+      const framedZoom = lerp(followZoom, 15.0, homeProgress);
+      extraZoom = lerp(1, framedZoom, heroFocus * closeIn);
     }
 
     // Dampen the orbit hard while zoomed in so the tight close-up on the
