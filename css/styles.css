@@ -5446,3 +5446,68 @@ code {
 .nerf-pipeline-caption.visible {
   opacity: 1;
 }
+
+/* ============================================================
+   Slide 17: 3D Gaussian Splatting pipeline (full-canvas animation)
+   ============================================================ */
+.slide#gaussian-pipeline {
+  padding: 0;
+}
+
+.gpipe-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.gpipe-slide canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gpipe-caption {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.5rem, 4vh, 3rem);
+  transform: translateX(-50%);
+  font-family: "Heebo", sans-serif;
+  font-size: clamp(18px, 1.7vw, 24px);
+  font-weight: 600;
+  color: #2a2a2a;
+  letter-spacing: 0.01em;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  direction: rtl;
+  max-width: min(86%, 980px);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+}
+
+.gpipe-caption.visible {
+  opacity: 1;
+}
+
+.gpipe-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.5rem, 1.6vh, 1.1rem);
+  transform: translateX(-50%);
+  font-family: "Heebo", sans-serif;
+  font-size: 14px;
+  color: #ff5a36;
+  direction: rtl;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.gpipe-hint.visible {
+  opacity: 0.85;
+}

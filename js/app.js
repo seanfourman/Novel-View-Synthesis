@@ -17,6 +17,7 @@ import {
   initNeRFVideo,
   initGaussianSplats,
 } from "./slides.js";
+import { initGaussianPipeline } from "./gpipe.js";
 
 const deck = document.getElementById("deck");
 const slides = Array.from(document.querySelectorAll(".slide"));
@@ -148,7 +149,8 @@ const sceneRegistry = {
   13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
   // slide 15 (NeRF pros & cons) - no canvas
   15: initGaussianSplats, // slide 16 (3D Gaussian Splatting build-up)
-  16: initEndBg, // slide 17 (final recap)
+  16: initGaussianPipeline, // slide 17 (3DGS pipeline animation)
+  17: initEndBg, // slide 18 (final recap)
 };
 
 const sceneInstances = {};
