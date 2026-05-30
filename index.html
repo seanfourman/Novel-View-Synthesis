@@ -1097,6 +1097,31 @@
               <strong>NeRF</strong> הצליח לייצר תמונות חדשות באיכות גבוהה,
               אבל דרש הרבה חישובים כדי ליצור כל תמונה.
             </p>
+
+            <!-- Build-up: from a sparse point cloud to a solid rendered object -->
+            <div class="gsplat-strip" aria-label="מהצגת ענן נקודות דליל ועד לתמונה הסופית">
+              <figure class="gsplat-step">
+                <canvas class="gsplat-canvas" data-stage="0" aria-hidden="true"></canvas>
+                <figcaption class="gsplat-caption"><span class="gsplat-num">1</span>ענן נקודות דליל</figcaption>
+              </figure>
+              <figure class="gsplat-step">
+                <canvas class="gsplat-canvas" data-stage="1" aria-hidden="true"></canvas>
+                <figcaption class="gsplat-caption"><span class="gsplat-num">2</span>יצירת כתמים</figcaption>
+              </figure>
+              <figure class="gsplat-step">
+                <canvas class="gsplat-canvas" data-stage="2" aria-hidden="true"></canvas>
+                <figcaption class="gsplat-caption"><span class="gsplat-num">3</span>הצפפת הכתמים</figcaption>
+              </figure>
+              <figure class="gsplat-step">
+                <canvas class="gsplat-canvas" data-stage="3" aria-hidden="true"></canvas>
+                <figcaption class="gsplat-caption"><span class="gsplat-num">4</span>כיוונון וליטוש</figcaption>
+              </figure>
+              <figure class="gsplat-step">
+                <canvas class="gsplat-canvas" data-stage="4" aria-hidden="true"></canvas>
+                <figcaption class="gsplat-caption"><span class="gsplat-num">5</span>התמונה הסופית</figcaption>
+              </figure>
+            </div>
+
             <p class="gaussian-paragraph">
               <strong>3D Gaussian Splatting</strong> מציע גישה אחרת -
               במקום לדגום הרבה נקודות לאורך כל קרן מצלמה, <br>

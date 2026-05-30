@@ -7195,3 +7195,116 @@ export function initNeRFVideo() {
     },
   };
 }
+
+/* =========================================================
+   Slide 16: 3D Gaussian Splatting build-up strip
+   Five panels of the SAME isometric die rendered as Gaussian
+   "splats". Each panel reveals a random subset of a shared
+   master point set, so the object densifies from a sparse
+   point cloud (panel 1) into a solid render (panel 5).
+   ========================================================= */
+export function initGaussianSplats() {
+  const slide = document.getElementById("gaussian-splatting");
+  if (!slide) return { tick() {} };
+  const canvases = Array.from(slide.querySelectorAll(".gsplat-canvas"));
+  if (!canvases.length) return { tick() {} };
+
+  const COS30 = Math.cos(Math.PI / 6); // 0.8660 — 2:1 isometric
+  const MASTER = 1800; // splats in the densest (final) panel
+
+  // Dark recessed pips, in face-local coords (a,b) in [-1,1].
+  const PIPS = {
+    top: [[0, 0]], // 1
+    left: [[-0.5, 0.5], [0.5, -0.5]], // 2
+    right: [[-0.55, 0.55], [0, 0], [0.55, -0.55]], // 3
+  };
+  const PIP_R = 0.22;
+
+  // The three faces meeting at the near corner (+,+,+): top, left, right.
+  // base = RGB face colour; top lightest → right darkest gives the 3D read.
+  const faces = [
+    { key: "top",   to3d: (a, b) => [a, 1, b], base: [124, 154, 194] },
+    { key: "left",  to3d: (a, b) => [a, b, 1], base: [94, 126, 170] },
+    { key: "right", to3d: (a, b) => [1, b, a], base: [70, 100, 144] },
+  ];
+
+  function project(x, y, z) {
+    return { sx: (x - z) * COS30, sy: (x + z) * 0.5 - y, depth: x + y + z };
+  }
+
+  function inPip(key, a, b) {
+    const list = PIPS[key];
+    for (let i = 0; i < list.length; i++) {
+      const dx = a - list[i][0];
+      const dy = b - list[i][1];
+      if (dx * dx + dy * dy < PIP_R * PIP_R) return true;
+    }
+    return false;
+  }
+
+  // Build the shared master set; each splat gets a random reveal rank.
+  const splats = [];
+  for (let i = 0; i < MASTER; i++) {
+    const f = faces[i % faces.length];
+    const a = Math.random() * 2 - 1;
+    const b = Math.random() * 2 - 1;
+    const [x, y, z] = f.to3d(a, b);
+    const p = project(x, y, z);
+    const c = inPip(f.key, a, b) ? [40, 54, 80] : f.base;
+    splats.push({ sx: p.sx, sy: p.sy, depth: p.depth, c });
+  }
+  const rank = splats.map((_, i) => i);
+  for (let i = rank.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    const t = rank[i]; rank[i] = rank[j]; rank[j] = t;
+  }
+  rank.forEach((idx, r) => { splats[idx].ord = r; });
+
+  // How many splats each panel reveals (panel 0 sparse → panel 4 full).
+  const STAGE_COUNT = [80, 260, 640, 1120, MASTER];
+
+  function drawStage(canvas, stage) {
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssW = canvas.clientWidth || 150;
+    const cssH = canvas.clientHeight || 130;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    // Iso die spans sx in [-1.732,1.732], sy in [-2,2]; fit with padding.
+    const s = Math.min(cssW / 4.2, cssH / 4.9);
+    const cx = cssW / 2;
+    const cy = cssH / 2;
+    const r = s * 0.12; // soft splat radius
+    const threshold = STAGE_COUNT[stage] || STAGE_COUNT[0];
+
+    const shown = splats.filter((p) => p.ord < threshold);
+    shown.sort((a, b) => a.depth - b.depth); // far → near
+
+    for (const p of shown) {
+      const px = cx + p.sx * s;
+      const py = cy + p.sy * s;
+      const [cr, cg, cb] = p.c;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.95)`);
+      g.addColorStop(0.55, `rgba(${cr},${cg},${cb},0.6)`);
+      g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawAll() {
+    for (const c of canvases) drawStage(c, parseInt(c.dataset.stage, 10) || 0);
+  }
+
+  drawAll();
+  const ro = new ResizeObserver(drawAll);
+  canvases.forEach((c) => ro.observe(c));
+
+  return { tick() {} };
+}

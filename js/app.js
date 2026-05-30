@@ -15,6 +15,7 @@ import {
   initSRNNetAnim,
   initNeRFIntro,
   initNeRFVideo,
+  initGaussianSplats,
 } from "./slides.js";
 
 const deck = document.getElementById("deck");
@@ -146,6 +147,7 @@ const sceneRegistry = {
   12: initNeRFIntro, // slide 13 (NeRF)
   13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
   // slide 15 (NeRF pros & cons) - no canvas
+  15: initGaussianSplats, // slide 16 (3D Gaussian Splatting build-up)
   16: initEndBg, // slide 17 (final recap)
 };
 
