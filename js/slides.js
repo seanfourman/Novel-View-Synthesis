@@ -6696,7 +6696,7 @@ export function initNeRFVideo() {
     // Hero focus ramps up at the converge → hero handoff, then decays once
     // the MLP/query phase takes over.
     const heroApproach = easeInOut(clamp01((t - P.convergeEnd) / 1.4));
-    const heroRelease = easeInOut(clamp01((t - (P.queryEnd + 0.4)) / 1.6));
+    const heroRelease = easeInOut(clamp01((t - (P.fillEnd + 0.4)) / 1.6));
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
@@ -6879,7 +6879,7 @@ export function initNeRFVideo() {
 
     drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash, forcedColors);
 
-    const mlpFadeOut = clamp01((t - P.queryEnd - 0.6) / 1.5);
+    const mlpFadeOut = clamp01((t - P.fillEnd - 0.6) / 1.5);
     const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut), {
       inputArrowAlpha: inputNetworkT,
       outputArrowAlpha: outputRgbT,
