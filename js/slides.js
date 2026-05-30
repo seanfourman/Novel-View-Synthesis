@@ -3884,7 +3884,7 @@ export function initSfMLiDAR() {
       ctx.closePath();
       ctx.fill();
 
-      // Back-half frustums (behind the bunny) — drawn first, slightly faded
+      // Back-half frustums (behind the bunny) - drawn first, slightly faded
       backFrustums
         .filter((f) => f.index !== activeIdx)
         .forEach((f) => drawFrustum(f, 0.26));
@@ -3901,7 +3901,7 @@ export function initSfMLiDAR() {
         );
       }
 
-      // Front-half frustums (in front of the bunny) — drawn over it, fully opaque
+      // Front-half frustums (in front of the bunny) - drawn over it, fully opaque
       frontFrustums
         .filter((f) => f.index !== activeIdx)
         .forEach((f) => drawFrustum(f, 0.58));
@@ -5049,7 +5049,7 @@ export function initSRNNetAnim() {
 
   function step(dtScale) {
     // Only spawn a new pulse when the previous one has finished, and only once
-    // the source image has been sampled — otherwise the first pulse would lock
+    // the source image has been sampled - otherwise the first pulse would lock
     // in the neutral-grey pre-fill color.
     if (pulses.length === 0 && imageLoaded) {
       spawnTimer += dtScale;
@@ -5465,7 +5465,7 @@ export function initSRNNetAnim() {
 }
 
 /* =========================================================
-   Slide 2: Spatial transition — animated horizon grid + particles
+   Slide 2: Spatial transition - animated horizon grid + particles
    ========================================================= */
 export function initSpatialTransition() {
   const slide = document.querySelector('.slide[data-id="2"]');
@@ -5560,7 +5560,7 @@ export function initSpatialTransition() {
       for (let c = 0; c < COLS; c++) {
         const p = points[r][c];
         if (!p) continue;
-        // Depth-based fade — farther = fainter
+        // Depth-based fade - farther = fainter
         const depthFactor = Math.max(0, Math.min(1, 1 - (p.depth - 4.5) / 12));
         const alpha = 0.22 * depthFactor;
         if (alpha < 0.02) continue;
@@ -5772,7 +5772,7 @@ export function initNeRFVideo() {
     targets.push({ x: sx, y: sy, z: sz });
   }
   // Pick a hero slot once and rewrite its target to exactly HERO so the
-  // converged frustum and the ray line up — no duplicate hero camera.
+  // converged frustum and the ray line up - no duplicate hero camera.
   let HERO_IDX = 0;
   {
     let best = Infinity;
@@ -5968,7 +5968,7 @@ export function initNeRFVideo() {
   chapters.push({
     start: P.pixelEnd,
     end: P.returnEnd,
-    title: "חוזרים למבט הרחב — כל המצלמות שוב סביב הסצנה",
+    title: "חוזרים למבט הרחב - כל המצלמות שוב סביב הסצנה",
   });
   // One more click: every camera fires a burst of light rays into the scene.
   chapters.push({
@@ -6008,7 +6008,7 @@ export function initNeRFVideo() {
   let decelStartT = 0;
   let decelTargetT = 0;
   let decelElapsed = 0;
-  // If true, the chapter advances automatically the moment decel finishes —
+  // If true, the chapter advances automatically the moment decel finishes -
   // turns the two-step "click to finish, click to advance" into one click.
   let autoAdvanceAfterDecel = false;
   let selectedFormulaSampleIdx = -1;
@@ -6184,7 +6184,7 @@ export function initNeRFVideo() {
 
   // Render the reconstructed tractor point cloud at the scene centre. Each point
   // goes through the same project() as everything else, so the object rotates
-  // correctly as the camera orbits — a genuine 3D render, not a billboard.
+  // correctly as the camera orbits - a genuine 3D render, not a billboard.
   let _cloudSX = null;
   let _cloudSY = null;
   let _cloudSD = null;
@@ -6765,7 +6765,7 @@ export function initNeRFVideo() {
         //   f(0)=0, f(1)=1, f'(0)=2, f'(1)=0.
         // For the natural ease-in (auto-trigger at dur - DECEL/2), the
         // storyboard advance is DECEL/2 over DECEL seconds, so the actual
-        // rate at k=0 is 0.5 * f'(0) = 1 — a perfect handoff from
+        // rate at k=0 is 0.5 * f'(0) = 1 - a perfect handoff from
         // full-speed play to the decel curve. For a click-initiated decel
         // covering more ground, the rate starts higher then eases to 0.
         const k = decelElapsed / DECEL;
@@ -7169,7 +7169,7 @@ export function initNeRFVideo() {
   }
 
   // One click = "go to the next chapter", but only when paused at a chapter
-  // end. Clicks during playback are ignored (you can't skip ahead — once a
+  // end. Clicks during playback are ignored (you can't skip ahead - once a
   // chapter starts it plays to the end), and the final chapter is a dead end:
   // clicking there does nothing, so it never loops back to the start.
   slide.addEventListener("click", () => {

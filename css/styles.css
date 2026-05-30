@@ -595,7 +595,7 @@ code {
 
 /* ===== Per-icon contextual animations ===== */
 
-/* VR ו-AR — stereo eye blink: alternating fill flash on each lens */
+/* VR ו-AR - stereo eye blink: alternating fill flash on each lens */
 .icon-vr .vr-eye {
   fill: var(--accent);
   fill-opacity: 0;
@@ -619,7 +619,7 @@ code {
   }
 }
 
-/* Games — gentle controller "rumble" wiggle */
+/* Games - gentle controller "rumble" wiggle */
 .icon-game {
   animation: game-rumble 4s ease-in-out infinite;
   transform-origin: center;
@@ -669,7 +669,7 @@ code {
   }
 }
 
-/* Robot — head bobs, antenna sways, eyes blink */
+/* Robot - head bobs, antenna sways, eyes blink */
 .icon-robot .robot-head-group {
   transform-box: fill-box;
   transform-origin: 50% 100%;
@@ -702,7 +702,7 @@ code {
   }
 }
 
-/* Car — wheels spin (dashed stroke makes the rotation visible), radar pulses overhead */
+/* Car - wheels spin (dashed stroke makes the rotation visible), radar pulses overhead */
 .icon-car .car-wheel {
   stroke-dasharray: 1.4 1.6;
   transform-box: fill-box;
@@ -734,7 +734,7 @@ code {
   }
 }
 
-/* Digital Twins — data flows back and forth between the screens */
+/* Digital Twins - data flows back and forth between the screens */
 .icon-twins .twins-flow {
   stroke-dashoffset: 7;
   animation: twins-flow-anim 1.4s linear infinite;
@@ -766,7 +766,7 @@ code {
   }
 }
 
-/* Spatial Computing — floating UI panels in 3D, with parallax shift */
+/* Spatial Computing - floating UI panels in 3D, with parallax shift */
 .icon-spatial .spatial-panel {
   transform-box: fill-box;
   transform-origin: center;
@@ -4629,7 +4629,7 @@ code {
   overflow: visible;
 }
 
-/* Soft glowing auras — green on right (pros), orange on left (cons) */
+/* Soft glowing auras - green on right (pros), orange on left (cons) */
 .srn-verdict-bg {
   position: absolute;
   top: -5%;
