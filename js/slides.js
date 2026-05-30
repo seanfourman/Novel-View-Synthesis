@@ -6614,16 +6614,20 @@ export function initNeRFVideo() {
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
-      // Pan the focal centre onto HERO (with a tiny leftward nudge so the
-      // hero frustum sits slightly off-centre toward the right of frame).
-      let aimD = 0.0;
-      if (t > P.heroEnd) {
-        const k = clamp01((t - P.heroEnd) / (P.samplesEnd - P.heroEnd));
-        aimD = lerp(0.0, 4.0, easeInOut(k));
-      }
-      // Leftward nudge of the focal point so the hero frustum sits well over
-      // to the right of frame. Downward shift lowers the whole viewing camera
-      // in world space (translation, not rotation).
+      // Pan the focal centre onto HERO, then follow the ray forward.
+      const bubbleFollowT = easeInOut(samplesT);
+      const rayLeadT = easeOut(rayT);
+      const firstBubbleD = sampleDists[0] * 0.62;
+      const lastBubbleD = sampleDists[NUM_SAMPLES - 1] * 0.82;
+      // Follow the leading cluster of samples instead of drifting toward the
+      // scene centre. During the ray shot we move only a little; once bubbles
+      // appear, the focal point travels with their visible front.
+      const aimD = lerp(
+        firstBubbleD * rayLeadT,
+        lastBubbleD,
+        bubbleFollowT,
+      );
+      // Keep the tuned right-side framing during the whole follow.
       const nudge = -0.55;
       const drop = 0.3;
       const aim = {
@@ -6634,13 +6638,12 @@ export function initNeRFVideo() {
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      // Camera turns right and tilts down toward the centre of the scene
-      // (origin) — the direction the hero frustum points.
+      // No extra left turn during follow; keep the same close-up angle.
       extraYaw = -0.8 * heroFocus;
       extraPitch = -0.36 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
-      const pullBack = easeInOut(clamp01((t - P.rayEnd) / 2.5));
-      extraZoom = lerp(1, lerp(6.6, 1.7, pullBack), heroFocus * closeIn);
+      const followZoom = lerp(6.8, 5.6, bubbleFollowT);
+      extraZoom = lerp(1, followZoom, heroFocus * closeIn);
     }
 
     // Dampen the orbit hard while zoomed in so the tight close-up on the
@@ -6709,8 +6712,6 @@ export function initNeRFVideo() {
         isHero ? legoImageFade : 0,
       );
     }
-
-    drawCenterObject(eConverge * 0.85);
 
     if (rayT > 0) drawRay(rayT);
 
