@@ -4239,7 +4239,7 @@ export function initSfMLiDAR() {
       const gap = 4;
       const gridW = capCount * cellW + (capCount - 1) * gap;
       const capX = (W - gridW) / 2;
-      const capY = 346;
+      const capY = 318;
 
       drawEllipsis(76, capY + 31, "rgba(20, 20, 20, 0.84)");
       drawEllipsis(W - 76, capY + 31, "rgba(20, 20, 20, 0.84)");
@@ -4267,7 +4267,7 @@ export function initSfMLiDAR() {
       const novelGap = 8;
       const novelGridW = novelCount * novelW + (novelCount - 1) * novelGap;
       const novelX = (W - novelGridW) / 2;
-      const novelY = 494;
+      const novelY = capY + 148;
       const fromFrame = captureFrames[activeSegment];
       const toFrame = captureFrames[activeSegment + 1];
 
