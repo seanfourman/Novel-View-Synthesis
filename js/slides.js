@@ -5988,6 +5988,8 @@ export function initNeRFVideo() {
   const TRACTOR_SCALE = 2.5; // world size of the cloud (normalised radius ≈ 1)
   const TRACTOR_Y = 0; // vertical offset of the object centre
   const TRACTOR_ROT_Y = (3 * Math.PI) / 2; // spin so the bucket-arm 3/4 faces us
+  const TRACTOR_ROT_X = Math.PI; // 180° about x to stand it upright
+  const TRACTOR_FLIP_Z = true; // mirror z
   const TRACTOR_POINT = 1.0; // point-size multiplier
   fetch(new URL("../assets/generated/lego_points.json", import.meta.url).href)
     .then((r) => r.json())
@@ -6332,14 +6334,20 @@ export function initNeRFVideo() {
     }
     const cY = Math.cos(TRACTOR_ROT_Y);
     const sY = Math.sin(TRACTOR_ROT_Y);
+    const cX = Math.cos(TRACTOR_ROT_X);
+    const sX = Math.sin(TRACTOR_ROT_X);
+    const fz = TRACTOR_FLIP_Z ? -1 : 1;
     const sc = TRACTOR_SCALE;
     let scaleAccum = 0;
     for (let i = 0; i < n; i++) {
       const X = x[i];
-      const Z = z[i];
+      // Rotate about x, then optionally mirror z, then rotate about y.
+      let Y = cX * y[i] - sX * z[i];
+      let Z = sX * y[i] + cX * z[i];
+      Z *= fz;
       const rx = cY * X + sY * Z;
       const rz = -sY * X + cY * Z;
-      const p = project(rx * sc, y[i] * sc + TRACTOR_Y, rz * sc);
+      const p = project(rx * sc, Y * sc + TRACTOR_Y, rz * sc);
       _cloudSX[i] = p.x;
       _cloudSY[i] = p.y;
       _cloudSD[i] = p.depth;
