@@ -5816,11 +5816,16 @@ export function initNeRFVideo() {
   resize();
   new ResizeObserver(resize).observe(slide);
 
-  const NUM_CAMERAS = 38;
+  const NUM_CAMERAS = 96;
   const NUM_SAMPLES = 22;
   const CYCLE = 30.0;
-  const CAM_DIST = 9.0;
-  const HERO = { x: -3.8, y: 1.8, z: -1.8 };
+  const DOME_RADIUS = 7.7;
+  const CAM_DIST = 14.5;
+  const HERO = {
+    x: -DOME_RADIUS * 0.82,
+    y: DOME_RADIUS * 0.38,
+    z: -DOME_RADIUS * 0.38,
+  };
 
   const P = {
     introEnd: 3.2,
@@ -5911,9 +5916,9 @@ export function initNeRFVideo() {
     const k = i + 0.5;
     const phi = Math.acos(1 - (2 * k) / NUM_CAMERAS);
     const theta = Math.PI * (1 + Math.sqrt(5)) * k;
-    const r = 3.8;
+    const r = DOME_RADIUS;
     const sx = r * Math.sin(phi) * Math.cos(theta);
-    const sy = r * Math.cos(phi) * 0.6;
+    const sy = r * Math.cos(phi) * 0.62;
     const sz = r * Math.sin(phi) * Math.sin(theta);
     targets.push({ x: sx, y: sy, z: sz });
   }
@@ -5939,9 +5944,9 @@ export function initNeRFVideo() {
   const wild = [];
   for (let i = 0; i < NUM_CAMERAS; i++) {
     wild.push({
-      x: (rand() - 0.5) * 11,
-      y: (rand() - 0.5) * 6.5,
-      z: (rand() - 0.5) * 9 + 0.5,
+      x: (rand() - 0.5) * DOME_RADIUS * 3.1,
+      y: (rand() - 0.5) * DOME_RADIUS * 1.85,
+      z: (rand() - 0.5) * DOME_RADIUS * 2.8 + 0.8,
       yaw: rand() * Math.PI * 2,
       pitch: rand() * Math.PI * 2,
       yawSpeed: (rand() - 0.5) * 0.8,
