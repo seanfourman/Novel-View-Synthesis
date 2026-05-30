@@ -4918,10 +4918,15 @@ code {
   max-width: 168px;
 }
 
-.gsplat-canvas {
+.gsplat-canvas,
+.gsplat-final {
   width: 100%;
   height: clamp(96px, 12vh, 132px);
   display: block;
+}
+
+.gsplat-final {
+  object-fit: contain;
 }
 
 .gsplat-caption {

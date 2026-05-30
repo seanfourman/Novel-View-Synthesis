@@ -7251,7 +7251,18 @@ export function initGaussianSplats() {
     const [x, y, z] = f.to3d(a, b);
     const p = project(x, y, z);
     const c = inPip(f.key, a, b) ? [40, 54, 80] : f.base;
-    splats.push({ sx: p.sx, sy: p.sy, depth: p.depth, c });
+    // Each splat is an anisotropic 2D Gaussian: a random orientation (rot),
+    // a minor/major axis ratio (el), and an overall size multiplier (sz) —
+    // so they read as overlapping ellipse "blobs" rather than uniform dots.
+    splats.push({
+      sx: p.sx,
+      sy: p.sy,
+      depth: p.depth,
+      c,
+      rot: Math.random() * Math.PI,
+      el: 0.4 + Math.random() * 0.32,
+      sz: 0.78 + Math.random() * 0.72,
+    });
   }
   const rank = splats.map((_, i) => i);
   for (let i = rank.length - 1; i > 0; i--) {
@@ -7260,8 +7271,11 @@ export function initGaussianSplats() {
   }
   rank.forEach((idx, r) => { splats[idx].ord = r; });
 
-  // How many splats each panel reveals (panel 0 sparse → panel 4 full).
-  const STAGE_COUNT = [80, 260, 640, 1120, MASTER];
+  // How many splats each panel reveals, and an ellipse-size multiplier per
+  // panel: panel 1 = sparse round dots, panels 2-4 = progressively bigger,
+  // denser ellipse splats. Panel 5 (the finished render) is a static <img>.
+  const STAGE_COUNT = [80, 280, 720, 1400];
+  const ELLIPSE_MUL = [0, 1.1, 1.16, 1.42];
 
   function drawStage(canvas, stage) {
     const ctx = canvas.getContext("2d");
@@ -7277,24 +7291,53 @@ export function initGaussianSplats() {
     const s = Math.min(cssW / 4.2, cssH / 4.9);
     const cx = cssW / 2;
     const cy = cssH / 2;
-    const r = s * 0.12; // soft splat radius
-    const threshold = STAGE_COUNT[stage] || STAGE_COUNT[0];
 
+    const threshold = STAGE_COUNT[stage] || STAGE_COUNT[0];
     const shown = splats.filter((p) => p.ord < threshold);
     shown.sort((a, b) => a.depth - b.depth); // far → near
 
+    // Panel 1: a sparse cloud of plain round points.
+    if (stage === 0) {
+      const dr = s * 0.06;
+      for (const p of shown) {
+        const px = cx + p.sx * s;
+        const py = cy + p.sy * s;
+        const [cr, cg, cb] = p.c;
+        const g = ctx.createRadialGradient(px, py, 0, px, py, dr);
+        g.addColorStop(0, `rgba(${cr},${cg},${cb},0.95)`);
+        g.addColorStop(0.6, `rgba(${cr},${cg},${cb},0.6)`);
+        g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(px, py, dr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+
+    // Panels 2-4: oriented, anisotropic ellipse splats that grow + densify.
+    const r = s * 0.16; // base splat radius (major axis)
+    const mul = ELLIPSE_MUL[stage] || 1;
     for (const p of shown) {
       const px = cx + p.sx * s;
       const py = cy + p.sy * s;
       const [cr, cg, cb] = p.c;
-      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
-      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.95)`);
-      g.addColorStop(0.55, `rgba(${cr},${cg},${cb},0.6)`);
+      const a = r * p.sz * mul; // major semi-axis
+      // Squash + rotate the local frame so the radial gradient becomes a
+      // soft, oriented ellipse (an anisotropic Gaussian splat).
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(p.rot);
+      ctx.scale(1, p.el);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, a);
+      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.85)`);
+      g.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.5)`);
       g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.arc(0, 0, a, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
   }
 
