@@ -6621,17 +6621,11 @@ export function initNeRFVideo() {
     if (heroFocus > 0) {
       // Pan the focal centre onto HERO, then follow the ray forward.
       const bubbleFollowT = easeInOut(samplesT);
-      const rayLeadT = easeOut(rayT);
-      const firstBubbleD = sampleDists[0] * 0.62;
       const lastBubbleD = sampleDists[NUM_SAMPLES - 1] * 0.82;
       // Follow the leading cluster of samples instead of drifting toward the
-      // scene centre. During the ray shot we move only a little; once bubbles
-      // appear, the focal point travels with their visible front.
-      const aimD = lerp(
-        firstBubbleD * rayLeadT,
-        lastBubbleD,
-        bubbleFollowT,
-      );
+      // scene centre. Hold still while the ray fires; once bubbles appear,
+      // the focal point travels with their visible front.
+      const aimD = lerp(0.0, lastBubbleD, bubbleFollowT);
       // Keep the tuned right-side framing during the whole follow.
       const nudge = -0.55;
       const drop = 0.3;
