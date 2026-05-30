@@ -5835,10 +5835,11 @@ export function initNeRFVideo() {
     rayEnd: 7.75,
     samplesEnd: 11.3,
     mlpEnd: 12.8,
-    queryEnd: 22.3,
-    fillEnd: 24.3,
-    pixelEnd: 27.3,
-    holdEnd: 29.3,
+    formulaMidEnd: 14.2,
+    queryEnd: 16.2,
+    fillEnd: 18.2,
+    pixelEnd: 21.2,
+    holdEnd: 22.8,
   };
 
   let _seed = 0xc0ffee;
@@ -6031,6 +6032,16 @@ export function initNeRFVideo() {
   // chapter lands on the hero camera, emits the ray, then tracks along it.
   chapters[2].end = P.samplesEnd;
   chapters.splice(3, 2);
+  chapters[4].end = P.formulaMidEnd;
+  chapters.splice(5, 0, {
+    start: P.formulaMidEnd,
+    end: P.queryEnd,
+    title: chapters[4].title,
+  });
+  chapters[6].start = P.queryEnd;
+  chapters[6].end = P.fillEnd;
+  chapters[7].start = P.fillEnd;
+  chapters[7].end = P.pixelEnd;
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
   let chapterT = 0; // storyboard time within chapter (0 → dur)
@@ -6045,6 +6056,7 @@ export function initNeRFVideo() {
   // If true, the chapter advances automatically the moment decel finishes —
   // turns the two-step "click to finish, click to advance" into one click.
   let autoAdvanceAfterDecel = false;
+  let selectedFormulaSampleIdx = -1;
 
   function chapterDur(i) {
     return chapters[i].end - chapters[i].start;
@@ -6065,6 +6077,7 @@ export function initNeRFVideo() {
     pausePulse = 0;
     decelMode = false;
     autoAdvanceAfterDecel = false;
+    if (chapterIdx === 0) selectedFormulaSampleIdx = -1;
     updateCaption();
   }
 
@@ -6351,8 +6364,11 @@ export function initNeRFVideo() {
     c.fill();
   }
 
-  function drawMLP(alpha) {
+  function drawMLP(alpha, options = {}) {
     if (alpha <= 0.01) return null;
+    const inputArrowAlpha = options.inputArrowAlpha || 0;
+    const outputArrowAlpha = options.outputArrowAlpha || 0;
+    const networkPulse = options.networkPulse || 0;
     const boxW = Math.min(W * 0.62, 880);
     const boxH = Math.min(H * 0.26, 210);
     const boxX = (W - boxW) / 2;
@@ -6395,7 +6411,23 @@ export function initNeRFVideo() {
     const barsTotalW = barCount * barW + (barCount - 1) * barGap;
     const barsX0 = cx - barsTotalW / 2;
     const barsY = rowY - barH / 2;
-    ctx.fillStyle = "#7ec9b3";
+    const pulse = networkPulse * (0.5 + 0.5 * Math.sin(wallT * 12));
+    ctx.fillStyle = `rgba(126,201,179,${(0.72 + pulse * 0.28).toFixed(3)})`;
+    if (networkPulse > 0.01) {
+      ctx.save();
+      ctx.globalAlpha *= 0.18 + pulse * 0.26;
+      ctx.fillStyle = "#7ec9b3";
+      roundRect(
+        ctx,
+        barsX0 - barW * 0.65,
+        barsY - barW * 0.75,
+        barsTotalW + barW * 1.3,
+        barH + barW * 1.5,
+        8,
+      );
+      ctx.fill();
+      ctx.restore();
+    }
     for (let i = 0; i < barCount; i++) {
       const x = barsX0 + i * (barW + barGap);
       roundRect(ctx, x, barsY, barW, barH, 3);
@@ -6425,14 +6457,24 @@ export function initNeRFVideo() {
     ctx.strokeStyle = "rgba(20,22,28,0.78)";
     ctx.fillStyle = "rgba(20,22,28,0.78)";
     ctx.lineWidth = 2;
-    drawArrow(ctx, inputX + fontSize * 2.6, rowY, barsX0 - 14, rowY);
-    drawArrow(
-      ctx,
-      barsX0 + barsTotalW + 6,
-      rowY,
-      outputX - fontSize * 1.7,
-      rowY,
-    );
+    if (inputArrowAlpha > 0.01) {
+      ctx.save();
+      ctx.globalAlpha *= easeOut(inputArrowAlpha);
+      drawArrow(ctx, inputX + fontSize * 2.6, rowY, barsX0 - 14, rowY);
+      ctx.restore();
+    }
+    if (outputArrowAlpha > 0.01) {
+      ctx.save();
+      ctx.globalAlpha *= easeOut(outputArrowAlpha);
+      drawArrow(
+        ctx,
+        barsX0 + barsTotalW + 6,
+        rowY,
+        outputX - fontSize * 1.7,
+        rowY,
+      );
+      ctx.restore();
+    }
 
     ctx.restore();
 
@@ -6770,46 +6812,32 @@ export function initNeRFVideo() {
     const colorMix = new Array(NUM_SAMPLES).fill(0);
     let currentQueriedIdx = -1;
     let queryFlash = 0;
-    let arrowState = null;
-    const formulaIntroT = mlpT * (1 - clamp01(queryT * 8));
+    const formulaIntroT = chapterIdx === 3 ? mlpT : 0;
+    const inputNetworkT = clamp01((t - P.mlpEnd) / (P.formulaMidEnd - P.mlpEnd));
+    const outputRgbT = clamp01((t - P.formulaMidEnd) / (P.queryEnd - P.formulaMidEnd));
+    const returnArrowT = clamp01((outputRgbT - 0.45) / 0.45);
     const formulaAnchor = getMLPInputAnchor();
-    const formulaSampleIdx = pickFormulaSampleIdx(formulaAnchor);
-
-    const querySubset = [4, 7, 10, 13, 16, 2];
-    const PER_SAMPLE = (P.queryEnd - P.mlpEnd) / querySubset.length;
-    if (queryT > 0) {
-      const localT = t - P.mlpEnd;
-      for (let qi = 0; qi < querySubset.length; qi++) {
-        const qStart = qi * PER_SAMPLE;
-        const qEnd = qStart + PER_SAMPLE;
-        const idx = querySubset[qi];
-        if (localT >= qEnd) {
-          colorMix[idx] = 1;
-        } else if (localT >= qStart) {
-          const subT = (localT - qStart) / PER_SAMPLE;
-          currentQueriedIdx = idx;
-          if (subT < 0.3) {
-            queryFlash = subT / 0.3;
-            arrowState = { dir: "up", k: subT / 0.3, idx };
-          } else if (subT < 0.55) {
-            queryFlash = 1;
-            arrowState = { dir: "up", k: 1, idx };
-          } else if (subT < 0.85) {
-            const k = (subT - 0.55) / 0.3;
-            queryFlash = 1 - k * 0.5;
-            colorMix[idx] = easeInOut(k);
-            arrowState = { dir: "down", k, idx };
-          } else {
-            queryFlash = 0.5;
-            colorMix[idx] = 1;
-          }
-        }
-      }
+    if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
+      selectedFormulaSampleIdx = pickFormulaSampleIdx(formulaAnchor);
     }
+    const formulaSampleIdx =
+      selectedFormulaSampleIdx >= 0
+        ? selectedFormulaSampleIdx
+        : pickFormulaSampleIdx(formulaAnchor);
 
-    if (formulaIntroT > 0.01) {
+    if (formulaIntroT > 0.01 || queryT > 0) {
       currentQueriedIdx = formulaSampleIdx;
-      queryFlash = Math.max(queryFlash, 0.85 * easeInOut(formulaIntroT));
+      queryFlash = Math.max(
+        queryFlash,
+        (0.55 + 0.35 * Math.sin(wallT * 10)) *
+          Math.max(inputNetworkT, formulaIntroT),
+      );
+    }
+    const resultColorT = easeInOut(clamp01((returnArrowT - 0.62) / 0.28));
+    if (resultColorT > 0.01) {
+      colorMix[formulaSampleIdx] = resultColorT;
+      currentQueriedIdx = formulaSampleIdx;
+      queryFlash = Math.max(queryFlash, 0.7 * (1 - resultColorT));
     }
 
     if (fillT > 0) {
@@ -6824,7 +6852,11 @@ export function initNeRFVideo() {
     drawSamples(samplesT, colorMix, currentQueriedIdx, queryFlash);
 
     const mlpFadeOut = clamp01((t - P.queryEnd - 0.6) / 1.5);
-    const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut));
+    const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut), {
+      inputArrowAlpha: inputNetworkT,
+      outputArrowAlpha: outputRgbT,
+      networkPulse: clamp01(inputNetworkT * (1 - outputRgbT)),
+    });
     if (mlpInfo && formulaIntroT > 0.01) {
       const p = samplePos(formulaSampleIdx);
       const proj = project(p.x, p.y, p.z);
@@ -6835,16 +6867,16 @@ export function initNeRFVideo() {
         "rgba(255,90,42,0.9)",
       );
     }
-    if (mlpInfo && arrowState && currentQueriedIdx >= 0) {
-      const p = samplePos(currentQueriedIdx);
+    if (mlpInfo && returnArrowT > 0.01) {
+      const p = samplePos(formulaSampleIdx);
       const proj = project(p.x, p.y, p.z);
-      const anchor =
-        arrowState.dir === "up" ? mlpInfo.inputAnchor : mlpInfo.outputAnchor;
-      const from = arrowState.dir === "up" ? { x: proj.x, y: proj.y } : anchor;
-      const to = arrowState.dir === "up" ? anchor : { x: proj.x, y: proj.y };
-      drawCurvedArrow(from, to, easeOut(arrowState.k));
+      drawCurvedArrow(
+        mlpInfo.outputAnchor,
+        { x: proj.x, y: proj.y - 4 },
+        easeOut(returnArrowT),
+        "rgba(255,90,42,0.9)",
+      );
     }
-
     if (pixelT > 0) drawPixelChip(easeOut(pixelT));
 
     ctx.restore();
