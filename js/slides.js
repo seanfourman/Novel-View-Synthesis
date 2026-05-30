@@ -5940,7 +5940,6 @@ export function initNeRFVideo() {
     }
     targets[HERO_IDX] = { x: HERO.x, y: HERO.y, z: HERO.z };
   }
-
   const wild = [];
   for (let i = 0; i < NUM_CAMERAS; i++) {
     wild.push({
@@ -6637,11 +6636,12 @@ export function initNeRFVideo() {
       cx = lerp(0, aim.x, heroFocus);
       cy = lerp(0, aim.y, heroFocus);
       cz = lerp(0, aim.z, heroFocus);
-      // No extra left turn during follow; keep the same close-up angle.
-      extraYaw = -0.8 * heroFocus;
-      extraPitch = -0.36 * heroFocus;
+      // While following the samples, keep zooming in and add only a tiny
+      // leftward view drift. In this projection, less-negative yaw is left.
+      extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
+      extraPitch = lerp(-0.36, -0.39, bubbleFollowT) * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
-      const followZoom = lerp(6.8, 5.6, bubbleFollowT);
+      const followZoom = lerp(6.8, 25.0, bubbleFollowT);
       extraZoom = lerp(1, followZoom, heroFocus * closeIn);
     }
 
@@ -6700,8 +6700,24 @@ export function initNeRFVideo() {
     camData.sort((a, b) => b.depth - a.depth);
 
     const legoImageFade = easeInOut(clamp01((t - P.convergeEnd - 0.25) / 1.15));
+    const heroNeighborhoodClear = easeInOut(
+      clamp01((t - (P.convergeEnd + 4.0)) / 0.8),
+    );
+    const hp = project(HERO.x, HERO.y, HERO.z);
     for (const c of camData) {
       const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
+      if (!isHero && heroNeighborhoodClear > 0.01) {
+        const distToHero = Math.hypot(
+          c.pos.x - HERO.x,
+          c.pos.y - HERO.y,
+          c.pos.z - HERO.z,
+        );
+        const p = project(c.pos.x, c.pos.y, c.pos.z);
+        const screenDist = Math.hypot(p.x - hp.x, p.y - hp.y);
+        const inHeroWorldZone = distToHero < DOME_RADIUS * 0.92;
+        const inHeroScreenZone = screenDist < Math.min(W, H) * 0.34;
+        if (inHeroWorldZone || inHeroScreenZone) continue;
+      }
       drawFrustum(
         c.pos,
         c.dir,
