@@ -419,7 +419,7 @@ code {
   content: "";
   display: block;
   width: 10rem;
-  height: 1.5px;
+  height: 3px;
   background: var(--accent);
   margin: 0.5rem auto 0;
 }
