@@ -6361,13 +6361,13 @@ export function initNeRFVideo() {
 
     ctx.save();
     ctx.globalAlpha *= alpha;
-    ctx.fillStyle = "rgba(20,22,28,0.18)";
+    ctx.fillStyle = "rgba(255,255,255,0)";
     roundRect(ctx, boxX + 3, boxY + 6, boxW, boxH, r);
     ctx.fill();
-    ctx.fillStyle = "#1a1c22";
+    ctx.fillStyle = "rgba(255,255,255,0)";
     roundRect(ctx, boxX, boxY, boxW, boxH, r);
     ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(20,22,28,0)";
     ctx.lineWidth = 1;
     roundRect(ctx, boxX, boxY, boxW, boxH, r);
     ctx.stroke();
@@ -6376,7 +6376,7 @@ export function initNeRFVideo() {
     // Pull the row of input/F_Θ/output up so the F_Θ label has room below.
     const rowY = boxY + boxH * 0.42;
     const fontSize = Math.max(18, boxH * 0.2);
-    ctx.fillStyle = "#f4f4f6";
+    ctx.fillStyle = "rgba(20,22,28,0.94)";
     ctx.font = `italic ${fontSize}px "Times New Roman", Georgia, serif`;
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
@@ -6406,7 +6406,7 @@ export function initNeRFVideo() {
     const labelMain = fontSize * 0.85;
     const labelSub = labelMain * 0.65;
     const labelY = barsY + barH + labelMain * 0.95;
-    ctx.fillStyle = "#dfe2e6";
+    ctx.fillStyle = "rgba(20,22,28,0.92)";
     ctx.textBaseline = "alphabetic";
     ctx.font = `italic ${labelMain}px "Times New Roman", Georgia, serif`;
     const fW = ctx.measureText("F").width;
@@ -6422,8 +6422,8 @@ export function initNeRFVideo() {
 
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.strokeStyle = "rgba(244,244,246,0.85)";
-    ctx.fillStyle = "rgba(244,244,246,0.85)";
+    ctx.strokeStyle = "rgba(20,22,28,0.78)";
+    ctx.fillStyle = "rgba(20,22,28,0.78)";
     ctx.lineWidth = 2;
     drawArrow(ctx, inputX + fontSize * 2.6, rowY, barsX0 - 14, rowY);
     drawArrow(
@@ -6437,12 +6437,12 @@ export function initNeRFVideo() {
     ctx.restore();
 
     return {
-      inputAnchor: { x: inputX, y: boxY + boxH },
-      outputAnchor: { x: outputX, y: boxY + boxH },
+      inputAnchor: { x: inputX, y: rowY + fontSize * 0.72 },
+      outputAnchor: { x: outputX, y: rowY + fontSize * 0.72 },
     };
   }
 
-  function drawCurvedArrow(from, to, alpha, color = "rgba(244,244,246,0.95)") {
+  function drawCurvedArrow(from, to, alpha, color = "rgba(24,26,32,0.86)") {
     if (alpha <= 0.01) return;
     ctx.save();
     ctx.globalAlpha *= alpha;
@@ -6614,7 +6614,7 @@ export function initNeRFVideo() {
     // Hero focus ramps up at the converge → hero handoff, then decays once
     // the MLP/query phase takes over.
     const heroApproach = easeInOut(clamp01((t - P.convergeEnd) / 1.4));
-    const heroRelease = easeInOut(clamp01((t - (P.samplesEnd + 0.8)) / 1.6));
+    const heroRelease = easeInOut(clamp01((t - (P.queryEnd + 0.4)) / 1.6));
     const heroFocus = heroApproach * (1 - heroRelease);
 
     if (heroFocus > 0) {
@@ -6734,6 +6734,8 @@ export function initNeRFVideo() {
     let currentQueriedIdx = -1;
     let queryFlash = 0;
     let arrowState = null;
+    const formulaSampleIdx = Math.min(10, NUM_SAMPLES - 1);
+    const formulaIntroT = mlpT * (1 - clamp01(queryT * 8));
 
     const querySubset = [4, 7, 10, 13, 16, 2];
     const PER_SAMPLE = (P.queryEnd - P.mlpEnd) / querySubset.length;
@@ -6767,6 +6769,11 @@ export function initNeRFVideo() {
       }
     }
 
+    if (formulaIntroT > 0.01) {
+      currentQueriedIdx = formulaSampleIdx;
+      queryFlash = Math.max(queryFlash, 0.85 * easeInOut(formulaIntroT));
+    }
+
     if (fillT > 0) {
       for (let i = 0; i < NUM_SAMPLES; i++) {
         if (colorMix[i] < 1) {
@@ -6780,6 +6787,16 @@ export function initNeRFVideo() {
 
     const mlpFadeOut = clamp01((t - P.queryEnd - 0.6) / 1.5);
     const mlpInfo = drawMLP(mlpT * (1 - mlpFadeOut));
+    if (mlpInfo && formulaIntroT > 0.01) {
+      const p = samplePos(formulaSampleIdx);
+      const proj = project(p.x, p.y, p.z);
+      drawCurvedArrow(
+        { x: proj.x, y: proj.y - 4 },
+        mlpInfo.inputAnchor,
+        easeOut(formulaIntroT),
+        "rgba(255,90,42,0.9)",
+      );
+    }
     if (mlpInfo && arrowState && currentQueriedIdx >= 0) {
       const p = samplePos(currentQueriedIdx);
       const proj = project(p.x, p.y, p.z);
