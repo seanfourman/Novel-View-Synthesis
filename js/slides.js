@@ -5838,10 +5838,10 @@ export function initNeRFVideo() {
     formulaMidEnd: 14.2,
     queryEnd: 16.2,
     fillEnd: 18.2,
-    pixelEnd: 25.0,
-    returnEnd: 28.0, // pull back out to the wide "all cameras" establishing view
-    raysEnd: 31.0, // every camera fires light rays into the scene
-    soloEnd: 34.0, // rays + cameras fade away, leaving only the 3D model
+    pixelEnd: 30.0,
+    returnEnd: 33.0, // pull back out to the wide "all cameras" establishing view
+    raysEnd: 36.0, // every camera fires light rays into the scene
+    soloEnd: 39.0, // rays + cameras fade away, leaving only the 3D model
     holdEnd: 22.8,
   };
 
@@ -6136,6 +6136,21 @@ export function initNeRFVideo() {
     start: P.raysEnd,
     end: P.soloEnd,
     title: "וזה המודל התלת-ממדי שהתקבל",
+  });
+  [
+    "אוספים תמונות של אותה סצנה מכמה זוויות שונות",
+    "כל תמונה מגיעה עם מיקום וכיוון במרחב התלת-ממדי",
+    "ממצלמה אחת יוצאת קרן, ועליה דוגמים נקודות במרחב",
+    "כל נקודה נשאלת: איפה היא ומאיזה כיוון מסתכלים עליה",
+    "הרשת לומדת פונקציה שמחשבת מה קיים בכל נקודה",
+    "הפלט של הרשת הוא צבע וצפיפות: RGB ו-σ",
+    "הצבע והצפיפות חוזרים אל הדגימה שעל הקרן",
+    "משלבים את הדגימות לאורך הקרן לצבע של פיקסל אחד",
+    "האימון מחבר את כל הזוויות לייצוג תלת-ממדי אחד",
+    "מזווית חדשה יורים קרניים ומחשבים תמונה חדשה",
+    "כך אפשר להסתכל על הסצנה מזוויות שלא הופיעו במקור",
+  ].forEach((title, idx) => {
+    if (chapters[idx]) chapters[idx].title = title;
   });
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
@@ -6435,7 +6450,7 @@ export function initNeRFVideo() {
       if (local <= 0) continue;
       const localReturnT =
         returnToHeroT > 0
-          ? easeInOut(clamp01(returnToHeroT * 1.08 - i * 0.004))
+          ? easeInOut(clamp01(returnToHeroT * 0.98 - i * 0.004))
           : 0;
       const p = samplePosAt(i, localReturnT, mergeT);
       const proj = project(p.x, p.y, p.z);
@@ -6992,15 +7007,15 @@ export function initNeRFVideo() {
       // Track the focal point with the SAME curve the bubbles use to gather
       // home (drawSamples / sampleReturnT) so the view stays locked on the
       // cluster instead of racing ahead of it and snapping back at high zoom.
-      const homeProgress = easeInOut(clamp01(returnAimT * 1.08));
+      const homeProgress = easeInOut(clamp01(returnAimT * 0.98));
       const aimD = lerp(
         lerp(0.0, lastBubbleD, bubbleFollowT),
-        0.45,
+        0.28,
         homeProgress,
       );
       // Right-side framing during the follow, but ease the offsets out as the
       // bubbles come home so HERO settles closer to the centre of the screen.
-      const nudge = lerp(-0.55, -0.1, homeProgress);
+      const nudge = lerp(-0.55, 0.0, homeProgress);
       const drop = lerp(0.3, 0.0, homeProgress);
       const aim = {
         x: HERO.x + heroDir.x * aimD - nudge,
@@ -7021,9 +7036,9 @@ export function initNeRFVideo() {
         (lerp(-0.36, -0.31, bubbleFollowT) +
           formulaPoseT * 0.08 +
           formulaIntroZoomT * 0.05 +
-          returnLookT * 0.1) *
+          returnLookT * 0.18) *
         heroFocus;
-      extraYaw += returnLookT * 0.16 * heroFocus;
+      extraYaw += returnLookT * 0.34 * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
       const followZoom =
         lerp(6.8, 25.0, bubbleFollowT) +
