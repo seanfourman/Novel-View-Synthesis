@@ -6143,7 +6143,7 @@ export function initNeRFVideo() {
     "ממצלמה אחת יוצאת קרן, ועליה דוגמים נקודות במרחב",
     "לכל דגימה מצמידים מיקום תלת-ממדי וכיוון הסתכלות",
     "הרשת לומדת פונקציה שמחשבת מה קיים בכל נקודה",
-    "הפלט של הרשת הוא צבע וצפיפות: RGB ו-σ",
+    "הפלט של הרשת הוא צבע RGB וצפיפות σ",
     "הצבע והצפיפות חוזרים אל הדגימה שעל הקרן",
     "משלבים את הדגימות לאורך הקרן לצבע של פיקסל אחד",
     "האימון מחבר את כל הזוויות לייצוג תלת-ממדי אחד",
@@ -6379,8 +6379,7 @@ export function initNeRFVideo() {
     const sd = _cloudSD;
     _cloudOrder.sort((a, b) => sd[b] - sd[a]);
     // Point size from the average on-screen scale so the cloud reads as solid.
-    const ptHalf =
-      Math.max(0.6, (scaleAccum / n) * sc * 0.012) * TRACTOR_POINT;
+    const ptHalf = Math.max(0.6, (scaleAccum / n) * sc * 0.012) * TRACTOR_POINT;
     const sizePx = ptHalf * 2;
     ctx.save();
     ctx.globalAlpha *= clamp01(alpha);

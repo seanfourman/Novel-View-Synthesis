@@ -4975,7 +4975,16 @@ code {
   align-self: center;
 }
 
-.slide[data-id="13"] :is(p, p span, p strong, p em, .nerf-concept-item, .nerf-concept-item span, .nerf-carousel-caption) {
+.slide[data-id="13"]
+  :is(
+    p,
+    p span,
+    p strong,
+    p em,
+    .nerf-concept-item,
+    .nerf-concept-item span,
+    .nerf-carousel-caption
+  ) {
   font-size: 21px !important;
 }
 
@@ -5267,7 +5276,7 @@ code {
   bottom: clamp(1.5rem, 4vh, 3rem);
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
-  font-size: 21px;
+  font-size: 24px;
   color: #2a2a2a;
   letter-spacing: 0.01em;
   text-align: center;
