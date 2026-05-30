@@ -6288,24 +6288,29 @@ export function initNeRFVideo() {
 
       // Glow halo (drawn first, under the sphere)
       if (glow > 0.05) {
+        const glowBreath = 0.82 + 0.18 * Math.sin(wallT * 6);
+        const haloR = r * (3.6 + glowBreath * 0.9);
         const halo = ctx.createRadialGradient(
           proj.x,
           proj.y,
           r,
           proj.x,
           proj.y,
-          r * 4,
+          haloR,
         );
-        halo.addColorStop(0, `rgba(255,210,60,${(0.55 * glow).toFixed(3)})`);
+        halo.addColorStop(
+          0,
+          `rgba(255,210,60,${(0.48 * glow * glowBreath).toFixed(3)})`,
+        );
         halo.addColorStop(1, "rgba(255,210,60,0)");
         ctx.fillStyle = halo;
         ctx.beginPath();
-        ctx.arc(proj.x, proj.y, r * 4, 0, Math.PI * 2);
+        ctx.arc(proj.x, proj.y, haloR, 0, Math.PI * 2);
         ctx.fill();
       }
 
       // Sphere body with a soft radial gradient for a 3D look (highlight upper-left).
-      const sphereR = r * (1 + glow * 0.2);
+      const sphereR = r;
       const grad = ctx.createRadialGradient(
         proj.x - sphereR * 0.35,
         proj.y - sphereR * 0.35,
