@@ -5987,9 +5987,9 @@ export function initNeRFVideo() {
   let legoCloud = null;
   const TRACTOR_SCALE = 2.5; // world size of the cloud (normalised radius ≈ 1)
   const TRACTOR_Y = 0; // vertical offset of the object centre
-  const TRACTOR_ROT_Y = (3 * Math.PI) / 2; // spin so the bucket-arm 3/4 faces us
-  const TRACTOR_ROT_X = Math.PI; // 180° about x to stand it upright
-  const TRACTOR_FLIP_Z = true; // mirror z
+  const TRACTOR_ROT_Y = (3 * Math.PI) / 2; // spin so the bucket-arm side faces us
+  const TRACTOR_ROT_X = -Math.PI / 2; // stand it up (its up-axis is z, not y)
+  const TRACTOR_FLIP_Z = false; // mirror z
   const TRACTOR_POINT = 1.0; // point-size multiplier
   fetch(new URL("../assets/generated/lego_points.json", import.meta.url).href)
     .then((r) => r.json())
