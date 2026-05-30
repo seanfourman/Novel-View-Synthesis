@@ -432,6 +432,9 @@ code {
   line-height: 1.55;
   white-space: nowrap;
 }
+.tour-notes p.tour-note-text {
+  font-size: 18px;
+}
 
 /* ========== SLIDE 2: SPATIAL TRANSITION ========== */
 /* ---- Animated background grid canvas ---- */
