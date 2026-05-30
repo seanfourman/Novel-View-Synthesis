@@ -6167,6 +6167,7 @@ export function initNeRFVideo() {
     highlight = false,
     baseImage = null,
     baseImageAlpha = 1,
+    highlightStrength = highlight ? 1 : 0,
   ) {
     if (alpha <= 0.01) return null;
     const f = normalize3(dir);
@@ -6196,12 +6197,14 @@ export function initNeRFVideo() {
 
     const apex = project(pos.x, pos.y, pos.z);
     const depthFade = clamp01(1.4 - apex.depth / 14);
+    const h = clamp01(highlightStrength);
+    const wireR = Math.round(lerp(60, 20, h));
+    const wireG = Math.round(lerp(64, 20, h));
+    const wireB = Math.round(lerp(72, 24, h));
     const baseAlpha =
-      (highlight ? 0.95 : 0.55) * alpha * (0.35 + depthFade * 0.65);
-    const color = highlight
-      ? `rgba(20,20,24,${baseAlpha.toFixed(3)})`
-      : `rgba(60,64,72,${baseAlpha.toFixed(3)})`;
-    const width = highlight ? 2.2 : 1.0;
+      lerp(0.55, 0.95, h) * alpha * (0.35 + depthFade * 0.65);
+    const color = `rgba(${wireR},${wireG},${wireB},${baseAlpha.toFixed(3)})`;
+    const width = lerp(1.0, 2.2, h);
 
     if (baseImage && baseImageAlpha > 0.01) {
       drawImageOnFrustumBase(
@@ -6218,7 +6221,7 @@ export function initNeRFVideo() {
 
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(apex.x, apex.y, highlight ? 3.4 : 2.0, 0, Math.PI * 2);
+    ctx.arc(apex.x, apex.y, lerp(2.0, 3.4, h), 0, Math.PI * 2);
     ctx.fill();
 
     // Project the base corners so the caller can paint a texture on the square.
@@ -6843,6 +6846,9 @@ export function initNeRFVideo() {
       }
       const camAlpha = isHero ? 1.0 : 1 - formulaCameraFadeOut;
       if (camAlpha <= 0.02) continue;
+      const heroHighlightFade = isHero
+        ? easeInOut(clamp01((heroT - 0.05) / 0.65))
+        : 0;
       drawFrustum(
         c.pos,
         c.dir,
@@ -6850,6 +6856,7 @@ export function initNeRFVideo() {
         isHero,
         isHero ? legoViewImg : null,
         isHero ? legoImageFade : 0,
+        heroHighlightFade,
       );
     }
 
