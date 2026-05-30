@@ -6735,9 +6735,11 @@ export function initNeRFVideo() {
     camData.sort((a, b) => b.depth - a.depth);
 
     const legoImageFade = easeInOut(clamp01((t - P.convergeEnd - 0.25) / 1.15));
-    const heroNeighborhoodClear = easeInOut(
+    const neighborhoodHideIn = easeInOut(
       clamp01((t - (P.convergeEnd + 4.0)) / 0.8),
     );
+    const neighborhoodReturn = easeInOut(clamp01((t - P.samplesEnd) / 0.75));
+    const heroNeighborhoodClear = neighborhoodHideIn * (1 - neighborhoodReturn);
     const hp = project(HERO.x, HERO.y, HERO.z);
     for (const c of camData) {
       const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
