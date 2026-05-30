@@ -7274,7 +7274,7 @@ export function initGaussianSplats() {
   // How many splats each panel reveals, and an ellipse-size multiplier per
   // panel: panel 1 = sparse round dots, panels 2-4 = progressively bigger,
   // denser ellipse splats. Panel 5 (the finished render) is a static <img>.
-  const STAGE_COUNT = [80, 280, 720, 1400];
+  const STAGE_COUNT = [150, 280, 720, 1400];
   const ELLIPSE_MUL = [0, 1.1, 1.16, 1.42];
 
   function drawStage(canvas, stage) {
@@ -7298,14 +7298,14 @@ export function initGaussianSplats() {
 
     // Panel 1: a sparse cloud of plain round points.
     if (stage === 0) {
-      const dr = s * 0.06;
+      const dr = s * 0.078;
       for (const p of shown) {
         const px = cx + p.sx * s;
         const py = cy + p.sy * s;
         const [cr, cg, cb] = p.c;
         const g = ctx.createRadialGradient(px, py, 0, px, py, dr);
-        g.addColorStop(0, `rgba(${cr},${cg},${cb},0.95)`);
-        g.addColorStop(0.6, `rgba(${cr},${cg},${cb},0.6)`);
+        g.addColorStop(0, `rgba(${cr},${cg},${cb},1)`);
+        g.addColorStop(0.65, `rgba(${cr},${cg},${cb},0.82)`);
         g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
         ctx.fillStyle = g;
         ctx.beginPath();

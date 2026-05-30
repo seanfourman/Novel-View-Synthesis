@@ -4905,6 +4905,7 @@ code {
   gap: clamp(0.4rem, 1.4vw, 1.1rem);
   width: min(900px, 100%);
   margin: clamp(0.6rem, 1.3vh, 1rem) auto;
+  direction: ltr; /* panels read left→right: stage 1 left, stage 5 right */
 }
 
 .gsplat-step {
