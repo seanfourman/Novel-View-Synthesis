@@ -5976,13 +5976,19 @@ export function initNeRFVideo() {
     return samplePosAt(i, 0);
   }
 
-  function samplePosAt(i, returnT = 0) {
+  // Single point (distance from the apex) where every sample finally collapses
+  // into one merged "pixel" bubble.
+  const MERGE_D = 0.38;
+  function samplePosAt(i, returnT = 0, mergeT = 0) {
     const gatherD = 0.22 + i * 0.016;
     const d = lerp(sampleDists[i], gatherD, clamp01(returnT));
+    // As mergeT rises, pull every sample to the SAME distance so the whole
+    // column collapses into one point.
+    const dm = lerp(d, MERGE_D, clamp01(mergeT));
     return {
-      x: HERO.x + heroDir.x * d,
-      y: HERO.y + heroDir.y * d,
-      z: HERO.z + heroDir.z * d,
+      x: HERO.x + heroDir.x * dm,
+      y: HERO.y + heroDir.y * dm,
+      z: HERO.z + heroDir.z * dm,
     };
   }
 
@@ -6293,7 +6299,11 @@ export function initNeRFVideo() {
     forcedColors = null,
     sampleAlpha = null,
     returnToHeroT = 0,
+    mergeT = 0,
   ) {
+    // As the column collapses into the single merged bubble, fade the
+    // individual spheres out so the merged one is what remains on screen.
+    const mergeFade = 1 - clamp01(mergeT);
     for (let i = 0; i < NUM_SAMPLES; i++) {
       const threshold = i / NUM_SAMPLES;
       const local = clamp01((appearT - threshold) / (1 / NUM_SAMPLES + 0.04));
@@ -6302,7 +6312,7 @@ export function initNeRFVideo() {
         returnToHeroT > 0
           ? easeInOut(clamp01(returnToHeroT * 1.08 - i * 0.004))
           : 0;
-      const p = samplePosAt(i, localReturnT);
+      const p = samplePosAt(i, localReturnT, mergeT);
       const proj = project(p.x, p.y, p.z);
       // Fixed on-screen radius with mild perspective scaling (clamped).
       const sizeScale = Math.max(0.55, Math.min(1.7, CAM_DIST / proj.depth));
@@ -6316,7 +6326,7 @@ export function initNeRFVideo() {
       const cg = lerp(222, target[1], mix);
       const cb = lerp(230, target[2], mix);
       const sampleOpacity =
-        (sampleAlpha?.[i] ?? 1) * lerp(1, target[3] ?? 1, mix);
+        (sampleAlpha?.[i] ?? 1) * lerp(1, target[3] ?? 1, mix) * mergeFade;
       if (sampleOpacity <= 0.01) continue;
 
       let glow = 0;
@@ -6610,8 +6620,9 @@ export function initNeRFVideo() {
     ctx.restore();
   }
 
-  function drawPixelChip(alpha) {
-    if (alpha <= 0.01) return;
+  // Front-to-back volume composite of the sample palette → the single colour
+  // this ray contributes to the final pixel.
+  function pixelColor() {
     let rr = 0,
       gg = 0,
       bb = 0,
@@ -6632,29 +6643,67 @@ export function initNeRFVideo() {
       gg /= tot;
       bb /= tot;
     }
-    rr = lerp(245, rr, 0.85);
-    gg = lerp(245, gg, 0.85);
-    bb = lerp(245, bb, 0.85);
+    return [rr, gg, bb];
+  }
 
-    const heroProj = project(HERO.x, HERO.y, HERO.z);
-    const px = heroProj.x - 70;
-    const py = heroProj.y - 70;
-    const r = 26;
+  // The single bubble all samples collapse into, painted with the composited
+  // pixel colour. `appear` is the merge progress (0→1).
+  function drawMergedBubble(appear) {
+    if (appear <= 0.01) return;
+    const p = {
+      x: HERO.x + heroDir.x * MERGE_D,
+      y: HERO.y + heroDir.y * MERGE_D,
+      z: HERO.z + heroDir.z * MERGE_D,
+    };
+    const proj = project(p.x, p.y, p.z);
+    const [cr, cg, cb] = pixelColor();
+    const sizeScale = Math.max(0.55, Math.min(1.7, CAM_DIST / proj.depth));
+    const r = Math.min(W, H) * 0.012 * sizeScale * lerp(1.05, 1.95, appear);
 
     ctx.save();
-    ctx.globalAlpha *= alpha;
-    ctx.fillStyle = `rgb(${rr | 0},${gg | 0},${bb | 0})`;
+    ctx.globalAlpha *= clamp01(appear);
+
+    // Soft glow in the pixel colour.
+    const haloR = r * 3.0;
+    const halo = ctx.createRadialGradient(
+      proj.x,
+      proj.y,
+      r,
+      proj.x,
+      proj.y,
+      haloR,
+    );
+    halo.addColorStop(0, `rgba(${cr | 0},${cg | 0},${cb | 0},0.35)`);
+    halo.addColorStop(1, `rgba(${cr | 0},${cg | 0},${cb | 0},0)`);
+    ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.arc(proj.x, proj.y, haloR, 0, Math.PI * 2);
     ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "rgba(40,44,52,0.8)";
-    ctx.stroke();
+
+    // Sphere body (same 3D shading as the sample spheres).
+    const grad = ctx.createRadialGradient(
+      proj.x - r * 0.35,
+      proj.y - r * 0.35,
+      r * 0.1,
+      proj.x,
+      proj.y,
+      r,
+    );
+    grad.addColorStop(
+      0,
+      `rgb(${Math.min(255, (cr | 0) + 28)},${Math.min(255, (cg | 0) + 24)},${Math.min(255, (cb | 0) + 20)})`,
+    );
+    grad.addColorStop(0.65, `rgb(${cr | 0},${cg | 0},${cb | 0})`);
+    grad.addColorStop(
+      1,
+      `rgb(${Math.max(0, (cr | 0) - 50)},${Math.max(0, (cg | 0) - 48)},${Math.max(0, (cb | 0) - 44)})`,
+    );
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(px + r * 0.7, py + r * 0.7);
-    ctx.lineTo(heroProj.x - 4, heroProj.y - 4);
-    ctx.strokeStyle = "rgba(40,44,52,0.45)";
+    ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+    ctx.fill();
     ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(40,44,52,0.65)";
     ctx.stroke();
     ctx.restore();
   }
@@ -6722,9 +6771,6 @@ export function initNeRFVideo() {
     const mlpT = clamp01((t - P.samplesEnd) / (P.mlpEnd - P.samplesEnd));
     const queryT = clamp01((t - P.mlpEnd) / (P.queryEnd - P.mlpEnd));
     const fillT = clamp01((t - P.fillEnd) / (P.pixelEnd - P.fillEnd));
-    // Pixel chip forms as the bubbles arrive home, so key it to a fixed window
-    // near the end of the (long) return rather than stretching the whole phase.
-    const pixelT = clamp01((t - (P.pixelEnd - 2.6)) / 2.4);
     if (selectedFormulaSampleIdx < 0 && mlpT > 0.01) {
       selectedFormulaSampleIdx = Math.min(
         pickFormulaSampleIdx(getMLPInputAnchor()) + 1,
@@ -6780,9 +6826,10 @@ export function initNeRFVideo() {
       // cluster instead of racing ahead of it and snapping back at high zoom.
       const homeProgress = easeInOut(clamp01(returnAimT * 1.08));
       const aimD = lerp(lerp(0.0, lastBubbleD, bubbleFollowT), 0.45, homeProgress);
-      // Keep the tuned right-side framing during the whole follow.
-      const nudge = -0.55;
-      const drop = 0.3;
+      // Right-side framing during the follow, but ease the offsets out as the
+      // bubbles come home so HERO settles closer to the centre of the screen.
+      const nudge = lerp(-0.55, -0.1, homeProgress);
+      const drop = lerp(0.3, 0.0, homeProgress);
       const aim = {
         x: HERO.x + heroDir.x * aimD - nudge,
         y: HERO.y + heroDir.y * aimD - drop,
@@ -6955,6 +7002,9 @@ export function initNeRFVideo() {
 
     const sampleAlpha = new Array(NUM_SAMPLES).fill(1);
     const sampleReturnT = easeInOut(fillT);
+    // Final stage of the return: once the column has gathered home, collapse it
+    // into the single merged "pixel" bubble.
+    const mergeT = easeInOut(clamp01((fillT - 0.62) / 0.38));
     if (fillT > 0) {
       const finalColorT = easeOut(clamp01(fillT * 1.15));
       const transparentT = easeInOut(clamp01(fillT * 1.25));
@@ -6978,6 +7028,7 @@ export function initNeRFVideo() {
       forcedColors,
       sampleAlpha,
       sampleReturnT,
+      mergeT,
     );
 
     const mlpFadeOut = clamp01((t - P.fillEnd - 0.6) / 1.5);
@@ -7008,7 +7059,7 @@ export function initNeRFVideo() {
         0.45,
       );
     }
-    if (pixelT > 0) drawPixelChip(easeOut(pixelT));
+    if (mergeT > 0.01) drawMergedBubble(mergeT);
 
     ctx.restore();
 
