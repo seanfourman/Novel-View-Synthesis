@@ -1,17 +1,19 @@
 // gpipe.js - Slide 17: how 3D Gaussian Splatting works, step by step.
 //
-// White stage, click to advance, low-math but with real depth:
-//   1. capture the scene from many camera angles (photos)
-//   2. -> a sparse 3D point cloud (SfM)
-//   3. -> each point becomes a 3D gaussian: position, shape, colour, opacity
-//   4. -> "splatting": project the gaussians onto a camera and blend -> an image
-//   5. -> compare that render to the real photo (where is it wrong?)
-//   6. -> the error updates every gaussian, and we clone/split/prune them
-//   7. -> after many iterations, a full 3D scene you can orbit
+// White stage, click to advance. Story:
+//   1. capture the scene from many angles  -> camera pyramids all around it
+//   2. each pyramid collapses into a point -> a sparse 3D point cloud
+//   3. each point becomes a Gaussian (a soft coloured 3D blob); a little row
+//      up top shows what a Gaussian is made of (position / shape / colour /
+//      opacity) - as small dots, not a big diagram
+//   4. splatting: project all Gaussians onto a camera and blend -> an image
+//   5. compare that render to the real photo
+//   6. the error updates / clones / splits / prunes the Gaussians
+//   7. after many iterations: a full 3D scene you can orbit
 //
 // Object = the NeRF "hotdog" scene, reconstructed offline into a coloured
-// point cloud (assets/generated/hotdog_points.json, built by silhouette
-// space-carving from the 100 training views). Self-contained, no THREE.
+// point cloud by silhouette space-carving (assets/generated/hotdog_points.json).
+// Self-contained, no THREE.
 
 export function initGaussianPipeline() {
   const slide = document.getElementById("gaussian-pipeline");
@@ -44,6 +46,7 @@ export function initGaussianPipeline() {
   const CYAN = "#1ba8d6";
   const INK = "#1f2533";
   const INK_SOFT = "#7b8494";
+  const FRUST = "rgba(70,80,100,0.8)";
 
   /* ---------- math ---------- */
   let _seed = 0x40d0617;
@@ -103,8 +106,6 @@ export function initGaussianPipeline() {
     x.fill();
     return c;
   }
-  // darken near-whites to ceramic grey + saturate colours so the (mostly white
-  // plate) hotdog scene reads against a white background.
   function adjColor(r, g, b) {
     const m = 0.299 * r + 0.587 * g + 0.114 * b;
     const sat = 1.42;
@@ -230,7 +231,6 @@ export function initGaussianPipeline() {
       const step = Math.max(1, Math.floor(n / MAXG));
       const pts = [];
       for (let i = 0; i < n && pts.length < MAXG; i += step) {
-        // carved cloud is z-up; rotate to y-up: (x,y,z) -> (x, z, -y)
         const wx = d.pos[i * 3] * u;
         const wy = d.pos[i * 3 + 1] * u;
         const wz = d.pos[i * 3 + 2] * u;
@@ -249,16 +249,30 @@ export function initGaussianPipeline() {
     .catch(fallbackCloud);
 
   /* ---------- real photos (hotdog training views) ---------- */
-  const photoIdx = [0, 14, 28, 42, 70];
-  const photos = photoIdx.map((n) => {
+  const photoNums = [0, 8, 16, 24, 33, 42, 50, 58, 66, 74, 82, 90];
+  const photos = photoNums.map((n) => {
     const im = new Image();
     im.decoding = "async";
-    im.src = new URL(
-      `../assets/3dgs/hotdog/train/r_${n}.png`,
-      import.meta.url,
-    ).href;
+    im.src = new URL(`../assets/3dgs/hotdog/train/r_${n}.png`, import.meta.url).href;
     return im;
   });
+
+  /* ---------- capture cameras on a dome (NeRF-style frustums) ---------- */
+  const NCAM = 40;
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  const sfmCams = [];
+  for (let i = 0; i < NCAM; i++) {
+    const k = i + 0.5;
+    const phi = Math.acos(1 - (2 * k) / NCAM); // full sphere dome (all angles)
+    const th = GA * k;
+    const r = OBJ_SIZE * 2.5;
+    sfmCams.push({
+      x: r * Math.sin(phi) * Math.cos(th),
+      y: r * Math.cos(phi) * 0.85 + OBJ_SIZE * 0.12,
+      z: r * Math.sin(phi) * Math.sin(th),
+      img: photos[i % photos.length],
+    });
+  }
 
   /* ====================================================================
      drawing helpers
@@ -313,50 +327,98 @@ export function initGaussianPipeline() {
     arrowHead(x1, y1, Math.atan2(y1 - cyp, x1 - cxp), 9, color);
   }
 
-  // a friendly tilted "photo" (real hotdog render) with a white polaroid border
-  function drawPhoto(img, cx, cy, w, angle, alpha) {
-    if (!img.complete || !img.naturalWidth) {
-      // still draw the frame so layout reads even before load
-    }
-    const pad = w * 0.06;
-    const iw = w - pad * 2;
-    const ih = iw;
-    const fh = ih + pad + w * 0.15;
+  // affine-warp an image onto a screen triangle (src in image px, dst screen)
+  function imgTri(img, s0, s1, s2, d0, d1, d2) {
+    const den = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+    if (Math.abs(den) < 1e-6) return;
+    const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / den;
+    const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / den;
+    const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / den;
+    const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.y * (s1.x - s0.x)) / den;
+    const e = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / den;
+    const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / den;
     ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(d0.x, d0.y);
+    ctx.lineTo(d1.x, d1.y);
+    ctx.lineTo(d2.x, d2.y);
+    ctx.closePath();
+    ctx.clip();
+    ctx.transform(a, b, c, d, e, f);
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+  }
+  function imgQuad(img, q, alpha) {
+    if (!img || !img.complete || !img.naturalWidth) return;
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
     ctx.globalAlpha = alpha;
-    ctx.translate(cx, cy);
-    ctx.rotate(angle);
-    ctx.shadowColor = "rgba(20,25,40,0.22)";
-    ctx.shadowBlur = 16;
-    ctx.shadowOffsetY = 6;
-    rr(-w / 2, -fh / 2, w, fh, 7);
+    imgTri(img, { x: 0, y: 0 }, { x: iw, y: 0 }, { x: iw, y: ih }, q[0], q[1], q[2]);
+    imgTri(img, { x: 0, y: 0 }, { x: iw, y: ih }, { x: 0, y: ih }, q[0], q[2], q[3]);
+    ctx.globalAlpha = 1;
+  }
+
+  // a camera pyramid pointing at the origin, with its photo on the base plane
+  function drawFrustum(cam, apex, size, img, alpha) {
+    let fX = -apex.x;
+    let fY = -apex.y;
+    let fZ = -apex.z;
+    const fl = Math.hypot(fX, fY, fZ) || 1;
+    fX /= fl;
+    fY /= fl;
+    fZ /= fl;
+    // right = forward x worldUp
+    let rx = fY * 0 - fZ * 1;
+    let ry = fZ * 0 - fX * 0;
+    let rz = fX * 1 - fY * 0;
+    const rl = Math.hypot(rx, ry, rz) || 1;
+    rx /= rl;
+    ry /= rl;
+    rz /= rl;
+    const ux = ry * fZ - rz * fY;
+    const uy = rz * fX - rx * fZ;
+    const uz = rx * fY - ry * fX;
+    const depth = size * 1.35;
+    const cxp = apex.x + fX * depth;
+    const cyp = apex.y + fY * depth;
+    const czp = apex.z + fZ * depth;
+    const hs = size * 0.6;
+    const C = [];
+    for (const [sr, su] of [[-1, 1], [1, 1], [1, -1], [-1, -1]]) {
+      C.push(proj(cam, cxp + rx * hs * sr + ux * hs * su, cyp + ry * hs * sr + uy * hs * su, czp + rz * hs * sr + uz * hs * su));
+    }
+    const pa = proj(cam, apex.x, apex.y, apex.z);
+    // base fill (white) so the photo reads, then warp the photo on
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.moveTo(C[0].x, C[0].y);
+    for (let i = 1; i < 4; i++) ctx.lineTo(C[i].x, C[i].y);
+    ctx.closePath();
     ctx.fillStyle = "#ffffff";
     ctx.fill();
-    ctx.shadowColor = "transparent";
-    ctx.save();
-    rr(-w / 2 + pad, -fh / 2 + pad, iw, ih, 4);
-    ctx.clip();
-    ctx.fillStyle = "#f3f1ec";
-    ctx.fillRect(-w / 2 + pad, -fh / 2 + pad, iw, ih);
-    if (img.complete && img.naturalWidth) {
-      const ir = img.naturalWidth / img.naturalHeight;
-      let dw = iw;
-      let dh = iw / ir;
-      if (dh < ih) {
-        dh = ih;
-        dw = ih * ir;
-      }
-      ctx.drawImage(img, -dw / 2, -fh / 2 + pad + (ih - dh) / 2, dw, dh);
+    if (img) imgQuad(img, C, alpha * 0.96);
+    // edges
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = FRUST;
+    ctx.lineWidth = 1.3;
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    for (const p of C) {
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(p.x, p.y);
     }
-    ctx.restore();
-    ctx.restore();
+    ctx.moveTo(C[0].x, C[0].y);
+    for (let i = 1; i < 4; i++) ctx.lineTo(C[i].x, C[i].y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   function groundShadow(cam, alpha) {
     const p = proj(cam, 0, -OBJ_SIZE * 0.42, 0);
     const rw = OBJ_SIZE * 1.05 * p.scale;
     ctx.save();
-    ctx.globalAlpha = alpha * 0.17;
+    ctx.globalAlpha = alpha * 0.16;
     const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rw);
     g.addColorStop(0, "rgba(30,37,51,1)");
     g.addColorStop(1, "rgba(30,37,51,0)");
@@ -376,7 +438,7 @@ export function initGaussianPipeline() {
       if (g.rank >= count) continue;
       const p = proj(cam, g.x, g.y, g.z);
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.7, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -419,28 +481,6 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // render the cloud small into a soft rounded thumbnail (a camera's render)
-  function renderThumb(rect, count, sharp, alpha, label) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    rr(rect.x, rect.y, rect.w, rect.h, 12);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = "rgba(0,0,0,0.12)";
-    ctx.stroke();
-    ctx.restore();
-    ctx.save();
-    rr(rect.x, rect.y, rect.w, rect.h, 12);
-    ctx.clip();
-    const focal = Math.min(rect.w, rect.h) * 2.0;
-    const pcam = makeCam(-0.6, 0.32, 1, rect.x + rect.w / 2, rect.y + rect.h * 0.54, focal);
-    const cnt = Math.floor(lerp(420, MAXG, sharp));
-    drawGaussians(pcam, cnt, lerp(1.3, 0.8, sharp), alpha, 0);
-    ctx.restore();
-    if (label) text(label, rect.x + rect.w / 2, rect.y - 13, 14, INK_SOFT, "center", 600);
-  }
-
   function drawDiff(cam, count, alpha) {
     ctx.globalAlpha = alpha;
     for (let i = 0; i < gaussians.length; i += 6) {
@@ -456,59 +496,49 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // a single hero ellipsoid with its 4 properties (step 3)
-  function drawGaussianProps(alpha) {
-    const cxp = W * 0.4;
-    const cyp = H * 0.46;
-    const R = Math.min(W, H) * 0.12;
-    const breathe = 1 + 0.06 * Math.sin(wallT * 1.5);
-    ctx.save();
+  // small top row: what a single Gaussian is made of (as little glyphs)
+  function drawPropsRow(alpha) {
+    const items = ["מיקום", "צורה וגודל", "צבע", "שקיפות"];
+    const n = items.length;
+    const gap = Math.min(W * 0.13, 170);
+    const x0 = W / 2 - (gap * (n - 1)) / 2;
+    const gy = H * 0.12;
     ctx.globalAlpha = alpha;
-    ctx.translate(cxp, cyp);
-    ctx.rotate(-0.3);
-    const grad = ctx.createRadialGradient(-R * 0.25, -R * 0.3, R * 0.05, 0, 0, R);
-    grad.addColorStop(0, "rgba(255,176,70,0.98)");
-    grad.addColorStop(0.6, "rgba(232,120,60,0.9)");
-    grad.addColorStop(1, "rgba(190,70,55,0.85)");
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, R * 1.25 * breathe, R * 0.66, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.45)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, R * 1.25 * breathe, R * 0.22, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-
-    const labels = [
-      ["מיקום", "איפה הוא במרחב"],
-      ["צורה וגודל", "כמה מתוח, לאיזה כיוון"],
-      ["צבע", "הגוון שהוא משדר"],
-      ["שקיפות", "כמה הוא אטום"],
-    ];
-    const lx = W * 0.6;
-    const top = cyp - R * 0.85;
-    const gap = (R * 1.7) / (labels.length - 1);
-    ctx.globalAlpha = alpha;
-    for (let i = 0; i < labels.length; i++) {
-      const ly = top + gap * i;
-      const ang = -0.8 + (i / (labels.length - 1)) * 1.6;
-      const axp = cxp + Math.cos(ang) * R * 1.1;
-      const ayp = cyp + Math.sin(ang) * R * 0.55;
-      ctx.strokeStyle = "rgba(0,0,0,0.18)";
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(axp, ayp);
-      ctx.lineTo(lx - 6, ly);
-      ctx.stroke();
-      ctx.fillStyle = ACCENT;
-      ctx.beginPath();
-      ctx.arc(lx + 11, ly, 9, 0, Math.PI * 2);
-      ctx.fill();
-      text(String(i + 1), lx + 11, ly + 0.5, 12, "#fff", "center", 700);
-      text(labels[i][0], lx + 27, ly - 8, 17, INK, "left", 700);
-      text(labels[i][1], lx + 27, ly + 9, 12.5, INK_SOFT, "left", 500);
+    text("כל Gaussian מחזיק:", W / 2, gy - 34, 14, INK_SOFT, "center", 600);
+    for (let i = 0; i < n; i++) {
+      const x = x0 + i * gap;
+      if (i === 0) {
+        ctx.fillStyle = INK;
+        ctx.beginPath();
+        ctx.arc(x, gy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (i === 1) {
+        ctx.save();
+        ctx.translate(x, gy);
+        ctx.rotate(-0.5);
+        ctx.fillStyle = "rgba(120,130,150,0.85)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 11, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if (i === 2) {
+        const g = ctx.createLinearGradient(x - 8, gy, x + 8, gy);
+        g.addColorStop(0, "#ffb046");
+        g.addColorStop(1, "#e0563a");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, gy, 7, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const g = ctx.createRadialGradient(x, gy, 0, x, gy, 8);
+        g.addColorStop(0, "rgba(90,110,140,0.9)");
+        g.addColorStop(1, "rgba(90,110,140,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, gy, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      text(items[i], x, gy + 20, 13, INK, "center", 600);
     }
     ctx.globalAlpha = 1;
   }
@@ -517,19 +547,19 @@ export function initGaussianPipeline() {
      steps / playback
      ==================================================================== */
   const T = {
-    capture: 0.0,
-    points: 4.0,
-    prop: 7.5,
-    splat: 12.0,
-    compare: 16.0,
-    optimize: 20.0,
-    result: 25.0,
-    end: 30.0,
+    cameras: 0.0,
+    points: 4.5,
+    gauss: 8.5,
+    splat: 13.0,
+    compare: 17.0,
+    optimize: 21.0,
+    result: 26.0,
+    end: 31.0,
   };
   const chapters = [
-    { start: T.capture, end: T.points, title: "מצלמים את הסצנה מעשרות זוויות שונות" },
-    { start: T.points, end: T.prop, title: "מהתמונות מחלצים ענן נקודות דליל במרחב" },
-    { start: T.prop, end: T.splat, title: "כל נקודה הופכת ל-Gaussian: מיקום, צורה, צבע ושקיפות" },
+    { start: T.cameras, end: T.points, title: "מצלמים את הסצנה ממלא מצלמות, מכל הזוויות" },
+    { start: T.points, end: T.gauss, title: "כל מצלמה הופכת לנקודה — ומתקבל ענן נקודות דליל" },
+    { start: T.gauss, end: T.splat, title: "כל נקודה הופכת ל-Gaussian: כתם תלת-ממדי רך" },
     { start: T.splat, end: T.compare, title: "מטילים ומשטחים את כל ה-Gaussians למסך (Splatting)" },
     { start: T.compare, end: T.optimize, title: "משווים את הרינדור לתמונה האמיתית — איפה יש טעות" },
     { start: T.optimize, end: T.result, title: "הטעות מעדכנת כל Gaussian, ומוסיפים/מפצלים/מסירים" },
@@ -609,26 +639,23 @@ export function initGaussianPipeline() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, W, H);
 
-    /* phase progresses (from t) */
-    const captureWin = clamp01(1 - smooth(T.points - 0.3, T.points + 0.7, t));
-    const dotsWin = smooth(T.points, T.points + 0.9, t) * (1 - smooth(T.prop + 0.4, T.prop + 1.4, t));
-    const propWin = smooth(T.prop + 0.3, T.prop + 1.1, t) * (1 - smooth(T.splat - 0.7, T.splat, t));
-    const splatGrow = smooth(T.prop + 0.6, T.prop + 2.0, t); // gaussians exist from step 3 on
-    const objDim = propWin; // dim the full cloud while showing the single hero gaussian
-    const heroCamWin = smooth(T.splat, T.splat + 0.8, t) * (1 - smooth(T.compare + 1.2, T.compare + 2.2, t));
+    /* progresses */
+    const converge = smooth(T.points, T.gauss - 0.6, t); // cameras -> points
+    const camAlpha = clamp01(1 - smooth(T.gauss - 1.0, T.gauss - 0.2, t));
+    const dotsWin = smooth(T.points + 0.2, T.points + 1.4, t) * (1 - smooth(T.gauss + 0.5, T.gauss + 1.5, t));
+    const splatGrow = smooth(T.gauss + 0.3, T.gauss + 1.9, t);
+    const propsWin = smooth(T.gauss + 0.5, T.gauss + 1.3, t) * (1 - smooth(T.splat - 0.6, T.splat + 0.2, t));
     const projWin = smooth(T.splat + 0.2, T.splat + 1.0, t) * (1 - smooth(T.compare - 0.3, T.compare + 0.4, t));
+    const heroCamWin = smooth(T.splat, T.splat + 0.8, t) * (1 - smooth(T.compare - 0.4, T.compare + 0.3, t));
     const compareWin = smooth(T.compare, T.compare + 0.7, t) * (1 - smooth(T.optimize + 0.3, T.optimize + 1.0, t));
     const optimizeWin = smooth(T.optimize, T.optimize + 0.7, t) * (1 - smooth(T.result, T.result + 0.5, t));
     const resultWin = smooth(T.result + 0.2, T.result + 1.2, t);
 
-    // sparse during steps 2-5, densify during optimize, full at result
     let count = 460;
     count = lerp(count, MAXG, smooth(T.optimize + 0.3, T.result, t));
     count = Math.round(count);
 
-    // panels shift the object left while a render/photo is on the right
-    const panelsIn = smooth(T.splat - 0.2, T.splat + 1.0, t) * (1 - smooth(T.result, T.result + 0.6, t));
-    const vpx = lerp(W * 0.5, W * 0.4, panelsIn);
+    const vpx = W * 0.5;
 
     const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.5 + wallT * 0.04;
     const pitch = 0.34 + Math.sin(wallT * 0.26) * 0.05 - resultWin * 0.06;
@@ -636,39 +663,52 @@ export function initGaussianPipeline() {
     const focal = Math.min(W, H) * 0.74;
     const cam = makeCam(yaw, pitch, zoom, vpx, H * 0.5, focal);
 
-    /* ---- step 1: capture (cameras + photos) ---- */
-    if (captureWin > 0.01) {
-      const cx = W * 0.5;
-      const cy = H * 0.42;
-      const pw = Math.min(W * 0.17, 210);
-      const angs = [-0.18, -0.06, 0.06, 0.18];
-      for (let i = 0; i < 4; i++) {
-        const a = easeOut(clamp01(captureWin * 1.3 - i * 0.1));
-        const fan = (i - 1.5) * pw * 0.82;
-        drawPhoto(photos[i], cx + fan * a, cy - Math.abs(i - 1.5) * pw * 0.05 * a, pw, angs[i], captureWin);
+    /* ---- steps 1-2: capture cameras that collapse into points ---- */
+    if (camAlpha > 0.01) {
+      // draw far-to-near so nearer frustums overlap correctly
+      const list = sfmCams
+        .map((c, i) => ({ c, i, d: proj(cam, c.x, c.y, c.z).depth }))
+        .sort((a, b) => b.d - a.d);
+      for (const { c, i } of list) {
+        const ti = easeInOut(clamp01(converge * 1.25 - (i / NCAM) * 0.22));
+        let tx = 0;
+        let ty = 0;
+        let tz = 0;
+        if (gReady) {
+          const g = gaussians[i % gaussians.length];
+          tx = g.x;
+          ty = g.y;
+          tz = g.z;
+        }
+        const apex = {
+          x: lerp(c.x, tx, ti),
+          y: lerp(c.y, ty, ti),
+          z: lerp(c.z, tz, ti),
+        };
+        const sz = OBJ_SIZE * 0.3 * (1 - 0.9 * ti);
+        const a = camAlpha * (1 - 0.85 * ti);
+        if (a > 0.02 && sz > 0.02) drawFrustum(cam, apex, sz, c.img, a);
       }
     }
 
-    /* ---- ground shadow once object exists ---- */
-    if (splatGrow > 0.02 && panelsIn < 0.99) groundShadow(cam, splatGrow * (1 - 0.4 * panelsIn));
+    /* ---- ground shadow once the object exists ---- */
+    if (splatGrow > 0.02) groundShadow(cam, splatGrow);
 
-    /* ---- steps 2+: dots / gaussians ---- */
+    /* ---- sparse points / gaussians ---- */
     if (dotsWin > 0.01) drawDots(cam, 460, dotsWin);
     if (splatGrow > 0.01) {
       const jitter = optimizeWin * 0.05;
       const sizeMul = splatGrow * lerp(1.0, 0.82, smooth(T.optimize, T.result, t));
-      const a = 1 - objDim * 0.86;
-      drawGaussians(cam, count, sizeMul, a, jitter);
+      drawGaussians(cam, count, sizeMul, 1, jitter);
     }
 
-    /* ---- step 3: one gaussian + properties ---- */
-    if (propWin > 0.01) drawGaussianProps(propWin);
+    /* ---- step 3: properties row up top ---- */
+    if (propsWin > 0.01) drawPropsRow(propsWin);
 
-    /* ---- step 4: splatting (hero camera + projection lines + render) ---- */
+    /* ---- step 4: splatting (camera + projection lines) ---- */
     if (heroCamWin > 0.01) {
       const HERO = { x: OBJ_SIZE * 1.7, y: OBJ_SIZE * 1.0, z: OBJ_SIZE * 1.3 };
       const pa = proj(cam, HERO.x, HERO.y, HERO.z);
-      // little camera glyph
       ctx.globalAlpha = heroCamWin;
       ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 2.2;
@@ -692,29 +732,47 @@ export function initGaussianPipeline() {
       ctx.globalAlpha = 1;
     }
 
-    /* ---- right-side render + real photo + comparison ---- */
-    if (panelsIn > 0.01) {
-      const ps = Math.min(W * 0.2, H * 0.3);
-      const rx = W - ps - W * 0.06;
-      const rendered = { x: rx, y: H * 0.16, w: ps, h: ps };
-      renderThumb(rendered, count, smooth(T.optimize, T.result, t), panelsIn, "הרינדור שלנו");
-      if (compareWin > 0.01 || optimizeWin > 0.01) {
-        const realA = Math.max(compareWin, optimizeWin);
-        drawPhoto(photos[0], rx + ps / 2, rendered.y + ps + 18 + ps / 2, ps * 1.04, 0.04, realA);
-        text("התמונה האמיתית", rx + ps / 2, rendered.y + ps + 18 + ps + 14, 14, INK_SOFT, "center", 600);
+    /* ---- compare/optimize: small real-photo reference (top-right) ---- */
+    const refWin = Math.max(compareWin, optimizeWin);
+    let refRect = null;
+    if (refWin > 0.01) {
+      const ps = Math.min(W * 0.16, H * 0.24);
+      const rx = W - ps - W * 0.05;
+      const ry = H * 0.09;
+      refRect = { x: rx, y: ry, w: ps, h: ps };
+      ctx.save();
+      ctx.globalAlpha = refWin;
+      rr(rx, ry, ps, ps, 12);
+      ctx.fillStyle = "#f3f1ec";
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.stroke();
+      rr(rx, ry, ps, ps, 12);
+      ctx.clip();
+      const img = photos[0];
+      if (img.complete && img.naturalWidth) {
+        const ir = img.naturalWidth / img.naturalHeight;
+        let dw = ps;
+        let dh = ps / ir;
+        if (dh < ps) {
+          dh = ps;
+          dw = ps * ir;
+        }
+        ctx.drawImage(img, rx + (ps - dw) / 2, ry + (ps - dh) / 2, dw, dh);
       }
+      ctx.restore();
+      text("התמונה האמיתית", rx + ps / 2, ry + ps + 13, 13, INK_SOFT, "center", 600);
     }
 
-    /* ---- step 5: differences on the object ---- */
+    /* ---- step 5: differences between our render (centre) and the photo ---- */
     if (compareWin > 0.01) drawDiff(cam, count, compareWin * 0.9);
 
-    /* ---- step 6: optimize — gradient backflow + densify/prune ---- */
-    if (optimizeWin > 0.01) {
-      const ps = Math.min(W * 0.2, H * 0.3);
-      const rx = W - ps - W * 0.06;
+    /* ---- step 6: optimize — error flows from the photo back to the gaussians ---- */
+    if (optimizeWin > 0.01 && refRect) {
       const phase = (wallT * 90) % 20;
-      curveArrow(rx - 6, H * 0.5, vpx + OBJ_SIZE * 0.2 * focal / CAM_DIST, H * 0.5, 70, CYAN, 2.6, phase);
-      text("מתקנים · מוסיפים · מפצלים · מסירים", W * 0.5, H * 0.12, 16, ACCENT, "center", 700);
+      curveArrow(refRect.x, refRect.y + refRect.h * 0.6, W * 0.5 + 50, H * 0.5, -80, CYAN, 2.6, phase);
+      text("מתקנים · מוסיפים · מפצלים · מסירים", W * 0.5, H * 0.13, 16, ACCENT, "center", 700);
     }
 
     /* ---- step 7: orbit ---- */
