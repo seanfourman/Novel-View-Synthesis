@@ -6442,6 +6442,39 @@ export function initNeRFVideo() {
     };
   }
 
+  function getMLPInputAnchor() {
+    const boxW = Math.min(W * 0.62, 880);
+    const boxH = Math.min(H * 0.26, 210);
+    const boxX = (W - boxW) / 2;
+    const boxY = Math.max(20, H * 0.07);
+    const rowY = boxY + boxH * 0.42;
+    const fontSize = Math.max(18, boxH * 0.2);
+    return {
+      x: boxX + boxW * 0.22,
+      y: rowY + fontSize * 0.72,
+    };
+  }
+
+  function pickFormulaSampleIdx(anchor) {
+    let bestIdx = Math.min(10, NUM_SAMPLES - 1);
+    let bestScore = Infinity;
+    for (let i = 0; i < NUM_SAMPLES; i++) {
+      const p = samplePos(i);
+      const proj = project(p.x, p.y, p.z);
+      if (proj.x < -80 || proj.x > W + 80 || proj.y < -80 || proj.y > H + 80) {
+        continue;
+      }
+      const below = Math.max(0, anchor.y + Math.min(H, W) * 0.08 - proj.y);
+      const score =
+        Math.hypot(proj.x - anchor.x, proj.y - anchor.y) + below * 2.8;
+      if (score < bestScore) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }
+
   function drawCurvedArrow(from, to, alpha, color = "rgba(24,26,32,0.86)") {
     if (alpha <= 0.01) return;
     ctx.save();
@@ -6639,9 +6672,11 @@ export function initNeRFVideo() {
       // While following the samples, keep zooming in and add only a tiny
       // leftward view drift. In this projection, less-negative yaw is left.
       extraYaw = lerp(-0.8, -0.66, bubbleFollowT) * heroFocus;
-      extraPitch = lerp(-0.36, -0.31, bubbleFollowT) * heroFocus;
+      const formulaPoseT = easeInOut(mlpT);
+      extraPitch =
+        (lerp(-0.36, -0.31, bubbleFollowT) + formulaPoseT * 0.08) * heroFocus;
       const closeIn = easeInOut(clamp01((t - P.convergeEnd) / 1.6));
-      const followZoom = lerp(6.8, 25.0, bubbleFollowT);
+      const followZoom = lerp(6.8, 25.0, bubbleFollowT) + formulaPoseT * 3.5;
       extraZoom = lerp(1, followZoom, heroFocus * closeIn);
     }
 
@@ -6734,8 +6769,9 @@ export function initNeRFVideo() {
     let currentQueriedIdx = -1;
     let queryFlash = 0;
     let arrowState = null;
-    const formulaSampleIdx = Math.min(10, NUM_SAMPLES - 1);
     const formulaIntroT = mlpT * (1 - clamp01(queryT * 8));
+    const formulaAnchor = getMLPInputAnchor();
+    const formulaSampleIdx = pickFormulaSampleIdx(formulaAnchor);
 
     const querySubset = [4, 7, 10, 13, 16, 2];
     const PER_SAMPLE = (P.queryEnd - P.mlpEnd) / querySubset.length;
