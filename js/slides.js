@@ -244,37 +244,37 @@ export function initDepthBasedNVS() {
   const steps = [
     {
       title: "קלט: תמונת RGB",
-      text: "תמונה אחת מהמצלמה, בלי עומק מפורש.",
+      text: "תמונה אחת מהמצלמה, בלי עומק מפורש",
       mode: "rgb",
     },
     {
       title: "הערכת עומק",
-      text: "מפה שחורה-לבנה של קרוב מול רחוק.",
+      text: "מפה שחורה-לבנה של קרוב מול רחוק",
       mode: "depth",
     },
     {
       title: "עומק בצבע",
-      text: "אותה מפת עומק, רק בצבע כדי לקרוא אותה מהר יותר.",
+      text: "אותה מפת עומק, רק בצבע כדי לקרוא אותה מהר יותר",
       mode: "depthColor",
     },
     {
       title: "הרמת RGB-D",
-      text: "כל פיקסל מקבל עומק וזז לנקודה במרחב.",
+      text: "כל פיקסל מקבל עומק וזז לנקודה במרחב",
       mode: "cloud",
     },
     {
       title: "בידוד האובייקט",
-      text: "חותכים את המכונית מהרקע ומגדירים מסלול מצלמות סביבו.",
+      text: "חותכים את המכונית מהרקע ומגדירים מסלול מצלמות סביבו",
       mode: "warp",
     },
     {
       title: "מסלול מצלמות",
-      text: "6 זוויות צפייה שנבחרו סביב האובייקט.",
+      text: "6 זוויות צפייה שנבחרו סביב האובייקט",
       mode: "orbit",
     },
     {
       title: "מבטים חדשים",
-      text: "אותו אובייקט משוחזר מכמה זוויות מצלמה.",
+      text: "אותו אובייקט משוחזר מכמה זוויות מצלמה",
       mode: "refine",
     },
   ];
@@ -4708,7 +4708,7 @@ export function initLimits() {
    leading comet re-enters from the left edge to start the cycle again.
    ============================================================ */
 export function initSRN() {
-  const slide = document.querySelector('.slide[data-id="10"]');
+  const slide = document.querySelector('.slide[data-id="11"]');
   if (!slide) return { tick() {} };
 
   const hero = document.getElementById("srn-hero");
@@ -4751,7 +4751,7 @@ export function initSRN() {
 }
 
 export function initNeRFIntro() {
-  const slide = document.querySelector('.slide[data-id="13"]');
+  const slide = document.querySelector('.slide[data-id="14"]');
   if (!slide) return { tick() {}, enter() {} };
 
   const carousel = slide.querySelector(".nerf-carousel");
@@ -4955,7 +4955,7 @@ export function initNvsIntro() {
    Slide 11: SRN network animation - pixel flows through MLP
    ========================================================= */
 export function initSRNNetAnim() {
-  const slide = document.querySelector('.slide[data-id="11"]');
+  const slide = document.querySelector('.slide[data-id="12"]');
   if (!slide) return { tick() {} };
   const canvas = slide.querySelector("#srn-net-canvas");
   if (!canvas) return { tick() {} };
@@ -5635,7 +5635,7 @@ export function initSpatialTransition() {
      I. hold, fade, loop
    ========================================================= */
 export function initNeRFVideo() {
-  const slide = document.querySelector('.slide[data-id="14"]');
+  const slide = document.querySelector('.slide[data-id="15"]');
   if (!slide) return { tick() {}, enter() {} };
 
   const canvas = document.getElementById("nerf-pipeline-canvas");

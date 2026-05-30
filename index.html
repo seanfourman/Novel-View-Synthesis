@@ -755,8 +755,39 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 10: SRN ============ -->
+      <!-- ============ SLIDE 10: PRACTICAL DEPTH-BASED NVS ============ -->
       <section class="slide" data-id="10">
+        <div class="nvs-process-slide" id="nvs-slide">
+          <h2>מתמונה אחת <span class="accent">למבטים חדשים</span></h2>
+          <p class="lead small">
+            כדי ליצור מבטים חדשים מתמונה יחידה, מעריכים עומק לכל פיקסל ומרימים
+            אותו לנקודה במרחב התלת-ממדי. <br>לאחר בידוד האובייקט מהרקע, אפשר לרנדר
+            אותו ממצלמות וירטואליות בזוויות שלא צולמו.
+          </p>
+
+          <div
+            class="nvs-process-board nvs-single-stage"
+            id="nvs-process-board"
+            tabindex="0"
+            aria-label="לחצו כדי להתקדם בתהליך"
+          >
+            <canvas
+              id="nvs-process-canvas"
+              aria-label="שלבי ביניים בתהליך NVS מבוסס-עומק"
+            ></canvas>
+            <div class="nvs-loading" id="nvs-loading" hidden>
+              טוען מודל עומק...
+            </div>
+          </div>
+          <div class="nvs-stage-caption">
+            <h3 id="nvs-step-title">קלט: תמונת RGB</h3>
+            <p id="nvs-step-text">תמונה אחת מהמצלמה, בלי עומק מפורש</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SLIDE 11: SRN ============ -->
+      <section class="slide" data-id="11">
         <div class="srn-slide srn-slide-wide">
           <div class="srn-text">
             <div class="kicker">2019 - ייצוג סצנה בתוך רשת נוירונים</div>
@@ -822,8 +853,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 11: WHAT SRN LEARNS (centered) ============ -->
-      <section class="slide" data-id="11">
+      <!-- ============ SLIDE 12: WHAT SRN LEARNS (centered) ============ -->
+      <section class="slide" data-id="12">
         <div class="srn-learn-slide">
           <img class="srn-zoom-bg" src="assets/srn/r_156.png" alt="" />
           <div class="srn-zoom-square"></div>
@@ -893,8 +924,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 12: SRN PROS & CONS ============ -->
-      <section class="slide" data-id="12">
+      <!-- ============ SLIDE 13: SRN PROS & CONS ============ -->
+      <section class="slide" data-id="13">
         <div class="srn-verdict-slide">
           <div class="srn-verdict-bg" aria-hidden="true"></div>
 
@@ -935,8 +966,8 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 13: NERF ============ -->
-      <section class="slide" data-id="13" id="nerf">
+      <!-- ============ SLIDE 14: NERF ============ -->
+      <section class="slide" data-id="14" id="nerf">
         <div class="nerf-slide">
           <div class="nerf-head">
             <div class="kicker">שדה רציף ברשת נוירונים - 2020</div>
@@ -1033,16 +1064,16 @@
         </div>
       </section>
 
-      <!-- ============ SLIDE 14: NERF PIPELINE VIDEO RECREATION ============ -->
-      <section class="slide" data-id="14" id="nerf-pipeline">
+      <!-- ============ SLIDE 15: NERF PIPELINE VIDEO RECREATION ============ -->
+      <section class="slide" data-id="15" id="nerf-pipeline">
         <div class="nerf-pipeline-slide">
           <canvas id="nerf-pipeline-canvas" aria-label="הדמיית הפייפליין של NeRF"></canvas>
           <div class="nerf-pipeline-caption" id="nerf-pipeline-caption"></div>
         </div>
       </section>
 
-      <!-- ============ SLIDE 15: NeRF PROS & CONS ============ -->
-      <section class="slide" data-id="15">
+      <!-- ============ SLIDE 16: NeRF PROS & CONS ============ -->
+      <section class="slide" data-id="16">
         <div class="srn-verdict-slide">
           <div class="srn-verdict-bg" aria-hidden="true"></div>
 
@@ -1078,38 +1109,6 @@
           <p class="verdict-tagline">
             NeRF יצר תוצאות מרשימות מאוד - אבל דרש הרבה זמן וחישוב כדי להגיע אליהן
           </p>
-        </div>
-      </section>
-
-      <!-- ============ SLIDE 16: MODEL PROCESS ============ -->
-      <section class="slide" data-id="16">
-        <div class="nvs-process-slide" id="nvs-slide">
-          <div class="kicker">תהליך אמיתי: single-image depth-based NVS</div>
-          <h2>מה באמת עובר דרך המודל?</h2>
-          <p class="lead small">
-            זה pipeline אמיתי אחד מתוך משפחת NVS: מתחילים מתמונת RGB, מעריכים
-            עומק, מציגים אותו גם בצבע, מרימים פיקסלים למרחב, מבודדים את
-            האובייקט, ואז מייצרים מבטים חדשים סביבו.
-          </p>
-
-          <div
-            class="nvs-process-board nvs-single-stage"
-            id="nvs-process-board"
-            tabindex="0"
-            aria-label="Click to advance the novel view synthesis process"
-          >
-            <canvas
-              id="nvs-process-canvas"
-              aria-label="Actual intermediate image for a depth-based novel view synthesis pipeline"
-            ></canvas>
-            <div class="nvs-loading" id="nvs-loading" hidden>
-              Loading depth model...
-            </div>
-          </div>
-          <div class="nvs-stage-caption">
-            <h3 id="nvs-step-title">קלט: תמונת RGB</h3>
-            <p id="nvs-step-text">תמונה אחת מהמצלמה, בלי עומק מפורש.</p>
-          </div>
         </div>
       </section>
 

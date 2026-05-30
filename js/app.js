@@ -140,13 +140,14 @@ const sceneRegistry = {
   6: initSfMLiDAR, // slide 7
   7: initLimits, // slide 8 (why classical methods failed)
   8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
-  9: initSRN, // slide 10 (SRN)
-  10: initSRNNetAnim, // slide 11 (SRN network animation)
-  // slide 12 (SRN pros & cons) - no canvas
-  12: initNeRFIntro, // slide 13 (NeRF)
-  13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
-  14: initDepthBasedNVS, // slide 15
-  15: initEndBg, // slide 16 (final recap)
+  9: initDepthBasedNVS, // slide 10 (practical depth-based NVS)
+  10: initSRN, // slide 11 (SRN)
+  11: initSRNNetAnim, // slide 12 (SRN network animation)
+  // slide 13 (SRN pros & cons) - no canvas
+  13: initNeRFIntro, // slide 14 (NeRF)
+  14: initNeRFVideo, // slide 15 (NeRF pipeline animation)
+  // slide 16 (NeRF pros & cons) - no canvas
+  16: initEndBg, // slide 17 (final recap)
 };
 
 const sceneInstances = {};
