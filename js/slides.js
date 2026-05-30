@@ -5826,8 +5826,8 @@ export function initNeRFVideo() {
     introEnd: 3.2,
     convergeEnd: 4.7,
     zoomEnd: 6.8, // close-up on the hero frustum (no ray yet)
-    heroEnd: 7.3,
-    rayEnd: 8.6,
+    heroEnd: 7.0,
+    rayEnd: 7.75,
     samplesEnd: 11.3,
     mlpEnd: 12.8,
     queryEnd: 22.3,
@@ -6023,6 +6023,11 @@ export function initNeRFVideo() {
       title: "כל הדגימות מצטרפות לפיקסל אחד בתמונה החדשה",
     },
   ];
+  // Merge the close-up and ray-fire beats into one click: the chapter first
+  // lands on the hero camera, waits briefly, then emits the ray automatically.
+  chapters[2].end = P.rayEnd;
+  chapters.splice(3, 1);
+  chapters[3].start = P.rayEnd;
   const DECEL = 1.0; // wallclock seconds of smooth ease-out into each pause
   let chapterIdx = 0;
   let chapterT = 0; // storyboard time within chapter (0 → dur)
@@ -6139,7 +6144,14 @@ export function initNeRFVideo() {
   // Pyramid wireframe with a SQUARE base. pos is the apex (the camera's eye),
   // dir points outward from the apex to the base. Returns the 4 projected
   // base corners so the caller can paint a texture on the base if needed.
-  function drawFrustum(pos, dir, alpha, highlight = false, baseImage = null) {
+  function drawFrustum(
+    pos,
+    dir,
+    alpha,
+    highlight = false,
+    baseImage = null,
+    baseImageAlpha = 1,
+  ) {
     if (alpha <= 0.01) return null;
     const f = normalize3(dir);
     const worldUp = { x: 0, y: 1, z: 0 };
@@ -6175,8 +6187,12 @@ export function initNeRFVideo() {
       : `rgba(60,64,72,${baseAlpha.toFixed(3)})`;
     const width = highlight ? 2.2 : 1.0;
 
-    if (baseImage) {
-      drawImageOnFrustumBase(baseImage, projectedCorners, 0.96 * alpha);
+    if (baseImage && baseImageAlpha > 0.01) {
+      drawImageOnFrustumBase(
+        baseImage,
+        projectedCorners,
+        0.96 * alpha * baseImageAlpha,
+      );
     }
 
     for (const c of corners) strokeLine3(pos, c, color, width);
@@ -6682,9 +6698,17 @@ export function initNeRFVideo() {
     }
     camData.sort((a, b) => b.depth - a.depth);
 
+    const legoImageFade = easeInOut(clamp01((t - P.convergeEnd - 0.25) / 1.15));
     for (const c of camData) {
       const isHero = c.idx === HERO_IDX && convergeT > 0.5 && heroT > 0.05;
-      drawFrustum(c.pos, c.dir, 1.0, isHero, isHero ? legoViewImg : null);
+      drawFrustum(
+        c.pos,
+        c.dir,
+        1.0,
+        isHero,
+        isHero ? legoViewImg : null,
+        isHero ? legoImageFade : 0,
+      );
     }
 
     drawCenterObject(eConverge * 0.85);
