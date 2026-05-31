@@ -51,7 +51,7 @@ export function initGaussianPipeline() {
   /* ---------- math ---------- */
   let _seed = 0x40d0617;
   const rand = () =>
-    ((_seed = (_seed * 1664525 + 1013904223) >>> 0) / 0x100000000);
+    (_seed = (_seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
   const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
   const c255 = (v) => (v < 0 ? 0 : v > 255 ? 255 : v | 0);
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -82,7 +82,11 @@ export function initGaussianPipeline() {
     const z2 = cam.sP * y + cam.cP * z1;
     const denom = z2 + cam.dist;
     const f = cam.focal;
-    return { x: cam.vpx + (f * x1) / denom, y: cam.vpy - (f * y2) / denom, depth: denom };
+    return {
+      x: cam.vpx + (f * x1) / denom,
+      y: cam.vpy - (f * y2) / denom,
+      depth: denom,
+    };
   }
 
   /* ---------- soft-blob sprite cache (drawn anisotropically -> ellipse) ---------- */
@@ -164,7 +168,11 @@ export function initGaussianPipeline() {
       const ny = d.nrm[i * 3 + 1];
       const nz = d.nrm[i * 3 + 2];
       const spc = d.spc[i] * OBJ_SIZE;
-      const [cr, cg, cb] = adjColor(d.col[i * 3], d.col[i * 3 + 1], d.col[i * 3 + 2]);
+      const [cr, cg, cb] = adjColor(
+        d.col[i * 3],
+        d.col[i * 3 + 1],
+        d.col[i * 3 + 2],
+      );
       const [ux, uy, uz, vx, vy, vz] = basisFromNormal(nx, ny, nz);
       const ang = rand() * Math.PI;
       const ca = Math.cos(ang);
@@ -172,7 +180,9 @@ export function initGaussianPipeline() {
       const la = spc * (1.5 + rand() * 0.4);
       const lb = spc * (0.85 + rand() * 0.3);
       splats.push({
-        x, y, z,
+        x,
+        y,
+        z,
         ax: (ca * ux + sa * vx) * la,
         ay: (ca * uy + sa * vy) * la,
         az: (ca * uz + sa * vz) * la,
@@ -180,7 +190,9 @@ export function initGaussianPipeline() {
         by: (-sa * uy + ca * vy) * lb,
         bz: (-sa * uz + ca * vz) * lb,
         sprite: spriteFor(cr, cg, cb),
-        r: cr, g: cg, b: cb,
+        r: cr,
+        g: cg,
+        b: cb,
         rank: 0,
         ph: rand() * Math.PI * 2,
       });
@@ -206,7 +218,9 @@ export function initGaussianPipeline() {
       sparseList[j] = tmp;
     }
     for (let i = 0; i < polaroids.length; i++) {
-      polaroids[i].targetIdx = sparseList.length ? sparseList[i % sparseList.length] : -1;
+      polaroids[i].targetIdx = sparseList.length
+        ? sparseList[i % sparseList.length]
+        : -1;
     }
     ready = true;
   }
@@ -237,14 +251,22 @@ export function initGaussianPipeline() {
   /* ---------- dedicated comparison photo (r_92) ---------- */
   const refImg = new Image();
   refImg.decoding = "async";
-  refImg.src = new URL("../assets/3dgs/chair/train/r_92.png", import.meta.url).href;
+  refImg.src = new URL(
+    "../assets/3dgs/chair/train/r_56.png",
+    import.meta.url,
+  ).href;
 
   /* ---------- real chair photos (training views) for polaroids + compare ---------- */
-  const photoNums = [3, 9, 15, 21, 28, 34, 41, 47, 53, 60, 66, 72, 79, 85, 91, 97];
+  const photoNums = [
+    3, 9, 15, 21, 28, 34, 41, 47, 53, 60, 66, 72, 79, 85, 91, 97,
+  ];
   const photos = photoNums.map((num) => {
     const im = new Image();
     im.decoding = "async";
-    im.src = new URL(`../assets/3dgs/chair/train/r_${num}.png`, import.meta.url).href;
+    im.src = new URL(
+      `../assets/3dgs/chair/train/r_${num}.png`,
+      import.meta.url,
+    ).href;
     return im;
   });
   // a loose, seeded scatter of polaroid cards across the stage (collage feel)
@@ -337,7 +359,8 @@ export function initGaussianPipeline() {
     ctx.clip();
     ctx.fillStyle = "#eef0f3";
     ctx.fillRect(px, py, w, w);
-    if (img && img.complete && img.naturalWidth) ctx.drawImage(img, px, py, w, w);
+    if (img && img.complete && img.naturalWidth)
+      ctx.drawImage(img, px, py, w, w);
     ctx.restore();
     ctx.restore();
   }
@@ -411,8 +434,18 @@ export function initGaussianPipeline() {
     for (const it of arr) {
       const s = it.s;
       const pc = it.pc;
-      const pa = proj(cam, s.x + it.jx + s.ax * sizeMul, s.y + it.jy + s.ay * sizeMul, s.z + it.jz + s.az * sizeMul);
-      const pb = proj(cam, s.x + it.jx + s.bx * sizeMul, s.y + it.jy + s.by * sizeMul, s.z + it.jz + s.bz * sizeMul);
+      const pa = proj(
+        cam,
+        s.x + it.jx + s.ax * sizeMul,
+        s.y + it.jy + s.ay * sizeMul,
+        s.z + it.jz + s.az * sizeMul,
+      );
+      const pb = proj(
+        cam,
+        s.x + it.jx + s.bx * sizeMul,
+        s.y + it.jy + s.by * sizeMul,
+        s.z + it.jz + s.bz * sizeMul,
+      );
       const ux = pa.x - pc.x;
       const uy = pa.y - pc.y;
       const vx = pb.x - pc.x;
@@ -446,7 +479,11 @@ export function initGaussianPipeline() {
 
   // Fast square-pixel renderer for the high-density final result — mirrors the
   // tractor cloud approach in slides.js (fillRect + typed arrays, no arc/save/restore).
-  let _rpSX = null, _rpSY = null, _rpSD = null, _rpSI = null, _rpOrder = null;
+  let _rpSX = null,
+    _rpSY = null,
+    _rpSD = null,
+    _rpSI = null,
+    _rpOrder = null;
   function drawResultPoints(cam, count, alpha) {
     if (!ready || alpha <= 0.01) return;
     const cap = Math.min(count, splats.length);
@@ -454,7 +491,7 @@ export function initGaussianPipeline() {
       _rpSX = new Float32Array(cap);
       _rpSY = new Float32Array(cap);
       _rpSD = new Float32Array(cap);
-      _rpSI = new Int32Array(cap);   // splat index
+      _rpSI = new Int32Array(cap); // splat index
       _rpOrder = new Int32Array(cap); // sort order
     }
     let n = 0;
@@ -480,7 +517,10 @@ export function initGaussianPipeline() {
 
     // Size so squares tile the surface: pixels-per-unit / √density
     const pxPerUnit = cam.focal / Math.max(cam.dist, 0.1);
-    const ptHalf = Math.max(2.5, pxPerUnit * OBJ_SIZE / Math.sqrt(Math.max(n, 1)) * 0.55);
+    const ptHalf = Math.max(
+      2.5,
+      ((pxPerUnit * OBJ_SIZE) / Math.sqrt(Math.max(n, 1))) * 0.55,
+    );
     const sz = ptHalf * 2;
 
     ctx.save();
@@ -548,7 +588,11 @@ export function initGaussianPipeline() {
       ctx.stroke();
       arrowHead(x + 4, y, 0, 7, "#9aa3b2");
     };
-    const demos = [["שכפול", "Clone"], ["פיצול", "Split"], ["גיזום", "Prune"]];
+    const demos = [
+      ["שכפול", "Clone"],
+      ["פיצול", "Split"],
+      ["גיזום", "Prune"],
+    ];
     const dw = Math.min(W * 0.2, 240);
     const gx = Math.min(W * 0.035, 36);
     const total = dw * 3 + gx * 2;
@@ -557,7 +601,15 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = alpha;
     for (let i = 0; i < 3; i++) {
       const x = c0 + i * (dw + gx);
-      text(demos[i][0] + " · " + demos[i][1], x, cy - 40, 15, INK, "center", 700);
+      text(
+        demos[i][0] + " · " + demos[i][1],
+        x,
+        cy - 40,
+        15,
+        INK,
+        "center",
+        700,
+      );
       if (i === 0) {
         blob(x - dw * 0.26, cy, 12, 1);
         arr(x - 2, cy);
@@ -594,58 +646,104 @@ export function initGaussianPipeline() {
     if (kind === "pos") {
       ctx.strokeStyle = "#aab2c0";
       ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + 18, y);
-      ctx.moveTo(x, y); ctx.lineTo(x, y - 18);
-      ctx.moveTo(x, y); ctx.lineTo(x - 13, y + 11);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 18, y);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - 18);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 13, y + 11);
       ctx.stroke();
       ctx.fillStyle = INK;
-      ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.fill();
     } else if (kind === "shape") {
       // isometric cube wireframe
       const s = 14;
       const oy = y + 2;
       ctx.strokeStyle = "#66718a";
       const top = [x, oy - s];
-      const ml  = [x - s * 0.866, oy - s * 0.5];
-      const mr  = [x + s * 0.866, oy - s * 0.5];
-      const bl  = [x - s * 0.866, oy + s * 0.5];
-      const br  = [x + s * 0.866, oy + s * 0.5];
+      const ml = [x - s * 0.866, oy - s * 0.5];
+      const mr = [x + s * 0.866, oy - s * 0.5];
+      const bl = [x - s * 0.866, oy + s * 0.5];
+      const br = [x + s * 0.866, oy + s * 0.5];
       const bot = [x, oy + s];
       const mid = [x, oy];
       ctx.fillStyle = "#66718a";
       ctx.globalAlpha = 0.18;
-      ctx.beginPath(); ctx.moveTo(top[0],top[1]); ctx.lineTo(mr[0],mr[1]); ctx.lineTo(mid[0],mid[1]); ctx.lineTo(ml[0],ml[1]); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(top[0], top[1]);
+      ctx.lineTo(mr[0], mr[1]);
+      ctx.lineTo(mid[0], mid[1]);
+      ctx.lineTo(ml[0], ml[1]);
+      ctx.closePath();
+      ctx.fill();
       ctx.globalAlpha = 0.28;
-      ctx.beginPath(); ctx.moveTo(mid[0],mid[1]); ctx.lineTo(mr[0],mr[1]); ctx.lineTo(br[0],br[1]); ctx.lineTo(bot[0],bot[1]); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(mid[0], mid[1]);
+      ctx.lineTo(mr[0], mr[1]);
+      ctx.lineTo(br[0], br[1]);
+      ctx.lineTo(bot[0], bot[1]);
+      ctx.closePath();
+      ctx.fill();
       ctx.globalAlpha = 0.1;
-      ctx.beginPath(); ctx.moveTo(mid[0],mid[1]); ctx.lineTo(ml[0],ml[1]); ctx.lineTo(bl[0],bl[1]); ctx.lineTo(bot[0],bot[1]); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(mid[0], mid[1]);
+      ctx.lineTo(ml[0], ml[1]);
+      ctx.lineTo(bl[0], bl[1]);
+      ctx.lineTo(bot[0], bot[1]);
+      ctx.closePath();
+      ctx.fill();
       ctx.globalAlpha = 1;
       ctx.beginPath();
-      ctx.moveTo(top[0],top[1]); ctx.lineTo(mr[0],mr[1]);
-      ctx.moveTo(mr[0],mr[1]); ctx.lineTo(br[0],br[1]);
-      ctx.moveTo(br[0],br[1]); ctx.lineTo(bot[0],bot[1]);
-      ctx.moveTo(bot[0],bot[1]); ctx.lineTo(bl[0],bl[1]);
-      ctx.moveTo(bl[0],bl[1]); ctx.lineTo(ml[0],ml[1]);
-      ctx.moveTo(ml[0],ml[1]); ctx.lineTo(top[0],top[1]);
-      ctx.moveTo(top[0],top[1]); ctx.lineTo(mid[0],mid[1]);
-      ctx.moveTo(br[0],br[1]); ctx.lineTo(mid[0],mid[1]);
-      ctx.moveTo(bl[0],bl[1]); ctx.lineTo(mid[0],mid[1]);
+      ctx.moveTo(top[0], top[1]);
+      ctx.lineTo(mr[0], mr[1]);
+      ctx.moveTo(mr[0], mr[1]);
+      ctx.lineTo(br[0], br[1]);
+      ctx.moveTo(br[0], br[1]);
+      ctx.lineTo(bot[0], bot[1]);
+      ctx.moveTo(bot[0], bot[1]);
+      ctx.lineTo(bl[0], bl[1]);
+      ctx.moveTo(bl[0], bl[1]);
+      ctx.lineTo(ml[0], ml[1]);
+      ctx.moveTo(ml[0], ml[1]);
+      ctx.lineTo(top[0], top[1]);
+      ctx.moveTo(top[0], top[1]);
+      ctx.lineTo(mid[0], mid[1]);
+      ctx.moveTo(br[0], br[1]);
+      ctx.lineTo(mid[0], mid[1]);
+      ctx.moveTo(bl[0], bl[1]);
+      ctx.lineTo(mid[0], mid[1]);
       ctx.stroke();
     } else if (kind === "color") {
       ctx.fillStyle = "#3aa860";
-      ctx.beginPath(); ctx.arc(x - 8, y + 4, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x - 8, y + 4, 7.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = "#d8b34a";
-      ctx.beginPath(); ctx.arc(x + 8, y + 4, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 8, y + 4, 7.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = "#cfd3da";
-      ctx.beginPath(); ctx.arc(x, y - 7, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y - 7, 7.5, 0, Math.PI * 2);
+      ctx.fill();
     } else if (kind === "sh") {
       // Spherical harmonics — sphere with latitude/longitude grid lines
       ctx.strokeStyle = "#66718a";
       const r = 14;
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.27, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(x, y - r * 0.55, r * 0.83, r * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(x, y, r * 0.32, r, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x, y, r, r * 0.27, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x, y - r * 0.55, r * 0.83, r * 0.22, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 0.32, r, 0, 0, Math.PI * 2);
+      ctx.stroke();
     } else {
       const g = ctx.createLinearGradient(x - 17, y, x + 17, y);
       g.addColorStop(0, "rgba(90,105,130,0.95)");
@@ -664,19 +762,12 @@ export function initGaussianPipeline() {
   // Circular zoom inset — shows Gaussians up close during the properties step
   function drawZoomInset(alpha) {
     if (!ready || alpha <= 0.01) return;
-    const ix = W * 0.30;
-    const iy = H * 0.50;
+    const ix = W * 0.3;
+    const iy = H * 0.5;
     const ir = Math.min(W * 0.115, 115);
 
     // Zoom camera: very close, nearly eye-level, lively yaw + pitch oscillation
-    const zCam = makeCam(
-      wallT * 0.18,
-      1.25,
-      3.5,
-      ix,
-      iy,
-      Math.min(W, H) * 1.8
-    );
+    const zCam = makeCam(wallT * 0.18, 1.25, 3.5, ix, iy, Math.min(W, H) * 1.8);
 
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -731,8 +822,8 @@ export function initGaussianPipeline() {
   // Reference photo card — corner style with frame
   function drawRealPhoto(alpha, cx, cy, w) {
     cx = cx ?? W * 0.14;
-    cy = cy ?? H * 0.20;
-    w  = w  ?? Math.min(W * 0.15, H * 0.21);
+    cy = cy ?? H * 0.2;
+    w = w ?? Math.min(W * 0.15, H * 0.21);
     const pad = w * 0.06;
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
@@ -748,7 +839,8 @@ export function initGaussianPipeline() {
     ctx.clip();
     ctx.fillStyle = "#eef0f3";
     ctx.fillRect(cx - w / 2, cy - w / 2, w, w);
-    if (refImg.complete && refImg.naturalWidth) ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
+    if (refImg.complete && refImg.naturalWidth)
+      ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
     ctx.restore();
     ctx.restore();
     text("תמונת אימון", cx, cy + w / 2 + pad + 14, 13, INK_SOFT, "center", 600);
@@ -760,8 +852,12 @@ export function initGaussianPipeline() {
     const t = easeInOut(clamp01(compareProgress));
     // Slide from corner → center-left
     const cx = lerp(W * 0.14, W * 0.28, t);
-    const cy = lerp(H * 0.20, H * 0.50, t);
-    const w  = lerp(Math.min(W * 0.15, H * 0.21), Math.min(W * 0.22, H * 0.31), t);
+    const cy = lerp(H * 0.2, H * 0.5, t);
+    const w = lerp(
+      Math.min(W * 0.15, H * 0.21),
+      Math.min(W * 0.29, H * 0.47),
+      t,
+    );
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
     if (refImg.complete && refImg.naturalWidth) {
@@ -806,7 +902,8 @@ export function initGaussianPipeline() {
     wallT += dt;
     // the photos -> points collapse (step 0 -> 1) eases slowly and deliberately;
     // the later steps settle a little quicker.
-    const rate = target === 1 && flow < 1 ? 1.5 : target === 2 && flow < 2 ? 0.95 : 3.4;
+    const rate =
+      target === 1 && flow < 1 ? 1.5 : target === 2 && flow < 2 ? 0.95 : 3.4;
     flow += (target - flow) * (1 - Math.exp(-dt * rate));
     if (Math.abs(target - flow) < 0.0005) flow = target;
     updateCaption();
@@ -841,8 +938,12 @@ export function initGaussianPipeline() {
     // slow free spin at the result.
     const still = smooth(2.1, 2.7, f) * (1 - resultWin);
     const motion = 1 - 0.9 * still;
-    const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.4 * motion + resultWin * Math.sin(wallT * 0.22) * 0.5;
-    const pitch = 0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
+    const yaw =
+      -0.5 +
+      Math.sin(wallT * 0.16) * 0.4 * motion +
+      resultWin * Math.sin(wallT * 0.22) * 0.5;
+    const pitch =
+      0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
     const vpx = W * 0.5 + compareWin * W * 0.14;
     const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
@@ -860,7 +961,14 @@ export function initGaussianPipeline() {
       const jitter = optimizeWin * 0.05;
       const sizeMul = gaussWin * lerp(1.7, 0.66, smooth(4.2, 5.7, f));
       const gaussOnly = 1 - resultWin;
-      if (gaussOnly > 0.01) drawGaussians(cam, Math.min(count, 5200), sizeMul, gaussWin * gaussOnly, jitter);
+      if (gaussOnly > 0.01)
+        drawGaussians(
+          cam,
+          Math.min(count, 5200),
+          sizeMul,
+          gaussWin * gaussOnly,
+          jitter,
+        );
       if (resultWin > 0.01) drawResultPoints(cam, count, gaussWin * resultWin);
     }
 
