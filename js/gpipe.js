@@ -336,9 +336,12 @@ export function initGaussianPipeline() {
       ctx.setLineDash([11, 9]);
       ctx.lineDashOffset = -dash;
     }
+    // Shorten the stroke 2 px along the end tangent so it doesn't pierce the arrowhead
+    const tdx = x1 - cxp, tdy = y1 - cyp, tlen = Math.hypot(tdx, tdy) || 1;
+    const sx1 = x1 - (tdx / tlen) * 2, sy1 = y1 - (tdy / tlen) * 2;
     ctx.beginPath();
     ctx.moveTo(x0, y0);
-    ctx.quadraticCurveTo(cxp, cyp, x1, y1);
+    ctx.quadraticCurveTo(cxp, cyp, sx1, sy1);
     ctx.stroke();
     ctx.setLineDash([]);
     arrowHead(x1, y1, Math.atan2(y1 - cyp, x1 - cxp), 9, color);
