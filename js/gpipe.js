@@ -609,18 +609,18 @@ export function initGaussianPipeline() {
   // Circular zoom inset — shows Gaussians up close during the properties step
   function drawZoomInset(alpha) {
     if (!ready || alpha <= 0.01) return;
-    const ix = W * 0.17;
+    const ix = W * 0.30;
     const iy = H * 0.50;
     const ir = Math.min(W * 0.115, 115);
 
-    // Zoom camera: very close, nearly eye-level, slow gentle yaw drift
+    // Zoom camera: very close, nearly eye-level, lively yaw + pitch oscillation
     const zCam = makeCam(
-      -0.4 + Math.sin(wallT * 0.09) * 0.08,
-      0.03,
-      4.2,
+      wallT * 0.18,
+      1.25,
+      3.5,
       ix,
       iy,
-      Math.min(W, H) * 1.75
+      Math.min(W, H) * 1.8
     );
 
     ctx.save();
@@ -657,7 +657,7 @@ export function initGaussianPipeline() {
       ["צורה וגודל", "shape"],
       ["צבע", "color"],
       ["שקיפות", "opacity"],
-      ["הרמוניות ספריות", "sh"],
+      ["תאורה זוויתית", "sh"],
     ];
     const n = items.length;
     const gap = Math.min(W * 0.125, 162);
@@ -668,12 +668,7 @@ export function initGaussianPipeline() {
     for (let i = 0; i < n; i++) {
       const x = x0 + i * gap;
       propIcon(items[i][1], x, gy);
-      if (i === 4) {
-        text("הרמוניות", x, gy + 44, 19, INK, "center", 600);
-        text("ספריות", x, gy + 63, 19, INK, "center", 600);
-      } else {
-        text(items[i][0], x, gy + 46, 21, INK, "center", 600);
-      }
+      text(items[i][0], x, gy + 46, 21, INK, "center", 600);
     }
     ctx.globalAlpha = 1;
   }
