@@ -583,6 +583,14 @@ export function initGaussianPipeline() {
       ctx.beginPath(); ctx.arc(x + 8, y + 4, 7.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#cfd3da";
       ctx.beginPath(); ctx.arc(x, y - 7, 7.5, 0, Math.PI * 2); ctx.fill();
+    } else if (kind === "sh") {
+      // Spherical harmonics — sphere with latitude/longitude grid lines
+      ctx.strokeStyle = "#66718a";
+      const r = 14;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.27, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x, y - r * 0.55, r * 0.83, r * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(x, y, r * 0.32, r, 0, 0, Math.PI * 2); ctx.stroke();
     } else {
       const g = ctx.createLinearGradient(x - 17, y, x + 17, y);
       g.addColorStop(0, "rgba(90,105,130,0.95)");
@@ -597,15 +605,62 @@ export function initGaussianPipeline() {
     }
     ctx.restore();
   }
+
+  // Circular zoom inset — shows Gaussians up close during the properties step
+  function drawZoomInset(alpha) {
+    if (!ready || alpha <= 0.01) return;
+    const ix = W * 0.17;
+    const iy = H * 0.50;
+    const ir = Math.min(W * 0.115, 115);
+
+    // Zoom camera: very close, nearly eye-level, slow gentle yaw drift
+    const zCam = makeCam(
+      -0.4 + Math.sin(wallT * 0.09) * 0.08,
+      0.03,
+      4.2,
+      ix,
+      iy,
+      Math.min(W, H) * 1.75
+    );
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Clip to circle
+    ctx.beginPath();
+    ctx.arc(ix, iy, ir, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Background
+    ctx.fillStyle = "#f9f8f6";
+    ctx.fillRect(ix - ir - 1, iy - ir - 1, (ir + 1) * 2, (ir + 1) * 2);
+
+    // Render Gaussians close-up
+    drawGaussians(zCam, SPARSE_N, 1.1, 1.0, 0);
+
+    ctx.restore();
+
+    // Border ring
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = "rgba(31,37,51,0.13)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ix, iy, ir, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawPropsRow(alpha) {
     const items = [
       ["מיקום", "pos"],
       ["צורה וגודל", "shape"],
       ["צבע", "color"],
       ["שקיפות", "opacity"],
+      ["הרמוניות ספריות", "sh"],
     ];
     const n = items.length;
-    const gap = Math.min(W * 0.17, 225);
+    const gap = Math.min(W * 0.125, 162);
     const x0 = W / 2 - (gap * (n - 1)) / 2;
     const gy = H * 0.145;
     ctx.globalAlpha = alpha;
@@ -613,7 +668,12 @@ export function initGaussianPipeline() {
     for (let i = 0; i < n; i++) {
       const x = x0 + i * gap;
       propIcon(items[i][1], x, gy);
-      text(items[i][0], x, gy + 46, 22, INK, "center", 600);
+      if (i === 4) {
+        text("הרמוניות", x, gy + 44, 19, INK, "center", 600);
+        text("ספריות", x, gy + 63, 19, INK, "center", 600);
+      } else {
+        text(items[i][0], x, gy + 46, 21, INK, "center", 600);
+      }
     }
     ctx.globalAlpha = 1;
   }
@@ -716,7 +776,7 @@ export function initGaussianPipeline() {
     const still = smooth(2.1, 2.7, f) * (1 - resultWin);
     const motion = 1 - 0.9 * still;
     const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.4 * motion + resultWin * Math.sin(wallT * 0.22) * 0.5;
-    const pitch = 0.26 + Math.sin(wallT * 0.26) * 0.05 * motion + resultWin * 0.06;
+    const pitch = 0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
     const vpx = W * 0.5;
     const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
@@ -736,8 +796,11 @@ export function initGaussianPipeline() {
       drawGaussians(cam, count, sizeMul, gaussWin, jitter);
     }
 
-    /* step 2: properties row */
-    if (propsWin > 0.01) drawPropsRow(propsWin);
+    /* step 2: properties row + zoom inset */
+    if (propsWin > 0.01) {
+      drawPropsRow(propsWin);
+      drawZoomInset(propsWin);
+    }
 
     /* step 3: splatting onto a fixed camera */
     if (splatWin > 0.01) {
