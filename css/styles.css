@@ -5489,36 +5489,6 @@ code {
   max-width: min(86%, 980px);
 }
 
-.gpipe-real {
-  position: absolute;
-  left: 50%;
-  top: 2.5vh;
-  transform: translateX(-50%);
-  height: 23vh;
-  width: auto;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  pointer-events: none;
-}
-
 .gpipe-caption.visible {
   opacity: 1;
-}
-
-.gpipe-hint {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(0.6rem, 1.8vh, 1.2rem);
-  transform: translateX(-50%);
-  font-family: "Heebo", sans-serif;
-  font-size: 14px;
-  color: #ff5a36;
-  direction: rtl;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.gpipe-hint.visible {
-  opacity: 0.85;
 }
