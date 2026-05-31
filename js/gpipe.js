@@ -234,6 +234,11 @@ export function initGaussianPipeline() {
     .then((d) => (d && d.count ? buildSplats(d) : fallbackCloud()))
     .catch(fallbackCloud);
 
+  /* ---------- dedicated comparison photo (r_92) ---------- */
+  const refImg = new Image();
+  refImg.decoding = "async";
+  refImg.src = new URL("../assets/3dgs/chair/train/r_92.png", import.meta.url).href;
+
   /* ---------- real chair photos (training views) for polaroids + compare ---------- */
   const photoNums = [3, 9, 15, 21, 28, 34, 41, 47, 53, 60, 66, 72, 79, 85, 91, 97];
   const photos = photoNums.map((num) => {
@@ -723,9 +728,8 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // Reference photo card — position/size configurable
+  // Reference photo card — corner style with frame
   function drawRealPhoto(alpha, cx, cy, w) {
-    const img = photos[7] || photos[0];
     cx = cx ?? W * 0.14;
     cy = cy ?? H * 0.20;
     w  = w  ?? Math.min(W * 0.15, H * 0.21);
@@ -744,10 +748,27 @@ export function initGaussianPipeline() {
     ctx.clip();
     ctx.fillStyle = "#eef0f3";
     ctx.fillRect(cx - w / 2, cy - w / 2, w, w);
-    if (img && img.complete && img.naturalWidth) ctx.drawImage(img, cx - w / 2, cy - w / 2, w, w);
+    if (refImg.complete && refImg.naturalWidth) ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
     ctx.restore();
     ctx.restore();
     text("תמונת אימון", cx, cy + w / 2 + pad + 14, 13, INK_SOFT, "center", 600);
+  }
+
+  // Bare photo (no card, no background) — used in the compare step, animates into position
+  function drawComparePhoto(alpha, compareProgress) {
+    if (alpha <= 0.01) return;
+    const t = easeInOut(clamp01(compareProgress));
+    // Slide from corner → center-left
+    const cx = lerp(W * 0.14, W * 0.28, t);
+    const cy = lerp(H * 0.20, H * 0.50, t);
+    const w  = lerp(Math.min(W * 0.15, H * 0.21), Math.min(W * 0.22, H * 0.31), t);
+    ctx.save();
+    ctx.globalAlpha = clamp01(alpha);
+    if (refImg.complete && refImg.naturalWidth) {
+      ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
+    }
+    text("תמונת אימון", cx, cy + w / 2 + 12, 13, INK_SOFT, "center", 600);
+    ctx.restore();
   }
 
   /* ====================================================================
@@ -867,12 +888,9 @@ export function initGaussianPipeline() {
       drawRealPhoto(splatWin);
     }
 
-    /* step 4: photo centered-left, paired with the chair shifted right */
-    if (compareWin > 0.02) {
-      const pw = Math.min(W * 0.21, H * 0.30);
-      drawRealPhoto(compareWin, W * 0.28, H * 0.50, pw);
-    }
-    /* step 5: photo back to corner */
+    /* step 4: photo animates from corner to center-left */
+    if (compareWin > 0.02) drawComparePhoto(compareWin, compareWin);
+    /* step 5: photo stays at corner */
     if (optimizeWin > 0.02) drawRealPhoto(optimizeWin);
 
     /* step 4: error dots */
