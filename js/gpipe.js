@@ -1010,7 +1010,7 @@ export function initGaussianPipeline() {
     },
     {
       title: "שלב 3 — יצירת Gaussians",
-      body: "כל נקודה הופכת ל-Gaussian תלת-ממדי.\nכל Gaussian שומר מיקום, צבע, שקיפות, גודל וכיוון.",
+      body: "כל נקודה הופכת ל-Gaussian תלת-ממדי.",
     },
     {
       title: "שלב 4 — יצירת תמונה באימון",
