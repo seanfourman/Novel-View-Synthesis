@@ -5479,10 +5479,10 @@ code {
 .gpipe-caption {
   position: absolute;
   left: 50%;
-  bottom: clamp(1.8rem, 5vh, 3.4rem);
+  bottom: clamp(2.6rem, 7vh, 4.2rem);
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
-  font-size: 21px;
+  font-size: 22px;
   line-height: 1.55;
   font-weight: 400;
   color: #1f2533;

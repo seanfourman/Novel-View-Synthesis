@@ -1206,21 +1206,98 @@ export function initGaussianPipeline() {
       const midX = (arrowX0 + arrowX1) / 2;
       const midY = arrowY0 - 52;
 
-      ctx.font = `500 13px Heebo, sans-serif`;
-      ctx.fillStyle = INK_SOFT;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.direction = "ltr";
-      ctx.fillText("Loss function:", midX, midY - 16);
 
-      ctx.font = `600 15px JetBrains Mono, monospace`;
+      // Label
+      ctx.font = `500 13px Heebo, sans-serif`;
+      ctx.fillStyle = INK_SOFT;
+      ctx.fillText("Loss function:", midX, midY - 30);
+
+      // Typeset formula: Loss = (1/N) Σ |I^i_rendered − I^i_real|
+      const fy = midY + 4;
+      const fSz = 15, subSz = 10, sigSz = 22;
       ctx.fillStyle = CYAN;
-      ctx.fillText("L = Σ ||render − real||²", midX, midY + 6);
+      ctx.textAlign = "left";
 
+      ctx.font = `italic 600 ${fSz}px Georgia, serif`;
+      const wLoss   = ctx.measureText("Loss = ").width;
+      const wPipeI  = ctx.measureText(" |I").width;
+      const wMinus  = ctx.measureText(" − I").width;
+      const wPipe   = ctx.measureText("|").width;
+      ctx.font = `italic ${subSz}px Georgia, serif`;
+      const wRend   = ctx.measureText("rendered").width;
+      const wReal   = ctx.measureText("real").width;
+      const wSup    = ctx.measureText("i").width;
+      ctx.font = `600 ${sigSz}px Georgia, serif`;
+      const wSig    = ctx.measureText("Σ").width;
+
+      const fracW   = 22;
+      const sigBlk  = wSig + 14;
+      const totalW  = wLoss + fracW + 8 + sigBlk + wPipeI + wSup + wRend + 6 + wMinus + wSup + wReal + 6 + wPipe;
+      let px = midX - totalW / 2;
+
+      // "Loss = "
+      ctx.font = `italic 600 ${fSz}px Georgia, serif`;
+      ctx.textBaseline = "middle";
+      ctx.fillText("Loss = ", px, fy);
+      px += wLoss;
+
+      // 1/N fraction
+      const fcx = px + fracW / 2;
+      ctx.font = `600 ${fSz - 2}px Georgia, serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("1", fcx, fy - fSz * 0.55);
+      ctx.strokeStyle = CYAN;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px - 1, fy - 1);
+      ctx.lineTo(px + fracW + 1, fy - 1);
+      ctx.stroke();
+      ctx.fillText("N", fcx, fy + fSz * 0.55);
+      px += fracW + 8;
+      ctx.textAlign = "left";
+
+      // Σ with N above and i=1 below
+      ctx.font = `600 ${sigSz}px Georgia, serif`;
+      ctx.fillText("Σ", px, fy);
+      ctx.font = `${subSz}px Georgia, serif`;
+      ctx.textAlign = "center";
+      const scx = px + wSig / 2;
+      ctx.fillText("N",   scx, fy - fSz * 1.05);
+      ctx.fillText("i=1", scx, fy + fSz * 0.9);
+      px += sigBlk;
+      ctx.textAlign = "left";
+
+      // |I  with superscript i and subscript "rendered"
+      ctx.font = `italic 600 ${fSz}px Georgia, serif`;
+      ctx.fillText(" |I", px, fy);
+      px += wPipeI;
+      ctx.font = `italic ${subSz}px Georgia, serif`;
+      ctx.fillText("i",        px, fy - fSz * 0.58);
+      ctx.fillText("rendered", px, fy + fSz * 0.62);
+      px += wRend + 6;
+
+      // − I  with superscript i and subscript "real"
+      ctx.font = `italic 600 ${fSz}px Georgia, serif`;
+      ctx.fillText(" − I", px, fy);
+      px += wMinus;
+      ctx.font = `italic ${subSz}px Georgia, serif`;
+      ctx.fillText("i",    px, fy - fSz * 0.58);
+      ctx.fillText("real", px, fy + fSz * 0.62);
+      px += wReal + 6;
+
+      // closing |
+      ctx.font = `italic 600 ${fSz}px Georgia, serif`;
+      ctx.fillText("|", px, fy);
+
+      // gradient label
       ctx.font = `500 12px Heebo, sans-serif`;
       ctx.fillStyle = INK_SOFT;
+      ctx.textAlign = "center";
       ctx.direction = "rtl";
-      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 28);
+      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 48);
       ctx.direction = "ltr";
       ctx.restore();
 
