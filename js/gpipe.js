@@ -1001,12 +1001,15 @@ export function initGaussianPipeline() {
     // slow free spin at the result.
     const still = smooth(2.1, 2.7, f) * (1 - resultWin);
     const motion = 1 - 0.9 * still;
+    // Blend base angle toward r_56 reference view during compare/optimize steps
+    const baseYaw = lerp(-0.5, -0.617, refWin);
+    const basePitch = lerp(0.08, -0.253, refWin);
     const yaw =
-      -0.5 +
+      baseYaw +
       Math.sin(wallT * 0.16) * 0.4 * motion +
       resultWin * Math.sin(wallT * 0.22) * 0.5;
     const pitch =
-      0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
+      basePitch + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
     // Shift right from compare step, return to center smoothly on final result
     const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
