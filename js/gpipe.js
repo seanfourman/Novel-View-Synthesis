@@ -278,16 +278,18 @@ export function initGaussianPipeline() {
     return im;
   });
   // a loose, seeded scatter of polaroid cards across the stage (collage feel)
-  const polaroids = photos.map((img, i) => ({
-    img,
-    fx: 0.16 + 0.68 * ((i % 4) / 3) + (rand() - 0.5) * 0.12,
-    fy: 0.16 + 0.66 * (((i / 4) | 0) / 3) + (rand() - 0.5) * 0.12,
-    rot: (rand() - 0.5) * 0.5,
-    bob: rand() * Math.PI * 2,
-    scl: 0.92 + rand() * 0.22,
-    depth: rand(), // draw order
-    targetIdx: -1, // a distinct cloud point this photo dissolves into (set on load)
-  }));
+  const polaroids = photos
+    .map((img, i) => ({
+      img,
+      fx: 0.16 + 0.68 * ((i % 4) / 3) + (rand() - 0.5) * 0.12,
+      fy: 0.16 + 0.66 * (((i / 4) | 0) / 3) + (rand() - 0.5) * 0.12,
+      rot: (rand() - 0.5) * 0.5,
+      bob: rand() * Math.PI * 2,
+      scl: 0.92 + rand() * 0.22,
+      depth: rand(),
+      targetIdx: -1,
+    }))
+    .filter(p => !(p.fy > 0.70 && p.fx > 0.25 && p.fx < 0.75));
 
   /* ====================================================================
      drawing helpers
@@ -559,8 +561,11 @@ export function initGaussianPipeline() {
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
 
-    const bw = 52, bh = 34, br = 5;
-    const bx = x - bw / 2, by = y - bh / 2 + 4;
+    const bw = 52,
+      bh = 34,
+      br = 5;
+    const bx = x - bw / 2,
+      by = y - bh / 2 + 4;
 
     // Camera body
     ctx.fillStyle = "#1e2535";
@@ -572,7 +577,8 @@ export function initGaussianPipeline() {
     ctx.stroke();
 
     // Viewfinder bump (top-right — lens is on the left facing scene)
-    const vfw = 14, vfh = 7;
+    const vfw = 14,
+      vfh = 7;
     ctx.fillStyle = "#252e44";
     ctx.strokeStyle = "#3a4460";
     ctx.lineWidth = 1.4;
@@ -588,7 +594,8 @@ export function initGaussianPipeline() {
     ctx.fill();
 
     // Lens barrel — left side of body, facing the scene
-    const lx = x - 10, ly = y + 5;
+    const lx = x - 10,
+      ly = y + 5;
     const lR = 11;
     const lensGrad = ctx.createRadialGradient(lx + 3, ly - 3, 1, lx, ly, lR);
     lensGrad.addColorStop(0, "#3a4f72");
@@ -674,11 +681,13 @@ export function initGaussianPipeline() {
         blob(x + dw * 0.3, cy + 6, 10, 1);
       } else {
         // Thanos snap: fast explosion, slow recovery
-        const ePer = 1.6, rPer = 5.5;
+        const ePer = 1.6,
+          rPer = 5.5;
         const phase = lt % (ePer + rPer);
-        const prunePulse = phase < ePer
-          ? easeInOut(phase / ePer)
-          : 1 - easeInOut((phase - ePer) / rPer);
+        const prunePulse =
+          phase < ePer
+            ? easeInOut(phase / ePer)
+            : 1 - easeInOut((phase - ePer) / rPer);
         const snapT = clamp01((prunePulse - 0.18) / 0.82);
         blob(x, cy, 14 * (1 - snapT * 0.45), 1 - snapT);
         const NPART = 26;
@@ -935,8 +944,7 @@ export function initGaussianPipeline() {
     const endW = Math.min(W * 0.29, H * 0.47);
 
     // Shake just before the pop
-    const shakeAmt =
-      smooth(0, 0.1, burstT) * (1 - smooth(0.22, 0.38, burstT));
+    const shakeAmt = smooth(0, 0.1, burstT) * (1 - smooth(0.22, 0.38, burstT));
     const sx = Math.sin(wallT * 44) * shakeAmt * 12;
     const sy = Math.cos(wallT * 37) * shakeAmt * 8;
 
@@ -985,7 +993,6 @@ export function initGaussianPipeline() {
         );
         ctx.restore();
       }
-
     }
   }
 
@@ -993,13 +1000,34 @@ export function initGaussianPipeline() {
      step machine (click advances; `flow` eases toward the target step)
      ==================================================================== */
   const STEPS = [
-    "צילמנו את הכיסא מהרבה זוויות",
-    "מכל התמונות משחזרים ענן נקודות דליל",
-    "כל נקודה הופכת ל-Gaussian — כתם תלת-ממדי רך",
-    "מטילים ומשטחים את כל ה-Gaussians למסך (Splatting)",
-    "משווים את הרינדור לתמונה האמיתית — איפה יש טעות",
-    "הטעות מעדכנת כל Gaussian: שכפול, פיצול וגיזום",
-    "אחרי אלפי איטרציות — סצנה תלת-ממדית שאפשר לטוס בה",
+    {
+      title: "שלב 1 — תמונות קלט",
+      body: "מצלמים את אותה סצנה ממספר זוויות שונות.\nהתמונות האלו משמשות כנתוני האימון של המודל.",
+    },
+    {
+      title: "שלב 2 — נקודות ראשוניות",
+      body: "מהתמונות משחזרים מיקומי מצלמות ונקודות התחלתיות במרחב.\nזה נותן בסיס ראשוני לבניית הסצנה.",
+    },
+    {
+      title: "שלב 3 — יצירת Gaussians",
+      body: "כל נקודה הופכת ל-Gaussian תלת-ממדי.\nכל Gaussian שומר מיקום, צבע, שקיפות, גודל וכיוון.",
+    },
+    {
+      title: "שלב 4 — יצירת תמונה באימון",
+      body: "בכל איטרציה המודל בוחר זווית צילום מתוך התמונות הקיימות.\nה-Gaussians מוקרנים אל אותה מצלמה ונוצרת תמונה משוערת.",
+    },
+    {
+      title: "שלב 5 — חישוב טעות",
+      body: "משווים בין התמונה שהמודל יצר לבין התמונה האמיתית מאותה זווית.\nההבדל ביניהן מחושב כ-Loss.",
+    },
+    {
+      title: "שלב 6 — עדכון ה-Gaussians",
+      body: "לפי ה-Loss, המודל מעדכן את ה-Gaussians: מיקום, צבע, שקיפות, גודל וצורה.\nהתהליך חוזר אלפי פעמים, עד שהתמונה שנוצרת דומה יותר לתמונות האמיתיות.",
+    },
+    {
+      title: "שלב 7 — צפייה בזמן אמת",
+      body: "לאחר האימון מתקבלת סצנה תלת-ממדית יציבה.\nכעת ניתן להזיז מצלמה וירטואלית וליצור מבטים חדשים בזמן אמת.",
+    },
   ];
   const LAST = STEPS.length - 1;
 
@@ -1010,11 +1038,12 @@ export function initGaussianPipeline() {
 
   function updateCaption() {
     if (captionEl) {
-      const next = STEPS[Math.round(flow)] || "";
+      const step = STEPS[Math.round(flow)];
+      const next = step ? step.body.replace(/\n/g, "<br>") : "";
       if (next !== lastCaption) {
         lastCaption = next;
-        captionEl.textContent = next;
-        captionEl.classList.toggle("visible", next !== "");
+        captionEl.innerHTML = next;
+        captionEl.classList.toggle("visible", !!step);
       }
     }
   }
@@ -1081,7 +1110,8 @@ export function initGaussianPipeline() {
     const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
     const vpx = W * 0.5 + shiftT * W * 0.18;
     const vpy = H * 0.5;
-    const focal = Math.min(W, H) * (lerp(0.95, 0.84, refWin) - optimizeWin * 0.05);
+    const focal =
+      Math.min(W, H) * (lerp(0.95, 0.84, refWin) - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
 
     /* step 0->1: polaroids collapse, each into its own cloud point */
@@ -1107,10 +1137,10 @@ export function initGaussianPipeline() {
       if (resultWin > 0.01 && chairGif.complete && chairGif.naturalWidth) {
         const gifAlpha = clamp01(gaussWin * resultWin);
         const gifSize = Math.min(W * 0.42, H * 0.68);
-        chairGif.style.width  = gifSize + "px";
+        chairGif.style.width = gifSize + "px";
         chairGif.style.height = gifSize + "px";
-        chairGif.style.left   = (W / 2 - gifSize / 2) + "px";
-        chairGif.style.top    = (H / 2 - gifSize / 2) + "px";
+        chairGif.style.left = W / 2 - gifSize / 2 + "px";
+        chairGif.style.top = H / 2 - gifSize / 2 + "px";
         chairGif.style.opacity = gifAlpha;
       } else {
         chairGif.style.opacity = 0;
@@ -1166,7 +1196,7 @@ export function initGaussianPipeline() {
       // Arrow: photo right-edge → gaussian cloud left-edge, representing ∇L flowing back.
       const arrowX0 = W * 0.42;
       const arrowY0 = H * 0.51;
-      const arrowX1 = W * 0.60;
+      const arrowX1 = W * 0.6;
       const arrowY1 = H * 0.51;
       curveArrow(arrowX0, arrowY0, arrowX1, arrowY1, 36, CYAN, 2.2, phase);
 

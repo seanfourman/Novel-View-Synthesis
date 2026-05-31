@@ -5483,6 +5483,7 @@ code {
   transform: translateX(-50%);
   font-family: "Heebo", sans-serif;
   font-size: 21px;
+  line-height: 1.55;
   font-weight: 400;
   color: #1f2533;
   letter-spacing: 0.01em;
