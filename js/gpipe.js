@@ -180,6 +180,7 @@ export function initGaussianPipeline() {
         by: (-sa * uy + ca * vy) * lb,
         bz: (-sa * uz + ca * vz) * lb,
         sprite: spriteFor(cr, cg, cb),
+        r: cr, g: cg, b: cb,
         rank: 0,
         ph: rand() * Math.PI * 2,
       });
@@ -371,11 +372,11 @@ export function initGaussianPipeline() {
   function drawDots(cam, count, alpha) {
     if (!ready || alpha <= 0.01) return;
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = DOT;
     for (let i = 0; i < splats.length; i++) {
       const s = splats[i];
       if (s.rank >= count) continue;
       const p = proj(cam, s.x, s.y, s.z);
+      ctx.fillStyle = `rgb(${s.r},${s.g},${s.b})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.9, 0, Math.PI * 2);
       ctx.fill();
