@@ -563,26 +563,26 @@ export function initGaussianPipeline() {
     ctx.fill();
     ctx.stroke();
 
-    // Viewfinder bump (top-left)
+    // Viewfinder bump (top-right — lens is on the left facing scene)
     const vfw = 14, vfh = 7;
     ctx.fillStyle = "#252e44";
     ctx.strokeStyle = "#3a4460";
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.roundRect(bx + 6, by - vfh + 1, vfw, vfh, [3, 3, 0, 0]);
+    ctx.roundRect(bx + bw - vfw - 6, by - vfh + 1, vfw, vfh, [3, 3, 0, 0]);
     ctx.fill();
     ctx.stroke();
 
-    // Shutter button (top-right)
+    // Shutter button (top-left)
     ctx.fillStyle = ACCENT;
     ctx.beginPath();
-    ctx.arc(bx + bw - 10, by - 3, 4, 0, Math.PI * 2);
+    ctx.arc(bx + 10, by - 3, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Lens barrel outer
-    const lx = x + 3, ly = y + 6;
+    // Lens barrel — left side of body, facing the scene
+    const lx = x - 10, ly = y + 5;
     const lR = 11;
-    const lensGrad = ctx.createRadialGradient(lx - 3, ly - 3, 1, lx, ly, lR);
+    const lensGrad = ctx.createRadialGradient(lx + 3, ly - 3, 1, lx, ly, lR);
     lensGrad.addColorStop(0, "#3a4f72");
     lensGrad.addColorStop(1, "#0d1220");
     ctx.fillStyle = lensGrad;
@@ -609,7 +609,7 @@ export function initGaussianPipeline() {
     // Lens gleam
     ctx.fillStyle = "rgba(255,255,255,0.3)";
     ctx.beginPath();
-    ctx.arc(lx - lR * 0.28, ly - lR * 0.28, lR * 0.18, 0, Math.PI * 2);
+    ctx.arc(lx + lR * 0.28, ly - lR * 0.28, lR * 0.18, 0, Math.PI * 2);
     ctx.fill();
 
     // Flash / indicator light (top-right of body)
@@ -1105,6 +1105,10 @@ export function initGaussianPipeline() {
     if (splatWin > 0.01) {
       const camX = W * 0.85;
       const camY = H * 0.28;
+      // Lens is on the left side of the camera body — same offset as drawCameraIcon
+      const lensX = camX - 10;
+      const lensY = camY + 5;
+      drawCameraIcon(camX, camY, splatWin);
       ctx.globalAlpha = splatWin * 0.3;
       ctx.strokeStyle = "rgba(60,70,90,0.5)";
       ctx.lineWidth = 1;
@@ -1114,11 +1118,10 @@ export function initGaussianPipeline() {
         const pg = proj(cam, s.x, s.y, s.z);
         ctx.beginPath();
         ctx.moveTo(pg.x, pg.y);
-        ctx.lineTo(camX, camY);
+        ctx.lineTo(lensX, lensY);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      drawCameraIcon(camX, camY, splatWin);
     }
 
     /* reference photo — polaroid corner (step 3 burst on click), center-left (step 4+) */
