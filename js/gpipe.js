@@ -723,18 +723,18 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // the real reference photo, shown during compare / optimize
-  function drawRealPhoto(alpha) {
+  // Reference photo card — position/size configurable
+  function drawRealPhoto(alpha, cx, cy, w) {
     const img = photos[7] || photos[0];
-    const w = Math.min(W * 0.2, H * 0.28);
+    cx = cx ?? W * 0.14;
+    cy = cy ?? H * 0.20;
+    w  = w  ?? Math.min(W * 0.15, H * 0.21);
     const pad = w * 0.06;
-    const cx = W / 2;
-    const cy = H * 0.2;
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
-    ctx.shadowColor = "rgba(20,30,50,0.18)";
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetY = 6;
+    ctx.shadowColor = "rgba(20,30,50,0.15)";
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
     ctx.fillStyle = "#fff";
     rr(cx - w / 2 - pad, cy - w / 2 - pad, w + pad * 2, w + pad * 2, 7);
     ctx.fill();
@@ -747,7 +747,7 @@ export function initGaussianPipeline() {
     if (img && img.complete && img.naturalWidth) ctx.drawImage(img, cx - w / 2, cy - w / 2, w, w);
     ctx.restore();
     ctx.restore();
-    text("התמונה האמיתית", cx, cy + w / 2 + pad + 16, 13.5, INK_SOFT, "center", 600);
+    text("תמונת אימון", cx, cy + w / 2 + pad + 14, 13, INK_SOFT, "center", 600);
   }
 
   /* ====================================================================
@@ -823,7 +823,7 @@ export function initGaussianPipeline() {
     const yaw = -0.5 + Math.sin(wallT * 0.16) * 0.4 * motion + resultWin * Math.sin(wallT * 0.22) * 0.5;
     const pitch = 0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
-    const vpx = W * 0.5;
+    const vpx = W * 0.5 + compareWin * W * 0.14;
     const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
     const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
@@ -846,7 +846,7 @@ export function initGaussianPipeline() {
     /* step 2: properties row */
     if (propsWin > 0.01) drawPropsRow(propsWin);
 
-    /* step 3: splatting onto a fixed camera */
+    /* step 3: splatting — lines from Gaussians to fixed camera + photo upper-left */
     if (splatWin > 0.01) {
       const camX = W * 0.85;
       const camY = H * 0.28;
@@ -864,10 +864,16 @@ export function initGaussianPipeline() {
       }
       ctx.globalAlpha = 1;
       drawCameraIcon(camX, camY, splatWin);
+      drawRealPhoto(splatWin);
     }
 
-    /* step 4 / 5: real reference photo */
-    if (refWin > 0.02) drawRealPhoto(refWin);
+    /* step 4: photo centered-left, paired with the chair shifted right */
+    if (compareWin > 0.02) {
+      const pw = Math.min(W * 0.21, H * 0.30);
+      drawRealPhoto(compareWin, W * 0.28, H * 0.50, pw);
+    }
+    /* step 5: photo back to corner */
+    if (optimizeWin > 0.02) drawRealPhoto(optimizeWin);
 
     /* step 4: error dots */
     if (compareWin > 0.01) drawDiff(cam, count, compareWin * 0.9);
