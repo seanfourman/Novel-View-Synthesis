@@ -412,7 +412,9 @@ export function initGaussianPipeline() {
       const uy = pa.y - pc.y;
       const vx = pb.x - pc.x;
       const vy = pb.y - pc.y;
-      ctx.globalAlpha = clamp01(alphaMul);
+      const revealT = s.rank / Math.max(1, count - 1);
+      const localA = clamp01((alphaMul - revealT * 0.6) / 0.4);
+      ctx.globalAlpha = localA;
       ctx.save();
       ctx.transform(ux / SPR_R, uy / SPR_R, vx / SPR_R, vy / SPR_R, pc.x, pc.y);
       ctx.drawImage(s.sprite, -SPR_R, -SPR_R, SPR, SPR);
@@ -439,30 +441,32 @@ export function initGaussianPipeline() {
 
   function drawCameraIcon(x, y, alpha) {
     ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.lineJoin = "round";
-    const w = 30;
-    const h = 21;
-    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha = clamp01(alpha);
+    const R = 20;
+    // Outer lens housing
+    ctx.fillStyle = "#232b3d";
     ctx.strokeStyle = ACCENT;
-    ctx.lineWidth = 2.2;
-    rr(x - w / 2, y - h / 2, w, h, 4);
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(x, y, R, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    // Mid ring
+    ctx.strokeStyle = `rgba(255,90,54,0.42)`;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(x - w / 2, y - 4);
-    ctx.lineTo(x - w / 2 - 9, y);
-    ctx.lineTo(x - w / 2, y + 4);
-    ctx.closePath();
-    ctx.fillStyle = ACCENT;
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(x + 2, y, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = ACCENT;
-    ctx.lineWidth = 1.6;
+    ctx.arc(x, y, R * 0.63, 0, Math.PI * 2);
     ctx.stroke();
+    // Aperture pupil
+    ctx.fillStyle = "#07090f";
+    ctx.beginPath();
+    ctx.arc(x, y, R * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    // Lens gleam
+    ctx.fillStyle = "rgba(255,255,255,0.26)";
+    ctx.beginPath();
+    ctx.arc(x - R * 0.27, y - R * 0.27, R * 0.19, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -529,48 +533,66 @@ export function initGaussianPipeline() {
   // top row: what a single Gaussian stores (shown during the "gaussian" step)
   function propIcon(kind, x, y) {
     ctx.save();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     if (kind === "pos") {
       ctx.strokeStyle = "#aab2c0";
       ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + 12, y);
-      ctx.moveTo(x, y); ctx.lineTo(x, y - 12);
-      ctx.moveTo(x, y); ctx.lineTo(x - 9, y + 8);
+      ctx.moveTo(x, y); ctx.lineTo(x + 18, y);
+      ctx.moveTo(x, y); ctx.lineTo(x, y - 18);
+      ctx.moveTo(x, y); ctx.lineTo(x - 13, y + 11);
       ctx.stroke();
       ctx.fillStyle = INK;
-      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
     } else if (kind === "shape") {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-0.5);
+      // isometric cube wireframe
+      const s = 14;
+      const oy = y + 2;
       ctx.strokeStyle = "#66718a";
-      ctx.fillStyle = "rgba(120,135,160,0.25)";
+      const top = [x, oy - s];
+      const ml  = [x - s * 0.866, oy - s * 0.5];
+      const mr  = [x + s * 0.866, oy - s * 0.5];
+      const bl  = [x - s * 0.866, oy + s * 0.5];
+      const br  = [x + s * 0.866, oy + s * 0.5];
+      const bot = [x, oy + s];
+      const mid = [x, oy];
+      ctx.fillStyle = "#66718a";
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath(); ctx.moveTo(top[0],top[1]); ctx.lineTo(mr[0],mr[1]); ctx.lineTo(mid[0],mid[1]); ctx.lineTo(ml[0],ml[1]); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.28;
+      ctx.beginPath(); ctx.moveTo(mid[0],mid[1]); ctx.lineTo(mr[0],mr[1]); ctx.lineTo(br[0],br[1]); ctx.lineTo(bot[0],bot[1]); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.1;
+      ctx.beginPath(); ctx.moveTo(mid[0],mid[1]); ctx.lineTo(ml[0],ml[1]); ctx.lineTo(bl[0],bl[1]); ctx.lineTo(bot[0],bot[1]); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.beginPath();
-      ctx.ellipse(0, 0, 13, 7, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(top[0],top[1]); ctx.lineTo(mr[0],mr[1]);
+      ctx.moveTo(mr[0],mr[1]); ctx.lineTo(br[0],br[1]);
+      ctx.moveTo(br[0],br[1]); ctx.lineTo(bot[0],bot[1]);
+      ctx.moveTo(bot[0],bot[1]); ctx.lineTo(bl[0],bl[1]);
+      ctx.moveTo(bl[0],bl[1]); ctx.lineTo(ml[0],ml[1]);
+      ctx.moveTo(ml[0],ml[1]); ctx.lineTo(top[0],top[1]);
+      ctx.moveTo(top[0],top[1]); ctx.lineTo(mid[0],mid[1]);
+      ctx.moveTo(br[0],br[1]); ctx.lineTo(mid[0],mid[1]);
+      ctx.moveTo(bl[0],bl[1]); ctx.lineTo(mid[0],mid[1]);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(-13, 0); ctx.lineTo(13, 0);
-      ctx.stroke();
-      ctx.restore();
     } else if (kind === "color") {
       ctx.fillStyle = "#3aa860";
-      ctx.beginPath(); ctx.arc(x - 6, y + 3, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x - 8, y + 4, 7.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#d8b34a";
-      ctx.beginPath(); ctx.arc(x + 6, y + 3, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 8, y + 4, 7.5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#cfd3da";
-      ctx.beginPath(); ctx.arc(x, y - 6, 5.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y - 7, 7.5, 0, Math.PI * 2); ctx.fill();
     } else {
-      const g = ctx.createLinearGradient(x - 12, y, x + 12, y);
+      const g = ctx.createLinearGradient(x - 17, y, x + 17, y);
       g.addColorStop(0, "rgba(90,105,130,0.95)");
       g.addColorStop(1, "rgba(90,105,130,0.05)");
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(x, y, 11, 0, Math.PI * 2);
+      ctx.arc(x, y, 16, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "rgba(90,105,130,0.5)";
-      ctx.lineWidth = 1.2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     }
     ctx.restore();
@@ -583,15 +605,15 @@ export function initGaussianPipeline() {
       ["שקיפות", "opacity"],
     ];
     const n = items.length;
-    const gap = Math.min(W * 0.15, 195);
+    const gap = Math.min(W * 0.17, 225);
     const x0 = W / 2 - (gap * (n - 1)) / 2;
-    const gy = H * 0.13;
+    const gy = H * 0.145;
     ctx.globalAlpha = alpha;
-    text("מה כל Gaussian מכיל:", W / 2, gy - 38, 17, INK, "center", 700);
+    text("מה כל Gaussian מכיל:", W / 2, gy - 58, 28, INK, "center", 700);
     for (let i = 0; i < n; i++) {
       const x = x0 + i * gap;
       propIcon(items[i][1], x, gy);
-      text(items[i][0], x, gy + 27, 14.5, INK, "center", 600);
+      text(items[i][0], x, gy + 46, 22, INK, "center", 600);
     }
     ctx.globalAlpha = 1;
   }
@@ -658,7 +680,7 @@ export function initGaussianPipeline() {
     wallT += dt;
     // the photos -> points collapse (step 0 -> 1) eases slowly and deliberately;
     // the later steps settle a little quicker.
-    const rate = target === 1 && flow < 1 ? 1.5 : 3.4;
+    const rate = target === 1 && flow < 1 ? 1.5 : target === 2 && flow < 2 ? 0.95 : 3.4;
     flow += (target - flow) * (1 - Math.exp(-dt * rate));
     if (Math.abs(target - flow) < 0.0005) flow = target;
     updateCaption();
@@ -710,7 +732,7 @@ export function initGaussianPipeline() {
     /* gaussians */
     if (gaussWin > 0.01) {
       const jitter = optimizeWin * 0.05;
-      const sizeMul = gaussWin * lerp(1.2, 0.66, smooth(4.2, 5.7, f));
+      const sizeMul = gaussWin * lerp(1.7, 0.66, smooth(4.2, 5.7, f));
       drawGaussians(cam, count, sizeMul, gaussWin, jitter);
     }
 
