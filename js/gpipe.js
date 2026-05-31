@@ -943,8 +943,8 @@ export function initGaussianPipeline() {
     const pitch =
       0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
-    // Keep chair shifted right from compare step onward (never snap back)
-    const shiftT = clamp01(smooth(3.05, 3.55, f));
+    // Shift right from compare step, return to center smoothly on final result
+    const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
     const vpx = W * 0.5 + shiftT * W * 0.14;
     const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
     const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
