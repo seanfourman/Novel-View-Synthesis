@@ -601,11 +601,7 @@ export function initGaussianPipeline() {
       ctx.stroke();
       arrowHead(x + 4, y, 0, 7, "#9aa3b2");
     };
-    const demos = [
-      ["שכפול", "Clone"],
-      ["פיצול", "Split"],
-      ["גיזום", "Prune"],
-    ];
+    const demos = ["שכפול", "פיצול", "גיזום"];
     const dw = Math.min(W * 0.2, 240);
     const gx = Math.min(W * 0.035, 36);
     const total = dw * 3 + gx * 2;
@@ -614,15 +610,7 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = alpha;
     for (let i = 0; i < 3; i++) {
       const x = c0 + i * (dw + gx);
-      text(
-        demos[i][0] + " · " + demos[i][1],
-        x,
-        cy - 40,
-        15,
-        INK,
-        "center",
-        700,
-      );
+      text(demos[i], x, cy - 40, 15, INK, "center", 700);
       if (i === 0) {
         blob(x - dw * 0.26, cy, 12, 1);
         arr(x - 2, cy);
@@ -634,16 +622,29 @@ export function initGaussianPipeline() {
         blob(x + dw * 0.16, cy - 5, 10, 1);
         blob(x + dw * 0.3, cy + 6, 10, 1);
       } else {
-        blob(x, cy, 14, 1 - 0.85 * pulse);
-        if (pulse > 0.55) {
-          ctx.strokeStyle = "rgba(220,70,55,0.85)";
-          ctx.lineWidth = 2.2;
-          ctx.beginPath();
-          ctx.moveTo(x - 9, cy - 9);
-          ctx.lineTo(x + 9, cy + 9);
-          ctx.moveTo(x + 9, cy - 9);
-          ctx.lineTo(x - 9, cy + 9);
-          ctx.stroke();
+        // Thanos snap: fast explosion, slow recovery
+        const ePer = 1.6, rPer = 5.5;
+        const phase = lt % (ePer + rPer);
+        const prunePulse = phase < ePer
+          ? easeInOut(phase / ePer)
+          : 1 - easeInOut((phase - ePer) / rPer);
+        const snapT = clamp01((prunePulse - 0.18) / 0.82);
+        blob(x, cy, 14 * (1 - snapT * 0.45), 1 - snapT);
+        const NPART = 26;
+        for (let p = 0; p < NPART; p++) {
+          const ang = (p / NPART) * Math.PI * 2 + p * 0.65;
+          const delay = (p % 5) * 0.06;
+          const pt = clamp01((snapT - delay) / (1 - delay + 0.001));
+          if (pt <= 0.01) continue;
+          const e = easeInOut(pt);
+          const drift = e * (9 + (p % 4) * 4);
+          const rise = e * e * 7;
+          blob(
+            x + Math.cos(ang) * drift,
+            cy + Math.sin(ang) * drift - rise,
+            2.2 + (p % 3) * 1.1,
+            (1 - pt) * 0.9,
+          );
         }
       }
     }
