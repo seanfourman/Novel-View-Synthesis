@@ -461,20 +461,33 @@ export function initGaussianPipeline() {
     ctx.globalAlpha = 1;
   }
 
-  // twinkling error dots over the render (the "where is it wrong" step)
+  // glowing error dots over the render
   function drawDiff(cam, count, alpha) {
-    ctx.globalAlpha = alpha;
+    if (alpha <= 0.01) return;
     for (let i = 0; i < splats.length; i += 6) {
       const s = splats[i];
       if (s.rank >= count) continue;
-      if (0.5 + 0.5 * Math.sin(wallT * 6 + s.ph) < 0.62) continue;
+      const pulse = 0.5 + 0.5 * Math.sin(wallT * 6 + s.ph);
+      if (pulse < 0.62) continue;
       const p = proj(cam, s.x, s.y, s.z);
-      ctx.fillStyle = i % 2 ? "rgba(255,90,42,0.95)" : "rgba(40,150,90,0.95)";
+      const r = 5 + 4 * pulse;
+      const a = alpha * pulse;
+      // glow halo
+      const col = i % 2 ? "255,80,30" : "255,190,30";
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, `rgba(${col},${a.toFixed(2)})`);
+      g.addColorStop(0.45, `rgba(${col},${(a * 0.5).toFixed(2)})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      // bright core
+      ctx.fillStyle = `rgba(255,255,220,${(a * 0.9).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.globalAlpha = 1;
   }
 
   // Fast square-pixel renderer for the high-density final result — mirrors the
