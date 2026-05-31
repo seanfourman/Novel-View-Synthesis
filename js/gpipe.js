@@ -848,7 +848,7 @@ export function initGaussianPipeline() {
   // Compare photo always at center-left (burst animation handled separately)
   function drawComparePhoto(alpha) {
     if (alpha <= 0.01) return;
-    const cx = W * 0.28;
+    const cx = W * 0.32;
     const cy = H * 0.5;
     const w = Math.min(W * 0.29, H * 0.47);
     ctx.save();
@@ -865,7 +865,7 @@ export function initGaussianPipeline() {
     const baseW = Math.min(W * 0.15, H * 0.21);
 
     // End position matches drawComparePhoto so the handoff is seamless
-    const endCX = W * 0.28;
+    const endCX = W * 0.32;
     const endCY = H * 0.5;
     const endW = Math.min(W * 0.29, H * 0.47);
 
@@ -1014,7 +1014,7 @@ export function initGaussianPipeline() {
     const dist = 13 - resultWin * 0.6;
     // Shift right from compare step, return to center smoothly on final result
     const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
-    const vpx = W * 0.5 + shiftT * W * 0.14;
+    const vpx = W * 0.5 + shiftT * W * 0.18;
     const vpy = H * 0.5;
     const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
@@ -1085,9 +1085,9 @@ export function initGaussianPipeline() {
 
       // Photo sits at ~(W*0.28, H*0.53). Gaussians are centered at vpx=W*0.5.
       // Arrow: photo right-edge → gaussian cloud left-edge, representing ∇L flowing back.
-      const arrowX0 = W * 0.395;
+      const arrowX0 = W * 0.435;
       const arrowY0 = H * 0.51;
-      const arrowX1 = W * 0.555;
+      const arrowX1 = W * 0.575;
       const arrowY1 = H * 0.50;
       curveArrow(arrowX0, arrowY0, arrowX1, arrowY1, -28, CYAN, 2.2, phase);
 
