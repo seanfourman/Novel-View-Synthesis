@@ -845,24 +845,83 @@ export function initGaussianPipeline() {
     ctx.restore();
   }
 
-  // Bare photo (no card, no background) — used in the compare step, animates into position
-  function drawComparePhoto(alpha, compareProgress) {
+  // Compare photo always at center-left (burst animation handled separately)
+  function drawComparePhoto(alpha) {
     if (alpha <= 0.01) return;
-    const t = easeInOut(clamp01(compareProgress));
-    // Slide from corner → center-left
-    const cx = lerp(W * 0.14, W * 0.28, t);
-    const cy = lerp(H * 0.2, H * 0.5, t);
-    const w = lerp(
-      Math.min(W * 0.15, H * 0.21),
-      Math.min(W * 0.29, H * 0.47),
-      t,
-    );
+    const cx = W * 0.28;
+    const cy = H * 0.5;
+    const w = Math.min(W * 0.29, H * 0.47);
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
-    if (refImg.complete && refImg.naturalWidth) {
+    if (refImg.complete && refImg.naturalWidth)
       ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
-    }
     ctx.restore();
+  }
+
+  // Corner polaroid during splatting — pops open and slides the photo to compare position
+  function drawCornerPolaroid(outerAlpha, burstT) {
+    const cx = W * 0.14;
+    const cy = H * 0.2;
+    const baseW = Math.min(W * 0.15, H * 0.21);
+
+    // End position matches drawComparePhoto so the handoff is seamless
+    const endCX = W * 0.28;
+    const endCY = H * 0.5;
+    const endW = Math.min(W * 0.29, H * 0.47);
+
+    // Shake just before the pop
+    const shakeAmt =
+      smooth(0, 0.1, burstT) * (1 - smooth(0.22, 0.38, burstT));
+    const sx = Math.sin(wallT * 44) * shakeAmt * 12;
+    const sy = Math.cos(wallT * 37) * shakeAmt * 8;
+
+    // Polaroid frame fades as the photo pops free
+    const frameAlpha = outerAlpha * (1 - smooth(0.12, 0.48, burstT));
+    if (frameAlpha > 0.01) {
+      polaroidCard(refImg, cx + sx, cy + sy, baseW, 0, frameAlpha);
+      ctx.save();
+      ctx.globalAlpha = frameAlpha;
+      text(
+        "תמונת אימון",
+        cx + sx,
+        cy + sy + baseW * 0.535,
+        14,
+        "#888fa0",
+        "center",
+        600,
+      );
+      ctx.restore();
+    }
+
+    // Photo slides from polaroid corner to compare position
+    if (burstT > 0.06 && refImg.complete && refImg.naturalWidth) {
+      const slideT = easeInOut(clamp01(smooth(0.12, 0.88, burstT)));
+      // Brief scale overshoot — the "pop" feel as it breaks free of the frame
+      const popBump =
+        Math.sin(clamp01(smooth(0.12, 0.38, burstT)) * Math.PI) * 0.2;
+
+      const photoCX = lerp(cx + sx, endCX, slideT);
+      const photoCY = lerp(cy + sy, endCY, slideT);
+      const photoW = lerp(baseW, endW, slideT) * (1 + popBump);
+
+      // Fades in as it pops, then fades out right at the end so drawComparePhoto takes over
+      const photoAlpha =
+        smooth(0.06, 0.22, burstT) * (1 - smooth(0.82, 0.98, burstT));
+
+      if (photoAlpha > 0.005) {
+        ctx.save();
+        ctx.globalAlpha = photoAlpha;
+        ctx.drawImage(
+          refImg,
+          photoCX - photoW / 2,
+          photoCY - photoW / 2,
+          photoW,
+          photoW,
+        );
+        ctx.restore();
+      }
+
+    }
   }
 
   /* ====================================================================
@@ -901,7 +960,13 @@ export function initGaussianPipeline() {
     // the photos -> points collapse (step 0 -> 1) eases slowly and deliberately;
     // the later steps settle a little quicker.
     const rate =
-      target === 1 && flow < 1 ? 1.5 : target === 2 && flow < 2 ? 0.95 : 3.4;
+      target === 1 && flow < 1
+        ? 1.5
+        : target === 2 && flow < 2
+          ? 0.95
+          : target === 4 && flow < 4
+            ? 1.1
+            : 3.4;
     flow += (target - flow) * (1 - Math.exp(-dt * rate));
     if (Math.abs(target - flow) < 0.0005) flow = target;
     updateCaption();
@@ -946,7 +1011,7 @@ export function initGaussianPipeline() {
     // Shift right from compare step, return to center smoothly on final result
     const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
     const vpx = W * 0.5 + shiftT * W * 0.14;
-    const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
+    const vpy = H * 0.5;
     const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
 
@@ -993,14 +1058,17 @@ export function initGaussianPipeline() {
       }
       ctx.globalAlpha = 1;
       drawCameraIcon(camX, camY, splatWin);
-      drawRealPhoto(splatWin);
     }
 
-    /* steps 4 & 5: photo — animProgress locked at 1 once reached, alpha from refWin */
-    const _refA = Math.max(compareWin, optimizeWin);
-    if (_refA > 0.02) {
-      const animProg = clamp01(smooth(3.05, 3.55, f)); // rises 0→1 and stays
-      drawComparePhoto(_refA, animProg);
+    /* reference photo — polaroid corner (step 3 burst on click), center-left (step 4+) */
+    const refBurstT = clamp01(smooth(3.0, 3.9, f));
+    if (splatWin > 0.01 || (refBurstT > 0.01 && refBurstT < 0.99)) {
+      drawCornerPolaroid(splatWin, refBurstT);
+    }
+    const centerPhotoAlpha =
+      Math.max(compareWin, optimizeWin) * smooth(0.62, 1.0, refBurstT);
+    if (centerPhotoAlpha > 0.01) {
+      drawComparePhoto(centerPhotoAlpha);
     }
 
     /* step 4: error dots */
