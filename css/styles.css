@@ -3111,8 +3111,8 @@ code {
   top: 50%;
   left: clamp(0.8rem, 2vw, 2.4rem);
   right: auto;
-  transform: translateY(-50%);
-  width: clamp(500px, 43vw, 620px);
+  transform: translateY(calc(-50%));
+  width: clamp(420px, 36vw, 520px);
   height: auto;
   aspect-ratio: 680 / 610;
   opacity: 1;
