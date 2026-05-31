@@ -550,31 +550,74 @@ export function initGaussianPipeline() {
   function drawCameraIcon(x, y, alpha) {
     ctx.save();
     ctx.globalAlpha = clamp01(alpha);
-    const R = 20;
-    // Outer lens housing
-    ctx.fillStyle = "#232b3d";
-    ctx.strokeStyle = ACCENT;
-    ctx.lineWidth = 2.4;
+
+    const bw = 52, bh = 34, br = 5;
+    const bx = x - bw / 2, by = y - bh / 2 + 4;
+
+    // Camera body
+    ctx.fillStyle = "#1e2535";
+    ctx.strokeStyle = "#3a4460";
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.arc(x, y, R, 0, Math.PI * 2);
+    ctx.roundRect(bx, by, bw, bh, br);
     ctx.fill();
     ctx.stroke();
-    // Mid ring
-    ctx.strokeStyle = `rgba(255,90,54,0.42)`;
-    ctx.lineWidth = 1.5;
+
+    // Viewfinder bump (top-left)
+    const vfw = 14, vfh = 7;
+    ctx.fillStyle = "#252e44";
+    ctx.strokeStyle = "#3a4460";
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.arc(x, y, R * 0.63, 0, Math.PI * 2);
-    ctx.stroke();
-    // Aperture pupil
-    ctx.fillStyle = "#07090f";
-    ctx.beginPath();
-    ctx.arc(x, y, R * 0.36, 0, Math.PI * 2);
+    ctx.roundRect(bx + 6, by - vfh + 1, vfw, vfh, [3, 3, 0, 0]);
     ctx.fill();
+    ctx.stroke();
+
+    // Shutter button (top-right)
+    ctx.fillStyle = ACCENT;
+    ctx.beginPath();
+    ctx.arc(bx + bw - 10, by - 3, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Lens barrel outer
+    const lx = x + 3, ly = y + 6;
+    const lR = 11;
+    const lensGrad = ctx.createRadialGradient(lx - 3, ly - 3, 1, lx, ly, lR);
+    lensGrad.addColorStop(0, "#3a4f72");
+    lensGrad.addColorStop(1, "#0d1220");
+    ctx.fillStyle = lensGrad;
+    ctx.strokeStyle = "#4a5570";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(lx, ly, lR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Lens barrel mid ring
+    ctx.strokeStyle = `rgba(255,90,54,0.5)`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(lx, ly, lR * 0.68, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Lens pupil
+    ctx.fillStyle = "#04060e";
+    ctx.beginPath();
+    ctx.arc(lx, ly, lR * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+
     // Lens gleam
-    ctx.fillStyle = "rgba(255,255,255,0.26)";
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
     ctx.beginPath();
-    ctx.arc(x - R * 0.27, y - R * 0.27, R * 0.19, 0, Math.PI * 2);
+    ctx.arc(lx - lR * 0.28, ly - lR * 0.28, lR * 0.18, 0, Math.PI * 2);
     ctx.fill();
+
+    // Flash / indicator light (top-right of body)
+    ctx.fillStyle = "rgba(120,200,255,0.7)";
+    ctx.beginPath();
+    ctx.arc(bx + bw - 10, by + 8, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
@@ -1099,11 +1142,11 @@ export function initGaussianPipeline() {
 
       // Photo sits at ~(W*0.28, H*0.53). Gaussians are centered at vpx=W*0.5.
       // Arrow: photo right-edge → gaussian cloud left-edge, representing ∇L flowing back.
-      const arrowX0 = W * 0.435;
+      const arrowX0 = W * 0.42;
       const arrowY0 = H * 0.51;
-      const arrowX1 = W * 0.575;
-      const arrowY1 = H * 0.50;
-      curveArrow(arrowX0, arrowY0, arrowX1, arrowY1, -28, CYAN, 2.2, phase);
+      const arrowX1 = W * 0.60;
+      const arrowY1 = H * 0.51;
+      curveArrow(arrowX0, arrowY0, arrowX1, arrowY1, 36, CYAN, 2.2, phase);
 
       // Loss function label above the arrow
       ctx.save();
@@ -1120,12 +1163,16 @@ export function initGaussianPipeline() {
 
       ctx.font = `600 15px JetBrains Mono, monospace`;
       ctx.fillStyle = CYAN;
-      ctx.fillText("L = Σ ||render − real||²", midX, midY + 6);
+      ctx.fillText("L = (1−λ)·L₁ + λ·L_SSIM", midX, midY + 6);
+
+      ctx.font = `500 11px Heebo, sans-serif`;
+      ctx.fillStyle = INK_SOFT;
+      ctx.direction = "ltr";
+      ctx.fillText("λ=0.2  |  L₁ = Σ|Î−I|  |  L_SSIM = 1−SSIM(Î,I)", midX, midY + 24);
 
       ctx.font = `500 12px Heebo, sans-serif`;
-      ctx.fillStyle = INK_SOFT;
       ctx.direction = "rtl";
-      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 28);
+      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 42);
       ctx.direction = "ltr";
       ctx.restore();
 
