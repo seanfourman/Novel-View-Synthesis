@@ -2846,7 +2846,7 @@ code {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: clamp(1rem, 1.04vw, 1.08rem);
+  font-size: 18px;
   line-height: 1.55;
   min-block-size: calc(3em * 1.55);
 }
@@ -2859,6 +2859,7 @@ code {
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""])
   .cp-results-label {
+  font-size: 18px;
   margin-bottom: 0.25rem;
 }
 
@@ -2876,7 +2877,7 @@ code {
 :where(.compare-split:not([data-active]), .compare-split[data-active=""])
   .cp-results
   li {
-  font-size: clamp(1rem, 0.96vw, 1rem);
+  font-size: 18px;
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""])
@@ -2885,9 +2886,14 @@ code {
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""])
+  .cp-col-title {
+  font-size: 18px;
+}
+
+:where(.compare-split:not([data-active]), .compare-split[data-active=""])
   .cp-col
   li {
-  font-size: clamp(1rem, 0.93vw, 1rem);
+  font-size: 18px;
 }
 
 :where(.compare-split:not([data-active]), .compare-split[data-active=""])
