@@ -130,7 +130,7 @@ export function initGaussianPipeline() {
 
   /* ---------- chair splat cloud (baked: position / colour / normal / spacing) ---------- */
   const OBJ_SIZE = 3.4;
-  const MAXG = 5200;
+  const MAXG = 40000;
   const SPARSE_N = 760; // points shown as the "sparse cloud"
   const splats = [];
   let ready = false;
@@ -437,6 +437,56 @@ export function initGaussianPipeline() {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
+
+  // Fast square-pixel renderer for the high-density final result — mirrors the
+  // tractor cloud approach in slides.js (fillRect + typed arrays, no arc/save/restore).
+  let _rpSX = null, _rpSY = null, _rpSD = null, _rpSI = null, _rpOrder = null;
+  function drawResultPoints(cam, count, alpha) {
+    if (!ready || alpha <= 0.01) return;
+    const cap = Math.min(count, splats.length);
+    if (!_rpSX || _rpSX.length < cap) {
+      _rpSX = new Float32Array(cap);
+      _rpSY = new Float32Array(cap);
+      _rpSD = new Float32Array(cap);
+      _rpSI = new Int32Array(cap);   // splat index
+      _rpOrder = new Int32Array(cap); // sort order
+    }
+    let n = 0;
+    let scaleAccum = 0;
+    for (let i = 0; i < splats.length; i++) {
+      const s = splats[i];
+      if (s.rank >= count) continue;
+      const pc = proj(cam, s.x, s.y, s.z);
+      if (pc.depth <= 0.1) continue;
+      if (pc.x < -8 || pc.x > W + 8 || pc.y < -8 || pc.y > H + 8) continue;
+      _rpSX[n] = pc.x;
+      _rpSY[n] = pc.y;
+      _rpSD[n] = pc.depth;
+      _rpSI[n] = i;
+      _rpOrder[n] = n;
+      scaleAccum += 1 / pc.depth;
+      n++;
+    }
+    // Sort slot-indices 0..n-1 by depth descending (far first, near overwrites)
+    const sd = _rpSD;
+    const order = Array.from(_rpOrder.subarray(0, n));
+    order.sort((a, b) => sd[b] - sd[a]);
+
+    // Size so squares tile the surface: pixels-per-unit / √density
+    const pxPerUnit = cam.focal / Math.max(cam.dist, 0.1);
+    const ptHalf = Math.max(2.5, pxPerUnit * OBJ_SIZE / Math.sqrt(Math.max(n, 1)) * 0.55);
+    const sz = ptHalf * 2;
+
+    ctx.save();
+    ctx.globalAlpha = clamp01(alpha);
+    for (let k = 0; k < n; k++) {
+      const slot = order[k];
+      const s = splats[_rpSI[slot]];
+      ctx.fillStyle = `rgb(${s.r},${s.g},${s.b})`;
+      ctx.fillRect(_rpSX[slot] - ptHalf, _rpSY[slot] - ptHalf, sz, sz);
+    }
+    ctx.restore();
   }
 
   function drawCameraIcon(x, y, alpha) {
@@ -784,18 +834,17 @@ export function initGaussianPipeline() {
     /* sparse cloud */
     if (dotsWin > 0.01) drawDots(cam, dotsCount, dotsWin);
 
-    /* gaussians */
+    /* gaussians: sprite-based until the final result, then switch to fast dot renderer */
     if (gaussWin > 0.01) {
       const jitter = optimizeWin * 0.05;
       const sizeMul = gaussWin * lerp(1.7, 0.66, smooth(4.2, 5.7, f));
-      drawGaussians(cam, count, sizeMul, gaussWin, jitter);
+      const gaussOnly = 1 - resultWin;
+      if (gaussOnly > 0.01) drawGaussians(cam, Math.min(count, 5200), sizeMul, gaussWin * gaussOnly, jitter);
+      if (resultWin > 0.01) drawResultPoints(cam, count, gaussWin * resultWin);
     }
 
-    /* step 2: properties row + zoom inset */
-    if (propsWin > 0.01) {
-      drawPropsRow(propsWin);
-      drawZoomInset(propsWin);
-    }
+    /* step 2: properties row */
+    if (propsWin > 0.01) drawPropsRow(propsWin);
 
     /* step 3: splatting onto a fixed camera */
     if (splatWin > 0.01) {
