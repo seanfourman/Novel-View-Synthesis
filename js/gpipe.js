@@ -1030,7 +1030,7 @@ export function initGaussianPipeline() {
     const shiftT = clamp01(smooth(3.05, 3.55, f)) * (1 - smooth(5.05, 5.85, f));
     const vpx = W * 0.5 + shiftT * W * 0.18;
     const vpy = H * 0.5;
-    const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
+    const focal = Math.min(W, H) * (lerp(0.95, 0.84, refWin) - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
 
     /* step 0->1: polaroids collapse, each into its own cloud point */
