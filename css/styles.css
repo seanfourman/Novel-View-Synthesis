@@ -4459,7 +4459,7 @@ code {
 
 .srn-zoom-square {
   position: absolute;
-  top: 28%;
+  top: calc(28% + 25px);
   left: 7%;
   width: 3vmin;
   height: 3vmin;
