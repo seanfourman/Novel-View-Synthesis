@@ -1002,8 +1002,9 @@ export function initGaussianPipeline() {
     const still = smooth(2.1, 2.7, f) * (1 - resultWin);
     const motion = 1 - 0.9 * still;
     // Blend base angle toward r_56 reference view during compare/optimize steps
-    const baseYaw = lerp(-0.5, -0.617, refWin);
-    const basePitch = lerp(0.08, -0.253, refWin);
+    const refBlend = clamp01(refWin + resultWin);
+    const baseYaw = lerp(-0.5, -0.617, refBlend);
+    const basePitch = lerp(0.08, -0.253, refBlend);
     const yaw =
       baseYaw +
       Math.sin(wallT * 0.16) * 0.4 * motion +
