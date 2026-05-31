@@ -256,6 +256,14 @@ export function initGaussianPipeline() {
     import.meta.url,
   ).href;
 
+  /* ---------- final result gif — rendered as a real DOM element, not via canvas ----------
+     ctx.drawImage() freezes GIF animation; overlaying an <img> lets the browser animate it. */
+  const chairGif = new Image();
+  chairGif.src = new URL("../assets/nerf/chair.gif", import.meta.url).href;
+  chairGif.style.cssText =
+    "position:absolute;left:0;top:0;opacity:0;pointer-events:none;object-fit:contain;";
+  slide.appendChild(chairGif);
+
   /* ---------- real chair photos (training views) for polaroids + compare ---------- */
   const photoNums = [
     3, 9, 15, 21, 28, 34, 41, 47, 53, 60, 66, 72, 79, 85, 91, 97,
@@ -1095,7 +1103,18 @@ export function initGaussianPipeline() {
           gaussWin * gaussOnly,
           jitter,
         );
-      if (resultWin > 0.01) drawResultPoints(cam, count, gaussWin * resultWin);
+      // GIF overlay — positioned via CSS so the browser animates it natively
+      if (resultWin > 0.01 && chairGif.complete && chairGif.naturalWidth) {
+        const gifAlpha = clamp01(gaussWin * resultWin);
+        const gifSize = Math.min(W * 0.42, H * 0.68);
+        chairGif.style.width  = gifSize + "px";
+        chairGif.style.height = gifSize + "px";
+        chairGif.style.left   = (W / 2 - gifSize / 2) + "px";
+        chairGif.style.top    = (H / 2 - gifSize / 2) + "px";
+        chairGif.style.opacity = gifAlpha;
+      } else {
+        chairGif.style.opacity = 0;
+      }
     }
 
     /* step 2: properties row */
@@ -1194,11 +1213,13 @@ export function initGaussianPipeline() {
       target = 0;
       wallT = 0;
       lastCaption = "";
+      chairGif.style.opacity = 0;
       updateCaption();
     },
     tick(visible, dtScale) {
       if (!visible) {
         if (captionEl) captionEl.classList.remove("visible");
+        chairGif.style.opacity = 0;
         return;
       }
       if (!W || !H) resize();
