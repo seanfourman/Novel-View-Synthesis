@@ -843,7 +843,6 @@ export function initGaussianPipeline() {
       ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
     ctx.restore();
     ctx.restore();
-    text("תמונת אימון", cx, cy + w / 2 + pad + 14, 13, INK_SOFT, "center", 600);
   }
 
   // Bare photo (no card, no background) — used in the compare step, animates into position
@@ -863,7 +862,6 @@ export function initGaussianPipeline() {
     if (refImg.complete && refImg.naturalWidth) {
       ctx.drawImage(refImg, cx - w / 2, cy - w / 2, w, w);
     }
-    text("תמונת אימון", cx, cy + w / 2 + 12, 13, INK_SOFT, "center", 600);
     ctx.restore();
   }
 
@@ -945,7 +943,9 @@ export function initGaussianPipeline() {
     const pitch =
       0.08 + Math.sin(wallT * 0.26) * 0.04 * motion + resultWin * 0.04;
     const dist = 13 - resultWin * 0.6;
-    const vpx = W * 0.5 + compareWin * W * 0.14;
+    // Keep chair shifted right from compare step onward (never snap back)
+    const shiftT = clamp01(smooth(3.05, 3.55, f));
+    const vpx = W * 0.5 + shiftT * W * 0.14;
     const vpy = H * 0.5 - optimizeWin * H * 0.04 + compareWin * H * 0.03;
     const focal = Math.min(W, H) * (0.95 - optimizeWin * 0.05);
     const cam = makeCam(yaw, pitch, dist, vpx, vpy, focal);
@@ -996,18 +996,53 @@ export function initGaussianPipeline() {
       drawRealPhoto(splatWin);
     }
 
-    /* step 4: photo animates from corner to center-left */
-    if (compareWin > 0.02) drawComparePhoto(compareWin, compareWin);
-    /* step 5: photo stays at corner */
-    if (optimizeWin > 0.02) drawRealPhoto(optimizeWin);
+    /* steps 4 & 5: photo — animProgress locked at 1 once reached, alpha from refWin */
+    const _refA = Math.max(compareWin, optimizeWin);
+    if (_refA > 0.02) {
+      const animProg = clamp01(smooth(3.05, 3.55, f)); // rises 0→1 and stays
+      drawComparePhoto(_refA, animProg);
+    }
 
     /* step 4: error dots */
     if (compareWin > 0.01) drawDiff(cam, count, compareWin * 0.9);
 
-    /* step 5: optimize - error flows back; clone/split/prune */
+    /* step 5: backprop arrow + loss function + densify */
     if (optimizeWin > 0.01) {
+      const a = optimizeWin;
       const phase = (wallT * 90) % 20;
-      curveArrow(W * 0.5, H * 0.3, W * 0.5, H * 0.46, 55, CYAN, 2.6, phase);
+
+      // Photo sits at ~(W*0.28, H*0.53). Gaussians are centered at vpx=W*0.5.
+      // Arrow: photo right-edge → gaussian cloud left-edge, representing ∇L flowing back.
+      const arrowX0 = W * 0.395;
+      const arrowY0 = H * 0.51;
+      const arrowX1 = W * 0.555;
+      const arrowY1 = H * 0.50;
+      curveArrow(arrowX0, arrowY0, arrowX1, arrowY1, -28, CYAN, 2.2, phase);
+
+      // Loss function label above the arrow
+      ctx.save();
+      ctx.globalAlpha = a;
+      const midX = (arrowX0 + arrowX1) / 2;
+      const midY = arrowY0 - 52;
+
+      ctx.font = `500 13px Heebo, sans-serif`;
+      ctx.fillStyle = INK_SOFT;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.direction = "ltr";
+      ctx.fillText("Loss function:", midX, midY - 16);
+
+      ctx.font = `600 15px JetBrains Mono, monospace`;
+      ctx.fillStyle = CYAN;
+      ctx.fillText("L = Σ ||render − real||²", midX, midY + 6);
+
+      ctx.font = `500 12px Heebo, sans-serif`;
+      ctx.fillStyle = INK_SOFT;
+      ctx.direction = "rtl";
+      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 28);
+      ctx.direction = "ltr";
+      ctx.restore();
+
       drawDensify(optimizeWin, wallT);
     }
 
