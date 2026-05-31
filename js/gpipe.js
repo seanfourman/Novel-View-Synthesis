@@ -1066,7 +1066,7 @@ export function initGaussianPipeline() {
       drawCornerPolaroid(splatWin, refBurstT);
     }
     const centerPhotoAlpha =
-      Math.max(compareWin, optimizeWin) * smooth(0.62, 1.0, refBurstT);
+      clamp01(compareWin + optimizeWin) * smooth(0.62, 1.0, refBurstT);
     if (centerPhotoAlpha > 0.01) {
       drawComparePhoto(centerPhotoAlpha);
     }
