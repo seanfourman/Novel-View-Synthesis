@@ -1166,16 +1166,12 @@ export function initGaussianPipeline() {
 
       ctx.font = `600 15px JetBrains Mono, monospace`;
       ctx.fillStyle = CYAN;
-      ctx.fillText("L = (1−λ)·L₁ + λ·L_SSIM", midX, midY + 6);
-
-      ctx.font = `500 11px Heebo, sans-serif`;
-      ctx.fillStyle = INK_SOFT;
-      ctx.direction = "ltr";
-      ctx.fillText("λ=0.2  |  L₁ = Σ|Î−I|  |  L_SSIM = 1−SSIM(Î,I)", midX, midY + 24);
+      ctx.fillText("L = Σ ||render − real||²", midX, midY + 6);
 
       ctx.font = `500 12px Heebo, sans-serif`;
+      ctx.fillStyle = INK_SOFT;
       ctx.direction = "rtl";
-      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 42);
+      ctx.fillText("∇L → עדכון פרמטרי Gaussian", midX, midY + 28);
       ctx.direction = "ltr";
       ctx.restore();
 
