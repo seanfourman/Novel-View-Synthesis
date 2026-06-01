@@ -4304,7 +4304,7 @@ export function initSfMLiDAR() {
       ctx.save();
       ctx.direction = "rtl";
       ctx.fillStyle = diagramInk;
-      ctx.font = "600 15px Inter, Arial, sans-serif";
+      ctx.font = "600 21px Inter, Arial, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("אינטרפולציה בין מבטים", W / 2, arrowY - 18);
       ctx.restore();
@@ -4338,7 +4338,7 @@ export function initSfMLiDAR() {
       ctx.save();
       ctx.direction = "rtl";
       ctx.fillStyle = diagramOrangeText;
-      ctx.font = "600 16px Inter, Arial, sans-serif";
+      ctx.font = "600 21px Inter, Arial, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(
         "מבטים חדשים (מצלמות וירטואליות)",
@@ -7215,16 +7215,23 @@ export function initGaussianSplats() {
   // Dark recessed pips, in face-local coords (a,b) in [-1,1].
   const PIPS = {
     top: [[0, 0]], // 1
-    left: [[-0.5, 0.5], [0.5, -0.5]], // 2
-    right: [[-0.55, 0.55], [0, 0], [0.55, -0.55]], // 3
+    left: [
+      [-0.5, 0.5],
+      [0.5, -0.5],
+    ], // 2
+    right: [
+      [-0.55, 0.55],
+      [0, 0],
+      [0.55, -0.55],
+    ], // 3
   };
   const PIP_R = 0.22;
 
   // The three faces meeting at the near corner (+,+,+): top, left, right.
   // base = RGB face colour; top lightest → right darkest gives the 3D read.
   const faces = [
-    { key: "top",   to3d: (a, b) => [a, 1, b], base: [124, 154, 194] },
-    { key: "left",  to3d: (a, b) => [a, b, 1], base: [94, 126, 170] },
+    { key: "top", to3d: (a, b) => [a, 1, b], base: [124, 154, 194] },
+    { key: "left", to3d: (a, b) => [a, b, 1], base: [94, 126, 170] },
     { key: "right", to3d: (a, b) => [1, b, a], base: [70, 100, 144] },
   ];
 
@@ -7267,9 +7274,13 @@ export function initGaussianSplats() {
   const rank = splats.map((_, i) => i);
   for (let i = rank.length - 1; i > 0; i--) {
     const j = (Math.random() * (i + 1)) | 0;
-    const t = rank[i]; rank[i] = rank[j]; rank[j] = t;
+    const t = rank[i];
+    rank[i] = rank[j];
+    rank[j] = t;
   }
-  rank.forEach((idx, r) => { splats[idx].ord = r; });
+  rank.forEach((idx, r) => {
+    splats[idx].ord = r;
+  });
 
   // How many splats each panel reveals, and an ellipse-size multiplier per
   // panel: panel 1 = sparse round dots, panels 2-4 = progressively bigger,
