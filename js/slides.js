@@ -4708,7 +4708,7 @@ export function initLimits() {
    leading comet re-enters from the left edge to start the cycle again.
    ============================================================ */
 export function initSRN() {
-  const slide = document.querySelector('.slide[data-id="10"]');
+  const slide = document.querySelector('.slide[data-id="9"]');
   if (!slide) return { tick() {} };
 
   const hero = document.getElementById("srn-hero");
@@ -4751,7 +4751,7 @@ export function initSRN() {
 }
 
 export function initNeRFIntro() {
-  const slide = document.querySelector('.slide[data-id="13"]');
+  const slide = document.querySelector('.slide[data-id="12"]');
   if (!slide) return { tick() {}, enter() {} };
 
   const carousel = slide.querySelector(".nerf-carousel");
@@ -4810,7 +4810,7 @@ export function initNeRFIntro() {
 }
 
 export function initNvsIntro() {
-  const slide = document.querySelector('section[data-id="9"]');
+  const slide = document.querySelector('section[data-id="8"]');
   if (!slide) return { tick() {}, enter() {} };
 
   const fill = slide.querySelector("#nvs-tl-fill");
@@ -4952,10 +4952,10 @@ export function initNvsIntro() {
 }
 
 /* =========================================================
-   Slide 11: SRN network animation - pixel flows through MLP
+   Slide 10: SRN network animation - pixel flows through MLP
    ========================================================= */
 export function initSRNNetAnim() {
-  const slide = document.querySelector('.slide[data-id="11"]');
+  const slide = document.querySelector('.slide[data-id="10"]');
   if (!slide) return { tick() {} };
   const canvas = slide.querySelector("#srn-net-canvas");
   if (!canvas) return { tick() {} };
@@ -5635,7 +5635,7 @@ export function initSpatialTransition() {
      I. hold, fade, loop
    ========================================================= */
 export function initNeRFVideo() {
-  const slide = document.querySelector('.slide[data-id="14"]');
+  const slide = document.querySelector('.slide[data-id="13"]');
   if (!slide) return { tick() {}, enter() {} };
 
   const canvas = document.getElementById("nerf-pipeline-canvas");

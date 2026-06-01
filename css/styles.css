@@ -3127,7 +3127,7 @@ code {
   padding-left: 540px;
 }
 
-.slide[data-id="7"] {
+.slide[data-id="6"] {
   padding: 0;
   align-items: stretch;
   justify-content: stretch;
@@ -5135,7 +5135,7 @@ code {
   align-self: center;
 }
 
-.slide[data-id="13"]
+.slide[data-id="12"]
   :is(
     p,
     p span,
