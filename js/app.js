@@ -16,6 +16,7 @@ import {
   initNeRFIntro,
   initNeRFVideo,
   initGaussianSplats,
+  initTakeHome,
 } from "./slides.js";
 import { initGaussianPipeline } from "./gpipe.js";
 
@@ -150,7 +151,8 @@ const sceneRegistry = {
   14: initGaussianSplats, // slide 15 (3D Gaussian Splatting build-up)
   15: initGaussianPipeline, // slide 16 (3DGS pipeline animation)
   // slide 17 (live room tour) - iframes only
-  17: initEndBg, // slide 18 (final recap)
+  17: initTakeHome, // slide 18 (take home message - staged evolution reveal)
+  18: initEndBg, // slide 19 (final recap)
 };
 
 const sceneInstances = {};

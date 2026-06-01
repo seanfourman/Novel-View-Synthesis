@@ -3151,6 +3151,25 @@ export function initEndBg() {
 }
 
 /* =========================================================
+   Slide 18: Take Home Message - staged evolution reveal.
+   Pure CSS animation; this just (re)triggers it on every
+   slide entry by toggling the `.go` class with a reflow.
+   ========================================================= */
+export function initTakeHome() {
+  const slide = document.querySelector('.slide[data-id="18"] .thm-slide');
+  return {
+    enter() {
+      if (!slide) return;
+      slide.classList.remove("go");
+      // force reflow so removing+re-adding restarts the CSS transitions
+      void slide.offsetWidth;
+      slide.classList.add("go");
+    },
+    tick() {},
+  };
+}
+
+/* =========================================================
    Slide 3: The Problem - orbit camera + photo capture
    ========================================================= */
 export function initProblemVis() {
