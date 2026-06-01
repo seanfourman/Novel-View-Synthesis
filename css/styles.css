@@ -5559,14 +5559,14 @@ code {
 .thm-evo {
   position: relative;
   width: min(1100px, 100%);
-  height: clamp(150px, 18vh, 172px);
+  height: clamp(158px, 19vh, 182px);
   margin: 0.1rem 0 0.2rem;
 }
 
 /* track + fill cross the node centers (12.5% .. 87.5%) */
 .thm-evo-line {
   position: absolute;
-  top: 30px;
+  top: 41px;
   left: 12.5%;
   right: 12.5%;
   height: 3px;
@@ -5576,7 +5576,7 @@ code {
 }
 .thm-evo-fill {
   position: absolute;
-  top: 30px;
+  top: 41px;
   left: 12.5%;
   width: 0;
   height: 3px;
@@ -5649,8 +5649,8 @@ code {
 }
 
 .thm-node {
-  width: 64px;
-  height: 64px;
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
   background: var(--bg);
   border: 3px solid var(--muted);
@@ -5677,9 +5677,10 @@ code {
   pointer-events: none;
 }
 .thm-step-icon {
-  width: 32px;
-  height: 32px;
+  width: 50px;
+  height: 50px;
   color: var(--muted);
+  overflow: visible;
   transition: color 0.55s ease var(--d);
 }
 .thm-slide.go .thm-node {
@@ -5721,28 +5722,186 @@ code {
   }
 }
 
+/* ---------- always-on icon micro-animations (illustrate each concept) ---------- */
+/* 1. classic methods - a scan line sweeping over a 3D object */
+.thm-ico-scan .scan-edges {
+  opacity: 0.55;
+}
+.thm-ico-scan .scan-line {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: thmScanSweep 2.4s ease-in-out infinite;
+}
+@keyframes thmScanSweep {
+  0%,
+  100% {
+    transform: translateY(-5px);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
+/* 2. SRN - one neuron lights up at a time, a signal travelling through the net
+   (not all blinking together); the connections keep flowing as the route. */
+.thm-ico-net .net-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.4;
+  animation: thmNetTravel 3s ease-in-out infinite;
+}
+.thm-ico-net .net-node:nth-child(1) {
+  animation-delay: 0s;
+}
+.thm-ico-net .net-node:nth-child(2) {
+  animation-delay: 0.5s;
+}
+.thm-ico-net .net-node:nth-child(3) {
+  animation-delay: 1s;
+}
+.thm-ico-net .net-node:nth-child(4) {
+  animation-delay: 1.5s;
+}
+.thm-ico-net .net-node:nth-child(5) {
+  animation-delay: 2s;
+}
+.thm-ico-net .net-node:nth-child(6) {
+  animation-delay: 2.5s;
+}
+.thm-ico-net .net-link {
+  stroke-dasharray: 3 3;
+  animation: thmNetFlow 1s linear infinite;
+}
+@keyframes thmNetTravel {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.4;
+  }
+  6% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+  20% {
+    transform: scale(0.82);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.82);
+    opacity: 0.4;
+  }
+}
+@keyframes thmNetFlow {
+  to {
+    stroke-dashoffset: -6;
+  }
+}
+
+/* 3. NeRF - a volume whose density field twinkles (continuous color+density) */
+.thm-ico-nerf .nerf-d {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: thmNerfDensity 2s ease-in-out infinite;
+}
+.thm-ico-nerf .nerf-d:nth-child(1) {
+  animation-delay: 0s;
+}
+.thm-ico-nerf .nerf-d:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.thm-ico-nerf .nerf-d:nth-child(3) {
+  animation-delay: 0.36s;
+}
+.thm-ico-nerf .nerf-d:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.thm-ico-nerf .nerf-d:nth-child(5) {
+  animation-delay: 0.36s;
+}
+.thm-ico-nerf .nerf-d:nth-child(6) {
+  animation-delay: 0.54s;
+}
+.thm-ico-nerf .nerf-d:nth-child(7) {
+  animation-delay: 0.36s;
+}
+.thm-ico-nerf .nerf-d:nth-child(8) {
+  animation-delay: 0.54s;
+}
+.thm-ico-nerf .nerf-d:nth-child(9) {
+  animation-delay: 0.72s;
+}
+@keyframes thmNerfDensity {
+  0%,
+  100% {
+    transform: scale(0.45);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* 4. 3DGS - overlapping splats drifting & pulsing */
+.thm-ico-gs .splat {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.thm-ico-gs .splat-a {
+  opacity: 0.85;
+  animation: thmSplatA 2.3s ease-in-out infinite;
+}
+.thm-ico-gs .splat-b {
+  opacity: 0.6;
+  animation: thmSplatB 2.3s ease-in-out infinite;
+}
+@keyframes thmSplatA {
+  0%,
+  100% {
+    transform: translate(-1px, 0.5px) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(1px, -1px) scale(1.14);
+    opacity: 1;
+  }
+}
+@keyframes thmSplatB {
+  0%,
+  100% {
+    transform: translate(1px, -0.5px) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(-1px, 1px) scale(1.14);
+    opacity: 0.85;
+  }
+}
+
 .thm-step-name {
   font-size: clamp(0.92rem, 1.1vw, 1.08rem);
-  font-weight: 700;
-  color: var(--ink-soft);
   line-height: 1.3;
-  transition: color 0.55s ease var(--d);
   direction: rtl;
 }
-.thm-slide.go .thm-step-name {
-  color: var(--ink);
-}
-.thm-step-en {
+.thm-step-title {
   display: block;
-  direction: ltr;
   font-weight: 800;
+  color: var(--ink-soft);
+  transition: color 0.55s ease var(--d);
+}
+.thm-step-title[dir="ltr"] {
+  direction: ltr;
+}
+.thm-slide.go .thm-step-title {
+  color: var(--ink);
 }
 .thm-step-sub {
   display: block;
   font-size: 0.84em;
   font-weight: 500;
   color: var(--muted);
-  margin-top: 0.12rem;
+  margin-top: 0.14rem;
 }
 
 .thm-invest {
@@ -5766,7 +5925,7 @@ code {
   margin: 0.35rem 0 0.1rem;
 }
 .thm-logo {
-  height: clamp(48px, 6.8vh, 80px);
+  height: clamp(64px, 9.5vh, 116px);
   width: auto;
   object-fit: contain;
   opacity: 0;
@@ -5850,40 +6009,6 @@ code {
 .thm-question .accent {
   color: var(--accent);
   font-weight: 700;
-}
-
-.thm-click-hint {
-  position: absolute;
-  bottom: -2.1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.82rem;
-  letter-spacing: 0.1em;
-  color: var(--muted);
-  font-family: "JetBrains Mono", monospace;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-.thm-slide.go .thm-click-hint {
-  opacity: 0.6;
-  transition-delay: 3.4s;
-  animation: thmHintBob 1.8s ease-in-out 3.4s infinite;
-}
-.thm-slide.q-shown .thm-click-hint {
-  opacity: 0;
-  animation: none;
-  transition-delay: 0s;
-}
-@keyframes thmHintBob {
-  0%,
-  100% {
-    transform: translate(-50%, 0);
-  }
-  50% {
-    transform: translate(-50%, 5px);
-  }
 }
 
 @media (max-width: 760px) {

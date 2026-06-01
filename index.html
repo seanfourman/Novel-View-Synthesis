@@ -1190,7 +1190,7 @@
 
           <p class="thm-intro">
             <em>Novel View Synthesis</em> התחיל כמשימה של יצירת תמונה מזווית שלא צולמה,<br />
-            אבל כיום הוא מייצג רעיון רחב יותר: <strong>למידת סצנות תלת־ממדיות מתוך מידע חזותי</strong>.
+            אבל כיום הוא מייצג רעיון רחב יותר: <strong>למידת סצנות תלת-ממדיות מתוך מידע חזותי</strong>.
           </p>
 
           <p class="thm-evo-label">במהלך הסמינריון ראינו מעבר הדרגתי:</p>
@@ -1200,55 +1200,78 @@
             <div class="thm-evo-line"></div>
             <div class="thm-evo-fill"></div>
             <div class="thm-evo-steps">
+              <!-- 1. classic methods: a 3D object being scanned/reconstructed -->
               <div class="thm-step">
                 <div class="thm-node">
-                  <svg class="thm-step-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <circle cx="5" cy="7" r="1.25" />
-                    <circle cx="12" cy="4" r="1.25" />
-                    <circle cx="19" cy="8" r="1.25" />
-                    <circle cx="7" cy="15" r="1.25" />
-                    <circle cx="14" cy="13" r="1.25" />
-                    <circle cx="18.5" cy="18" r="1.25" />
-                    <circle cx="9.5" cy="20" r="1.25" />
+                  <svg class="thm-step-icon thm-ico-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2.6 20 7 20 17 12 21.4 4 17 4 7 Z" />
+                    <path class="scan-edges" d="M12 2.6 12 11.4 M12 11.4 20 7 M12 11.4 4 7 M12 11.4 12 21.4" />
+                    <line class="scan-line" x1="4.4" y1="12" x2="19.6" y2="12" stroke-width="1.7" />
                   </svg>
                 </div>
-                <div class="thm-step-name">שחזור גיאומטרי קלאסי</div>
+                <div class="thm-step-name">
+                  <span class="thm-step-title">שיטות קלאסיות</span>
+                  <span class="thm-step-sub">שחזור גיאומטרי מפורש</span>
+                </div>
               </div>
 
+              <!-- 2. SRN: a neural network with signal flowing through it -->
               <div class="thm-step">
                 <div class="thm-node">
-                  <svg class="thm-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6.4 6 10.6 8.2M6.4 6 10.6 15.8M6.4 12 10.6 8.2M6.4 12 10.6 15.8M6.4 18 10.6 8.2M6.4 18 10.6 15.8M13.4 8.2 17.6 12M13.4 15.8 17.6 12" />
-                    <circle cx="5" cy="6" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="5" cy="18" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="12" cy="8.2" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="12" cy="15.8" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+                  <svg class="thm-step-icon thm-ico-net" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path class="net-link" d="M4.5 4.5 12 8M4.5 4.5 12 16M4.5 12 12 8M4.5 12 12 16M4.5 19.5 12 8M4.5 19.5 12 16M12 8 19.5 12M12 16 19.5 12" opacity="0.5" />
+                    <g fill="currentColor" stroke="none">
+                      <circle class="net-node net-l1" cx="4.5" cy="4.5" r="2.5" />
+                      <circle class="net-node net-l1" cx="4.5" cy="12" r="2.5" />
+                      <circle class="net-node net-l1" cx="4.5" cy="19.5" r="2.5" />
+                      <circle class="net-node net-l2" cx="12" cy="8" r="2.5" />
+                      <circle class="net-node net-l2" cx="12" cy="16" r="2.5" />
+                      <circle class="net-node net-l3" cx="19.5" cy="12" r="2.5" />
+                    </g>
                   </svg>
                 </div>
-                <div class="thm-step-name">ייצוגים נוירוניים של סצנות</div>
+                <div class="thm-step-name">
+                  <span class="thm-step-title" dir="ltr">SRN</span>
+                  <span class="thm-step-sub">ייצוגים נוירוניים של סצנות</span>
+                </div>
               </div>
 
+              <!-- 3. NeRF: a volumetric density field breathing -->
               <div class="thm-step">
                 <div class="thm-node">
-                  <svg class="thm-step-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                    <path d="m3.3 7 8.7 5 8.7-5" />
-                    <path d="M12 22V12" />
+                  <svg class="thm-step-icon thm-ico-nerf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="2.6" opacity="0.65" />
+                    <g class="nerf-grid" fill="currentColor" stroke="none">
+                      <circle class="nerf-d" cx="8" cy="8" r="1.6" />
+                      <circle class="nerf-d" cx="12" cy="8" r="1.6" />
+                      <circle class="nerf-d" cx="16" cy="8" r="1.6" />
+                      <circle class="nerf-d" cx="8" cy="12" r="1.6" />
+                      <circle class="nerf-d" cx="12" cy="12" r="1.6" />
+                      <circle class="nerf-d" cx="16" cy="12" r="1.6" />
+                      <circle class="nerf-d" cx="8" cy="16" r="1.6" />
+                      <circle class="nerf-d" cx="12" cy="16" r="1.6" />
+                      <circle class="nerf-d" cx="16" cy="16" r="1.6" />
+                    </g>
                   </svg>
                 </div>
-                <div class="thm-step-name"><span class="thm-step-en">NeRF</span><span class="thm-step-sub">שדה רציף של צבע וצפיפות</span></div>
+                <div class="thm-step-name">
+                  <span class="thm-step-title" dir="ltr">NeRF</span>
+                  <span class="thm-step-sub">שדה רציף של צבע וצפיפות</span>
+                </div>
               </div>
 
+              <!-- 4. 3DGS: overlapping gaussian splats pulsing -->
               <div class="thm-step">
                 <div class="thm-node">
-                  <svg class="thm-step-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <ellipse cx="9.5" cy="11" rx="6.2" ry="3.4" transform="rotate(-24 9.5 11)" opacity="0.85" />
-                    <ellipse cx="14.5" cy="13.5" rx="6.2" ry="3.4" transform="rotate(22 14.5 13.5)" opacity="0.6" />
+                  <svg class="thm-step-icon thm-ico-gs" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <g transform="rotate(-24 9.5 11)"><ellipse class="splat splat-a" cx="9.5" cy="11" rx="6.2" ry="3.4" /></g>
+                    <g transform="rotate(22 14.5 13.5)"><ellipse class="splat splat-b" cx="14.5" cy="13.5" rx="6.2" ry="3.4" /></g>
                   </svg>
                 </div>
-                <div class="thm-step-name"><span class="thm-step-en">3D Gaussian Splatting</span><span class="thm-step-sub">הצגה מהירה בזמן אמת</span></div>
+                <div class="thm-step-name">
+                  <span class="thm-step-title" dir="ltr">3D Gaussian Splatting</span>
+                  <span class="thm-step-sub">הצגה מהירה בזמן אמת</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1256,24 +1279,23 @@
           <div class="thm-finale">
             <div class="thm-bottom">
               <p class="thm-invest">
-                חברות טכנולוגיה גדולות כבר משקיעות בכיוון הזה — במטרה להפוך סצנות תלת-ממדיות לכלי שימושי ב<strong>מיפוי, AR / VR, רובוטיקה, סימולציות וחוויות אינטראקטיביות</strong>.
+                חברות טכנולוגיה גדולות כבר משקיעות בכיוון הזה - במטרה להפוך סצנות תלת-ממדיות לכלי שימושי ב-<br />
+                <strong>מיפוי, AR / VR, רובוטיקה, סימולציות וחוויות אינטראקטיביות</strong>.
               </p>
 
               <div class="thm-logos" dir="ltr" aria-label="חברות שמשקיעות בתחום">
                 <img class="thm-logo" src="assets/icons/NVIDIALogo.png" alt="NVIDIA" />
                 <img class="thm-logo" src="assets/icons/GoogleLogo.svg" alt="Google" />
-                <img class="thm-logo" src="assets/icons/MetaLogo.svg" alt="Meta" />
                 <img class="thm-logo" src="assets/icons/NianticLogo.png" alt="Niantic" />
+                <img class="thm-logo" src="assets/icons/MetaLogo.svg" alt="Meta" />
                 <img class="thm-logo" src="assets/icons/SnapchatLogo.svg" alt="Snap" />
               </div>
             </div>
 
             <p class="thm-question">
-              אם כל אוסף תמונות יוכל להפוך לסביבה תלת-ממדית חיה —<br />
+              אם כל אוסף תמונות יוכל להפוך לסביבה תלת-ממדית חיה -<br />
               <span class="accent">איך זה ישנה את הדרך שבה אנחנו לומדים, עובדים וחווים את העולם?</span>
             </p>
-
-            <div class="thm-click-hint" aria-hidden="true">לחצו להמשך ▾</div>
           </div>
         </div>
       </section>
