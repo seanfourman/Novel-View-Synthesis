@@ -5520,12 +5520,15 @@ code {
 }
 
 .thm-title {
-  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  font-size: clamp(1.9rem, 3.8vw, 3.1rem);
   font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1;
   color: var(--ink);
   direction: ltr;
+}
+.thm-title .accent {
+  color: var(--accent);
 }
 
 .thm-intro {
@@ -5535,8 +5538,8 @@ code {
   max-width: 900px;
 }
 .thm-intro em {
-  font-style: italic;
-  font-weight: 600;
+  font-style: normal;
+  font-weight: 700;
   color: var(--accent);
 }
 .thm-intro strong {
@@ -5646,8 +5649,8 @@ code {
 }
 
 .thm-node {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--bg);
   border: 3px solid var(--muted);
@@ -5659,22 +5662,63 @@ code {
   transition:
     background 0.55s ease var(--d),
     border-color 0.55s ease var(--d),
-    transform 0.55s ease var(--d),
     box-shadow 0.55s ease var(--d);
 }
+/* expanding pulse ring - fires as each node lights up (one shot) */
+.thm-node::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.8);
+  z-index: -1;
+  pointer-events: none;
+}
 .thm-step-icon {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   color: var(--muted);
   transition: color 0.55s ease var(--d);
 }
 .thm-slide.go .thm-node {
   background: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 8px 22px -8px rgba(255, 90, 54, 0.6);
+  box-shadow: 0 10px 26px -8px rgba(255, 90, 54, 0.65);
+  animation: thmNodePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d) both;
+}
+.thm-slide.go .thm-node::before {
+  animation: thmNodePing 1.5s ease-out var(--d) 2;
 }
 .thm-slide.go .thm-step-icon {
   color: #fff;
+}
+
+@keyframes thmNodePop {
+  0% {
+    transform: scale(0.55);
+  }
+  60% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes thmNodePing {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
 }
 
 .thm-step-name {
@@ -5717,16 +5761,16 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(1.6rem, 4vw, 3.4rem);
+  gap: clamp(2rem, 5vw, 4.2rem);
   flex-wrap: wrap;
-  margin: 0.15rem 0;
+  margin: 0.35rem 0 0.1rem;
 }
 .thm-logo {
-  height: clamp(28px, 3.6vh, 40px);
+  height: clamp(48px, 6.8vh, 80px);
   width: auto;
   object-fit: contain;
   opacity: 0;
-  transform: translateY(10px) scale(0.92);
+  transform: translateY(12px) scale(0.9);
   filter: grayscale(1);
   transition:
     opacity 0.5s ease,
@@ -5754,17 +5798,92 @@ code {
   transition-delay: 3.15s;
 }
 
+/* ---------- finale: companies block <-> final question (click to reveal) ---------- */
+.thm-finale {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+.thm-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.7rem, 1.6vh, 1.2rem);
+  transition:
+    opacity 0.55s ease,
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.thm-slide.q-shown .thm-bottom {
+  opacity: 0;
+  transform: translateY(48px);
+  pointer-events: none;
+}
+
 .thm-question {
-  font-size: clamp(1.05rem, 1.5vw, 1.4rem);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  font-size: clamp(1.15rem, 1.7vw, 1.6rem);
   font-weight: 600;
   color: var(--ink);
-  line-height: 1.6;
-  max-width: 1000px;
-  margin-top: 0.2rem;
+  line-height: 1.65;
+  max-width: 1040px;
+  margin-inline: auto;
+  opacity: 0;
+  transform: translateY(34px);
+  pointer-events: none;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.thm-slide.q-shown .thm-question {
+  opacity: 1;
+  transform: translateY(0);
 }
 .thm-question .accent {
   color: var(--accent);
   font-weight: 700;
+}
+
+.thm-click-hint {
+  position: absolute;
+  bottom: -2.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.thm-slide.go .thm-click-hint {
+  opacity: 0.6;
+  transition-delay: 3.4s;
+  animation: thmHintBob 1.8s ease-in-out 3.4s infinite;
+}
+.thm-slide.q-shown .thm-click-hint {
+  opacity: 0;
+  animation: none;
+  transition-delay: 0s;
+}
+@keyframes thmHintBob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 5px);
+  }
 }
 
 @media (max-width: 760px) {

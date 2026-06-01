@@ -3156,14 +3156,25 @@ export function initEndBg() {
    slide entry by toggling the `.go` class with a reflow.
    ========================================================= */
 export function initTakeHome() {
-  const slide = document.querySelector('.slide[data-id="18"] .thm-slide');
+  const section = document.querySelector('.slide[data-id="18"]');
+  const slide = section ? section.querySelector(".thm-slide") : null;
+  let bound = false;
   return {
     enter() {
       if (!slide) return;
-      slide.classList.remove("go");
+      // reset to the staged-reveal start, hiding the final question
+      slide.classList.remove("go", "q-shown");
       // force reflow so removing+re-adding restarts the CSS transitions
       void slide.offsetWidth;
       slide.classList.add("go");
+      if (!bound) {
+        // click anywhere on the slide toggles between the companies block
+        // and the closing question
+        section.addEventListener("click", () => {
+          slide.classList.toggle("q-shown");
+        });
+        bound = true;
+      }
     },
     tick() {},
   };
