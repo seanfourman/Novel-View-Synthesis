@@ -137,19 +137,19 @@ const sceneRegistry = {
   1: initSpatialTransition, // slide 2 (animated horizon grid)
   2: initProblemVis, // slide 3
   3: initStaticToSpatial, // slide 4
-  // slide 5 (live room tour) - iframes only
-  5: initClassic, // slide 6
-  6: initSfMLiDAR, // slide 7
-  7: initLimits, // slide 8 (why classical methods failed)
-  8: initNvsIntro, // slide 9 (transition to NVS + model timeline)
-  9: initSRN, // slide 10 (SRN)
-  10: initSRNNetAnim, // slide 11 (SRN network animation)
-  // slide 12 (SRN pros & cons) - no canvas
-  12: initNeRFIntro, // slide 13 (NeRF)
-  13: initNeRFVideo, // slide 14 (NeRF pipeline animation)
-  // slide 15 (NeRF pros & cons) - no canvas
-  15: initGaussianSplats, // slide 16 (3D Gaussian Splatting build-up)
-  16: initGaussianPipeline, // slide 17 (3DGS pipeline animation)
+  4: initClassic, // slide 5
+  5: initSfMLiDAR, // slide 6
+  6: initLimits, // slide 7 (why classical methods failed)
+  7: initNvsIntro, // slide 8 (transition to NVS + model timeline)
+  8: initSRN, // slide 9 (SRN)
+  9: initSRNNetAnim, // slide 10 (SRN network animation)
+  // slide 11 (SRN pros & cons) - no canvas
+  11: initNeRFIntro, // slide 12 (NeRF)
+  12: initNeRFVideo, // slide 13 (NeRF pipeline animation)
+  // slide 14 (NeRF pros & cons) - no canvas
+  14: initGaussianSplats, // slide 15 (3D Gaussian Splatting build-up)
+  15: initGaussianPipeline, // slide 16 (3DGS pipeline animation)
+  // slide 17 (live room tour) - iframes only
   17: initEndBg, // slide 18 (final recap)
 };
 
