@@ -3526,6 +3526,7 @@ ul.presenters li::after {
 .nvs-tl {
   position: relative;
   height: 168px;
+  margin-top: 1rem;
 }
 
 /* The line runs from the very left edge of the screen to the very right edge. */
