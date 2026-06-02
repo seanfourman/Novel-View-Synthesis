@@ -148,11 +148,12 @@ const sceneRegistry = {
   11: initNeRFIntro, // slide 12 (NeRF)
   12: initNeRFVideo, // slide 13 (NeRF pipeline animation)
   // slide 14 (NeRF pros & cons) - no canvas
-  14: initGaussianSplats, // slide 15 (3D Gaussian Splatting build-up)
-  15: initGaussianPipeline, // slide 16 (3DGS pipeline animation)
-  // slide 17 (live room tour) - iframes only
-  17: initTakeHome, // slide 18 (take home message - staged evolution reveal)
-  18: initEndBg, // slide 19 (final recap)
+  // slide 15 (SRN vs NeRF comparison) - video only
+  15: initGaussianSplats, // slide 16 (3D Gaussian Splatting build-up)
+  16: initGaussianPipeline, // slide 17 (3DGS pipeline animation)
+  // slide 18 (live room tour) - iframes only
+  18: initTakeHome, // slide 19 (take home message - staged evolution reveal)
+  19: initEndBg, // slide 20 (final recap)
 };
 
 const sceneInstances = {};

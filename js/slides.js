@@ -3156,7 +3156,7 @@ export function initEndBg() {
    slide entry by toggling the `.go` class with a reflow.
    ========================================================= */
 export function initTakeHome() {
-  const section = document.querySelector('.slide[data-id="18"]');
+  const section = document.querySelector('.slide[data-id="19"]');
   const slide = section ? section.querySelector(".thm-slide") : null;
   let bound = false;
   return {
