@@ -2488,6 +2488,33 @@ code {
   color: var(--ink) !important;
   font-weight: 600;
 }
+h1.big-title.thanks-big {
+  font-size: clamp(4.5rem, 13vw, 10rem);
+  text-align: center;
+  color: var(--ink);
+}
+ul.presenters {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-top: 0.5rem;
+  padding: 0;
+}
+ul.presenters li {
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+ul.presenters li::after {
+  content: " " attr(data-id);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
 #end-bg {
   position: absolute;
   inset: 0;
