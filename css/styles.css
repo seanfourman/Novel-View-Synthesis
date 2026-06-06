@@ -2745,6 +2745,10 @@ ul.presenters li::after {
   font-weight: 700;
 }
 
+.cp-line-nowrap {
+  white-space: nowrap;
+}
+
 .cp-results {
   margin: 0.1rem 0 0;
 }
