@@ -1814,6 +1814,7 @@ code {
   color: var(--ink);
   text-align: center;
   direction: ltr;
+  white-space: nowrap;
 }
 .classic-card-name::after {
   content: "";
