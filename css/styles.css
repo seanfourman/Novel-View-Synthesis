@@ -5956,16 +5956,17 @@ ul.presenters li::after {
 
 /* ---------- brand logos (reveal after the rail) ---------- */
 .thm-logos {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: clamp(2rem, 5vw, 4.2rem);
-  flex-wrap: wrap;
-  margin: 0.35rem 0 0.1rem;
+  justify-items: center;
+  width: min(1000px, 100%);
+  margin: 0.35rem auto 0.1rem;
 }
 .thm-logo {
   height: clamp(64px, 9.5vh, 116px);
   width: auto;
+  max-width: 100%;
   object-fit: contain;
   opacity: 0;
   transform: translateY(12px) scale(0.9);
