@@ -2740,6 +2740,11 @@ ul.presenters li::after {
   margin: 0;
 }
 
+.cp-highlight {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .cp-results {
   margin: 0.1rem 0 0;
 }
