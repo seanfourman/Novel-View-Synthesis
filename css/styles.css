@@ -2745,7 +2745,8 @@ ul.presenters li::after {
   font-weight: 700;
 }
 
-.cp-line-nowrap {
+.compare-split[data-active="sfm"] .cp-sfm .cp-line-nowrap,
+.compare-split[data-active="lidar"] .cp-lidar .cp-line-nowrap {
   white-space: nowrap;
 }
 
