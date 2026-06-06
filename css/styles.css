@@ -5605,7 +5605,7 @@ ul.presenters li::after {
 /* track + fill cross the node centers (12.5% .. 87.5%) */
 .thm-evo-line {
   position: absolute;
-  top: 41px;
+  top: calc(50% - 25px);
   left: 12.5%;
   right: 12.5%;
   height: 3px;
@@ -5615,7 +5615,7 @@ ul.presenters li::after {
 }
 .thm-evo-fill {
   position: absolute;
-  top: 41px;
+  top: calc(50% - 25px);
   left: 12.5%;
   width: 0;
   height: 3px;
@@ -5650,7 +5650,7 @@ ul.presenters li::after {
 }
 .thm-step {
   position: absolute;
-  top: 0;
+  top: calc(50% - 66px);
   transform: translateX(-50%);
   width: clamp(140px, 20vw, 220px);
   display: flex;
