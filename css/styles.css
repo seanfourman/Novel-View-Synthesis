@@ -3869,15 +3869,17 @@ ul.presenters li::after {
 }
 
 .srn-visual-note {
-  margin: 0.35rem 0 0;
-  width: 100%;
-  font-size: 11.5px;
+  margin: 0.35rem auto 0;
+  width: max-content;
+  max-width: 100%;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--ink-soft);
-  opacity: 0.75;
+  opacity: 0.95;
   direction: rtl;
   text-align: center;
   font-style: italic;
+  white-space: nowrap;
 }
 
 .srn-text .lead.small {
