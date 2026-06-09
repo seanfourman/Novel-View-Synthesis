@@ -880,7 +880,6 @@ export function initGaussianPipeline() {
       ["צורה וגודל", "shape"],
       ["צבע", "color"],
       ["שקיפות", "opacity"],
-      ["תאורה זוויתית", "sh"],
     ];
     const n = items.length;
     const gap = Math.min(W * 0.125, 162);
