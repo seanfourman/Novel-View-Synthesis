@@ -1228,10 +1228,17 @@ export function initGaussianPipeline() {
     updateCaption();
   }
 
-  /* ---------- interaction: click advances one step ---------- */
+  /* ---------- interaction: click advances one step (3s cooldown) ---------- */
+  const ADVANCE_COOLDOWN_MS = 3000;
+  let lastAdvanceTs = 0;
   slide.addEventListener("click", () => {
-    if (target < LAST) target += 1;
-    updateCaption();
+    const now = performance.now();
+    if (now - lastAdvanceTs < ADVANCE_COOLDOWN_MS) return;
+    if (target < LAST) {
+      target += 1;
+      lastAdvanceTs = now;
+      updateCaption();
+    }
   });
 
   return {
@@ -1241,6 +1248,7 @@ export function initGaussianPipeline() {
       target = 0;
       wallT = 0;
       lastCaption = "";
+      lastAdvanceTs = 0;
       chairGif.style.opacity = 0;
       updateCaption();
     },
