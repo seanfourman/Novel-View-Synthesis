@@ -4217,6 +4217,10 @@ ul.presenters li::after {
   color: var(--ink);
 }
 
+.srn-concept-item span {
+  white-space: nowrap;
+}
+
 .srn-concept-icon {
   width: 26px;
   height: 26px;
