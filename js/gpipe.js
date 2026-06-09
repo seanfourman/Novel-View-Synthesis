@@ -875,11 +875,12 @@ export function initGaussianPipeline() {
   }
 
   function drawPropsRow(alpha) {
+    // RTL order: first item (מיקום) sits on the right, last (שקיפות) on the left
     const items = [
-      ["מיקום", "pos"],
-      ["צורה וגודל", "shape"],
-      ["צבע", "color"],
       ["שקיפות", "opacity"],
+      ["צבע", "color"],
+      ["צורה וגודל", "shape"],
+      ["מיקום", "pos"],
     ];
     const n = items.length;
     const gap = Math.min(W * 0.125, 162);
